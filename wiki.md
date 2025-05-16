@@ -11,6 +11,10 @@ use [Wiki doc template](https://symphogenteams.visualstudio.com/Development%20an
     - client installed on devbox with link to test plan in azure devops
 - change request process
 
+---
+# Test Setup and Execution
+
+---
 # Manual testing (draft)
 ## Using DevBox for Testing a New Client Version
 ### Overview
