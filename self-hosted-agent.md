@@ -16,6 +16,49 @@ https://symphogenteams.visualstudio.com/Mimer/_settings/agentqueues?queueId=244&
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+![image](https://github.com/user-attachments/assets/085f43e1-ced8-427b-9476-98aec75a5bb7)
+![image](https://github.com/user-attachments/assets/ce5d1039-869f-4e27-9922-51b798f5830d)
+![image](https://github.com/user-attachments/assets/25e6237e-3f8d-4f9e-84de-89ad5f81fb17)
+![image](https://github.com/user-attachments/assets/6f0105e1-a2eb-464f-b244-241ccf284e32)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 using microsoft devbox I want to spin up a new devbox after I've built my winui3 application in azure devops pipeline. when the devbox is running I want to install my winui3 client on the devbox making it possible for other users to connect to the devbox to test my application
 ChatGPT said:
 
