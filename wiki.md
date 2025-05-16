@@ -7,7 +7,7 @@ use [Wiki doc template](https://symphogenteams.visualstudio.com/Development%20an
   - unit testing, ui
     - writing unit tests (UITestMethod with link to Microsoft docs)
     - running unit tests in azure pipeline
-  - dev box
+  - dev box (devcenter)
     - client installed on devbox with link to test plan in azure devops
 - change request process
 
