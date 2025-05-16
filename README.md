@@ -19,3 +19,20 @@ Portal for administrating Mimer client settings/configurations.
 - Blazor, webassembly, hosted, hybrid?
 - call micro services for fetching and crud?
 - data validation, e.g. teams where superids are not in userids?
+
+
+## TODO
+- Write comprehensive(?) section/page for [wiki](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_wiki/wikis/Development-and-Data-Engineering.wiki/191/Governance-Model-Overview) describing testing
+  - unit testing
+  - manual testing
+    - devcenter, definitions, projects, devbox
+    - client and url deployment to devbox?
+- change request description(?)
+- admin site
+  - blazor hosting model
+  - what should be administrated
+    - data validation
+      - userids vs. superuserids for teams
+      - teamids for given user vs what is defined in teams (are the team even there? does the team userids hold the userid?)
+  - call micro services for fetching and crud?
+  - sso, microsoft entra id
