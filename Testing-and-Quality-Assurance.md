@@ -9,8 +9,7 @@ This documentation covers test methodologies, infrastructure setup, execution pr
 ## Table of Contents
 - [Section 1: Overview](#section-1-overview)
 - [Section 2: Standard Unit Tests](#section-2-standard-unit-tests)
-- [Section 3](#section-3)
-- [Section 4: Manual Tests](#section-4-manual-tests)
+- [Section 3: Manual Tests](#section-3-manual-tests)
 - [Related Articles](#related-articles)
 - [Change Log](#change-log)
 
@@ -20,25 +19,23 @@ The application uses the following types of tests:
    For the Mimer Client unit tests are divided into two categories:
 	- Those marked with the `[TestMethod]` attribute => can run on any build agent.
 	- Those marked with the `[UITestMethod]` attribute => require a Windows environment with UI capabilities.
+   For more information on the UITestMethod attribute see [Section 2: Standard Unit Tests](#section-2-standard-unit-tests).
 2. **Manual Tests**: These tests are conducted by QA teams to validate the application against user stories and acceptance criteria. 
    They are not automated and are typically performed in a controlled environment to ensure the application meets functional and non-functional requirements.
 
 ## Section 2: Standard Unit Tests
 The standard unit tests are described in [TBD](https://insert-link-here).
 
-## Section 3: UI-Dependent Tests (TODO: Does this section belong here?)
-
-## Section 4: Manual Tests
+## Section 3: Manual Tests
 Manual tests are run by developers or testers and are not part of the CI/CD pipeline. 
 Automated tests are faster and more reliable than manual tests, but they require more setup and maintenance. 
 Manual tests are easier to write and maintain, but they are slower and less reliable than automated tests.
 We've also created a set of manual tests that are run by testers.
 All tests, or a subset of them, should be run when a new version of the client is released.
-The test plan(s) for Mimer Client are located in Azure DevOps [Test Plans](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_testManagement/all).
+The test plan(s) for `Mimer Client` are located in [Azure DevOps Test Plans](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_testManagement/all).
 
 ## Related Articles
 - [Related Page 1](link) TBD link to page where unit tests are described
-- [Related Page 2](link) TBD link to test plans in Azure DevOps?
 
 ## Change Log
-- **Date:** Description of changes made.
+- **2025-05-19:** Initial draft of Testing and Quality Assurance documentation created, including sections for standard unit tests and manual testing procedures.

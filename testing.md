@@ -47,9 +47,10 @@ var sut = new YourViewModel(
 The `UITestMethod` attribute is used to mark tests that require a UI context. 
 These tests are executed in a Windows environment and can interact with the UI elements of the application.
 
-For more information on testing WinUI functionality, see the [official Microsoft documentation on WinUI 3 testing](https://learn.microsoft.com/en-us/windows/apps/winui/winui3/testing/#how-do-i-test-winui-functionality-in-my-app).
+For more information on testing WinUI functionality, 
+see the [official Microsoft documentation on WinUI 3 testing](https://learn.microsoft.com/en-us/windows/apps/winui/winui3/testing/#how-do-i-test-winui-functionality-in-my-app).
 
-The `UITestMethod` attribute comes from the Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer namespace and is essential for testing components that require UI thread access:
+The `UITestMethod` attribute comes from the *Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer* namespace and is essential for testing components that require UI thread access:
 ```csharp
 [UITestMethod, TestCategory(TestCategory.RequiresSelfhostedWindowsAgent)]
 public void YourTest_TestScenario_ExpectedResult()
@@ -66,7 +67,7 @@ Running the test in a headless environment will fail - e.g. in Azure DevOps Pipe
 <br>***System.NotSupportedException: async TestMethod with UITestMethodAttribute are not supported. Either remove async or use TestMethodAttribute.***
 <br>Use `.Wait()` to call async methods in the test method.
 
-### When to Use UITestMethod
+### When to Use `UITestMethod`
 Use UITestMethod when testing components that:
 - Use dispatcher operations
 - Modify or interact with UI elements
@@ -129,7 +130,7 @@ This initialization ensures that UITestMethod-attributed tests have access to th
 > [!WARNING]
 > THE FOLLOWING CONTENT SHOULD BE MOVED TO THE FINAL DOCUMENTATION PAGE
 >
-> SEPARETE FROM THIS PAGE
+> SEPARATE FROM THIS PAGE
 
 Two types of tests, automated and manual. 
 Automated tests are run by the build server and are part of the CI/CD pipeline. 
