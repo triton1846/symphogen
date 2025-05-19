@@ -38,8 +38,8 @@ var sut = new YourViewModel(
 
 ### Key Features
 	- ConfigureDefaultServices() - Sets up common services with reasonable defaults
-	- WithSingleton<T>() - Registers singleton services with custom configurations
-	- WithTransient<T>() - Registers transient services
+	- WithSingleton<T>() - Registers singleton services with custom configurations, overriding defaults
+	- WithTransient<T>() - Registers transient services, overriding defaults
 	- GetRequiredService<T>() - Retrieves configured services
 	- GetMock<T>() - Retrieves consistent mock objects for a type
 
