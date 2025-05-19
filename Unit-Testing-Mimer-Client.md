@@ -1,9 +1,9 @@
 ## Pagestatus: _Draft_
 ## Introduction
 The testing infrastructure supports both standard unit tests and UI-dependent tests that require a UI context to execute. 
-The testing framework is built on Microsoft's Visual Studio Test Tools, with special accommodations for WinUI 3 application testing.
+The testing framework is built on Microsoft's `Visual Studio Test Tools`, with special accommodations for `WinUI 3` application testing.
 
-This document explains how to write and run tests in the WinUI application, with particular focus on UI testing using the UITestMethod attribute and the testing infrastructure we've established.
+This document explains how to write and run tests in the `WinUI` application, with particular focus on UI testing using the `UITestMethod` attribute and the testing infrastructure we've established.
 
 ## Table of Contents
 - [Section 1: Testing Types Overview](#section-1-testing-types-overview)
@@ -47,7 +47,7 @@ var sut = new YourViewModel(
 The `UITestMethod` attribute is used to mark tests that require a UI context. 
 These tests are executed in a Windows environment and can interact with the UI elements of the application.
 
-For more information on testing WinUI functionality, 
+For more information on testing `WinUI` functionality, 
 see the [official Microsoft documentation on WinUI 3 testing](https://learn.microsoft.com/en-us/windows/apps/winui/winui3/testing/#how-do-i-test-winui-functionality-in-my-app).
 
 The `UITestMethod` attribute comes from the *Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer* namespace and is essential for testing components that require UI thread access:
@@ -60,19 +60,22 @@ public void YourTest_TestScenario_ExpectedResult()
 ```
 The `TestCategory.RequiresSelfhostedWindowsAgent` attribute is used to indicate that the test requires a self-hosted Windows agent to run.
 This is important for tests that interact with the UI or require a specific Windows environment.
-Running the test in a headless environment will fail - e.g. in Azure DevOps Pipelines.
+Running the test in a headless environment will fail - e.g. in `Azure DevOps Pipelines`.
 
 > [!CAUTION]
 > Defining tests with async Task will result in:
 <br>***System.NotSupportedException: async TestMethod with UITestMethodAttribute are not supported. Either remove async or use TestMethodAttribute.***
-<br>Use `.Wait()` to call async methods in the test method.
+<br>Use `.Wait()` or `.GetAwaiter().GetResult()` to call async methods in the test method. 
+This is required because `[UITestMethod]` does not support `async Task` test methods. 
+Both approaches block the calling thread until the async operation completes. 
+Prefer `.GetAwaiter().GetResult()` if you want exceptions to be unwrapped.
 
 ### When to Use `UITestMethod`
 Use UITestMethod when testing components that:
 - Use dispatcher operations
 - Modify or interact with UI elements
 - Rely on UI thread affinity
-- Use WinUI-specific APIs
+- Use `WinUI`-specific APIs
 
 ### Test Infrastructure
 The UnitTestApp class initializes the testing environment for UI tests:
@@ -92,7 +95,7 @@ This initialization ensures that UITestMethod-attributed tests have access to th
 1. Use descriptive test names
     - Format: MethodUnderTest_Scenario_ExpectedBehavior
     - Example: LoadDataAsync_ShouldLoadData_WhenWorkflowIdIsSet
-2. Follow the Arrange-Act-Assert pattern
+2. Follow the [Arrange-Act-Assert pattern](https://learn.microsoft.com/en-us/visualstudio/test/unit-test-basics?view=vs-2022#write-your-tests):
     ```csharp
     // Arrange
     var fixture = new Fixture();
@@ -109,7 +112,10 @@ This initialization ensures that UITestMethod-attributed tests have access to th
     - Customize only the services relevant to your test
 4. Keep tests focused
     - Test one behavior per test method
-    - Use descriptive assertion messages: Assert.AreEqual(expected, actual, "Message explaining what failed")
+    - Use descriptive assertion messages: 
+        ```csharp
+        Assert.AreEqual(expected, actual, "Message explaining what failed")
+        ```
 
 ## Section 4: Running Tests
 ### Running Tests on a Local Developer Machine
