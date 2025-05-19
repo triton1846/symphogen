@@ -32,8 +32,8 @@ var serviceSetup = new TestServiceSetup()
 serviceSetup.BuildServiceProvider();
 
 var sut = new YourViewModel(
-    serviceSetup.GetRequiredService<IService1>(),
-    serviceSetup.GetRequiredService<IService2>());
+    serviceSetup.GetRequiredService<IWorkflowService>(),
+    serviceSetup.GetRequiredService<IUserService>());
 ```
 
 ### Key Features
@@ -47,6 +47,8 @@ var sut = new YourViewModel(
 The `UITestMethod` attribute is used to mark tests that require a UI context. 
 These tests are executed in a Windows environment and can interact with the UI elements of the application.
 
+For more information on testing WinUI functionality, see the [official Microsoft documentation on WinUI 3 testing](https://learn.microsoft.com/en-us/windows/apps/winui/winui3/testing/#how-do-i-test-winui-functionality-in-my-app).
+
 The `UITestMethod` attribute comes from the Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer namespace and is essential for testing components that require UI thread access:
 ```csharp
 [UITestMethod, TestCategory(TestCategory.RequiresSelfhostedWindowsAgent)]
@@ -56,6 +58,8 @@ public void YourTest_TestScenario_ExpectedResult()
 }
 ```
 The `TestCategory.RequiresSelfhostedWindowsAgent` attribute is used to indicate that the test requires a self-hosted Windows agent to run.
+This is important for tests that interact with the UI or require a specific Windows environment.
+Running the test in a headless environment will fail - e.g. in Azure DevOps Pipelines.
 
 > [!CAUTION]
 > Defining tests with async Task will result in:
@@ -88,17 +92,17 @@ This initialization ensures that UITestMethod-attributed tests have access to th
     - Format: MethodUnderTest_Scenario_ExpectedBehavior
     - Example: LoadDataAsync_ShouldLoadData_WhenWorkflowIdIsSet
 2. Follow the Arrange-Act-Assert pattern
-```csharp
-// Arrange
-var fixture = new Fixture();
-// Setup test dependencies
+    ```csharp
+    // Arrange
+    var fixture = new Fixture();
+    // Setup test dependencies
    
-// Act
-sut.YourMethodToTest();
+    // Act
+    sut.YourMethodToTest();
    
-// Assert
-Assert.AreEqual(expected, actual);
-```
+    // Assert
+    Assert.AreEqual(expected, actual);
+    ```
 3. Use TestServiceSetup consistently
     - Leverage ConfigureDefaultServices() for common dependencies
     - Customize only the services relevant to your test
@@ -106,9 +110,37 @@ Assert.AreEqual(expected, actual);
     - Test one behavior per test method
     - Use descriptive assertion messages: Assert.AreEqual(expected, actual, "Message explaining what failed")
 
+## Section 4: Running Tests
+***TBD***
+
+
 ## Related Articles
 - [Related Page 1](link)
 - [Related Page 2](link)
 
 ## Change Log
 - **Date:** Description of changes made.
+
+
+
+
+
+---
+> [!WARNING]
+> THE FOLLOWING CONTENT SHOULD BE MOVED TO THE FINAL DOCUMENTATION PAGE
+>
+> SEPARETE FROM THIS PAGE
+
+Two types of tests, automated and manual. 
+Automated tests are run by the build server and are part of the CI/CD pipeline. 
+Manual tests are run by developers or testers and are not part of the CI/CD pipeline. 
+Automated tests are faster and more reliable than manual tests, but they require more setup and maintenance. 
+Manual tests are easier to write and maintain, but they are slower and less reliable than automated tests.
+
+In order to test the Mimer client, we've created an extensive set of unit tests. 
+These are run by the build server and are part of the CI/CD pipeline. See above.
+We've also created a set of manual tests that are run by testers.
+All tests, or a subset of them, should be run when a new version of the client is released.
+
+The test plan(s) for Mimer Client are located in Azure DevOps [Test Plans](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_testManagement/all).
+
