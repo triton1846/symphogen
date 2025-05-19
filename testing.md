@@ -112,36 +112,31 @@ This initialization ensures that UITestMethod-attributed tests have access to th
     - Use descriptive assertion messages: Assert.AreEqual(expected, actual, "Message explaining what failed")
 
 ## Section 4: Running Tests
-***TBD***
+### Running Tests on a Local Developer Machine
 
+To run tests locally, use Visual Studio's built-in tools:
+
+1. **Open the solution in Visual Studio.**
+2. **Build the solution** to ensure all dependencies are up to date.
+3. **Open the Test Explorer** (__Test > Test Explorer__) to view available tests.
+4. **Run or debug tests** by selecting them in Test Explorer and clicking __Run__ or __Debug__.
+   - UI-dependent tests (`[UITestMethod]`) require a Windows environment with UI capabilities.
+5. **Review test results** in the Test Explorer window.
+
+You can also run tests from the command line using `dotnet test` or `vstest.console.exe`. Note that UI tests require a Windows environment with desktop interaction enabled.
+
+### Running Tests in Azure DevOps Pipeline
+
+Tests are automatically executed as part of the Azure DevOps build pipeline. The pipeline is configured to:
+
+- **Discover and run all tests** (both standard unit tests and UI-dependent tests) during the build process.
+- **Require a self-hosted Windows agent** for UI-dependent tests marked with `TestCategory.RequiresSelfhostedWindowsAgent`.
+- **Fail the build if any test fails.** This ensures that only code passing all tests is considered for deployment or further integration.
+
+Test results are published to the `Azure DevOps` build summary, where you can review passed and failed tests. If any test fails, the build is marked as failed and will not proceed to subsequent stages.
 
 ## Related Articles
-- [Related Page 1](link)
-- [Related Page 2](link)
+- [Testing and Quality Assurance](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_wiki/wikis/Development-and-Data-Engineering.wiki/311/Testing-and-Quality-Assurance)
 
 ## Change Log
-- **Date:** Description of changes made.
-
-
-
-
-
----
-> [!WARNING]
-> THE FOLLOWING CONTENT SHOULD BE MOVED TO THE FINAL DOCUMENTATION PAGE
->
-> SEPARATE FROM THIS PAGE
-
-Two types of tests, automated and manual. 
-Automated tests are run by the build server and are part of the CI/CD pipeline. 
-Manual tests are run by developers or testers and are not part of the CI/CD pipeline. 
-Automated tests are faster and more reliable than manual tests, but they require more setup and maintenance. 
-Manual tests are easier to write and maintain, but they are slower and less reliable than automated tests.
-
-In order to test the Mimer client, we've created an extensive set of unit tests. 
-These are run by the build server and are part of the CI/CD pipeline. See above.
-We've also created a set of manual tests that are run by testers.
-All tests, or a subset of them, should be run when a new version of the client is released.
-
-The test plan(s) for Mimer Client are located in Azure DevOps [Test Plans](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_testManagement/all).
-
+- **2025-05-20:** Initial version. Covers standard unit tests and UI-dependent tests using `UITestMethod`. Describes test setup with `TestServiceSetup`, usage of `TestCategory.RequiresSelfhostedWindowsAgent`, and best practices for writing and running tests in `WinUI 3` applications.
