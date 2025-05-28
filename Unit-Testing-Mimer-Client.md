@@ -133,7 +133,7 @@ You can also run tests from the command line using `dotnet test` or `vstest.cons
 
 ### Running Tests in Azure DevOps Pipeline
 
-Tests are automatically executed as part of the Azure DevOps build pipeline. The pipeline is configured to:
+Tests are automatically executed as part of the `Azure DevOps build pipeline`. The pipeline is configured to:
 
 - **Discover and run all tests** (both standard unit tests and UI-dependent tests) during the build process.
 - **Require a self-hosted Windows agent** for UI-dependent tests marked with `TestCategory.RequiresSelfhostedWindowsAgent`.

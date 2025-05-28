@@ -1,0 +1,309 @@
+﻿@page "/users"
+@using System.Text.Json
+@rendermode InteractiveServer
+@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
+
+@if (!isInitialized)
+{
+    <MudOverlay @bind-Visible="isLoading" DarkBackground>
+        <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+    </MudOverlay>
+}
+else
+{
+    <MudTable @bind-SelectedItem="selectedItem"
+              ApplyButtonPosition="TableApplyButtonPosition.End"
+              CanCancelEdit="true"
+              CommitEditTooltip="Commit Edit"
+              Dense="true"
+              EditButtonPosition="TableEditButtonPosition.End"
+              EditTrigger="TableEditTrigger.RowClick"
+              Filter="new Func<Models.User, bool>(FilterFunc)"
+              Hover="true"
+              IsEditRowSwitchingBlocked="false"
+              Items="@allUsers"
+              Loading="isLoading"
+              OnCommitEditClick="@(() => Snackbar.Add("Commit Edit Handler Invoked"))"
+              ReadOnly="false"
+              RowEditCancel="ResetItemToOriginalValues"
+              RowEditCommit="ItemHasBeenCommitted"
+              RowEditPreview="BackupItem"
+              SortLabel="Sort By">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Users</MudText>
+            <MudSelect T="MimerEnvironment"
+                       @bind-Value="selectedEnvironment"
+                       Label="Environment"
+                       Class="ml-2"
+                       Dense="true"
+                       Style="max-width: 200px;"
+                       MultiSelection="false"
+                       SelectedValuesChanged="async val => await OnSelectedEnvironmentChanged(val.First())">
+                <MudSelectItem Value="MimerEnvironment.QA">QA</MudSelectItem>
+                <MudSelectItem Value="MimerEnvironment.SB1">SB1</MudSelectItem>
+            </MudSelect>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="mt-0"
+                          Clearable="true"
+                          IconSize="Size.Medium"
+                          Immediate="true"
+                          Placeholder="Search"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.User, object>(x => x.FullName ?? string.Empty)">Full Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Email ?? string.Empty)">Email</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Department ?? string.Empty)">Department</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Location ?? string.Empty)">Location</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="SortByTeams">Teams</MudTableSortLabel></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="ID">
+                <div class="d-flex justify-space-between align-center">
+                    <span>@context.Id</span>
+                    <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
+                                   Color="Color.Success"
+                                   OnClick="async () => await CopyId(context.Id)" />
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Department">@context.Department</MudTd>
+            <MudTd DataLabel="Location">@context.Location</MudTd>
+            <MudTd DataLabel="Teams">
+                @if (context.Teams.Any())
+                {
+                    @foreach (var team in context.Teams.OrderBy(t => t.Name))
+                    {
+                        <MudTooltip Text="@team.Id">
+                            @if (team.TeamExists)
+                            {
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">@team.Name</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
+                            }
+                        </MudTooltip>
+                    }
+                }
+                else
+                {
+                    <MudTooltip Text="@($"{context.FullName} is not a member of any team")">
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">No Teams</MudChip>
+                    </MudTooltip>
+                }
+            </MudTd>
+        </RowTemplate>
+        <RowEditingTemplate>
+            <MudTd DataLabel="ID">@context.Id</MudTd>
+            <MudTd DataLabel="Full Name">
+                <MudTextField @bind-Value="context.FullName" Required />
+            </MudTd>
+            <MudTd DataLabel="Email">
+                <MudTextField @bind-Value="context.Email" Required />
+            </MudTd>
+            <MudTd DataLabel="Department">
+                <MudTextField @bind-Value="context.Department" Required />
+            </MudTd>
+            <MudTd DataLabel="Location">
+                <MudTextField @bind-Value="context.Location" Required />
+            </MudTd>
+            <MudTd DataLabel="Teams">
+                <MudSelect T="Models.Team"
+                           Dense="true"
+                           MultiSelection="true"
+                           MultiSelectionTextFunc="@(teams => string.Join(", ", teams.Order()))"
+                           SelectedValues="context.Teams"
+                           SelectedValuesChanged="values => OnTeamsSelected(context, values)"
+                           ToStringFunc="@(team => team.Name)">
+                    @foreach (var team in allTeams.OrderBy(t => t.Name))
+                    {
+                        <MudSelectItem T="Models.Team"
+                                       Value="@team"
+                                       Disabled="@(!team.TeamExists && !context.Teams.Any(t => t.Id == team.Id))">@team.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+        </RowEditingTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+        <EditButtonContent Context="button">
+            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+        </EditButtonContent>
+    </MudTable>
+}
+
+@code {
+    private bool isInitialized = false;
+    private List<BlazorWebAppSymphogen.Models.User>? allUsers;
+    private HashSet<string?> copiedIconIds = new();
+    private System.Timers.Timer? iconTimer;
+    private string searchString = "";
+    private Models.User selectedItem = default!;
+    private Models.User? elementBeforeEdit;
+    private List<string> editEvents = new();
+    private MimerEnvironment selectedEnvironment = MimerEnvironment.QA;
+    private bool isLoading = true;
+    private List<Models.Team> allTeams = [];
+    private List<Models.Team> _selectedTeams = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await LoadTeamsAsync();
+        await LoadUsersAsync();
+        isLoading = false;
+
+        iconTimer = new System.Timers.Timer(1000);
+        iconTimer.Elapsed += ResetIcon;
+        iconTimer.AutoReset = false;
+
+        isInitialized = true;
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        Logger.LogInformation("Loading users for environment: {Environment}", selectedEnvironment);
+        allUsers = await CosmosService.GetUsersAsync(selectedEnvironment);
+        foreach (var user in allUsers)
+        {
+            foreach (var teamId in user.TeamIds ?? [])
+            {
+                var team = allTeams.FirstOrDefault(t => t.Id == teamId);
+                var unknownTeam = new Models.Team { Id = teamId, Name = "Unknown Team", TeamExists = false };
+                user.Teams.Add(team ?? unknownTeam);
+                if (!allTeams.Any(t => t.Id == teamId))
+                {
+                    allTeams.Add(unknownTeam);
+                }
+            }
+        }
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        Logger.LogInformation("Loading teams for environment: {Environment}", selectedEnvironment);
+        allTeams = await CosmosService.GetTeamsAsync(selectedEnvironment);
+    }
+
+    private async Task CopyId(string? id)
+    {
+        if (!string.IsNullOrEmpty(id))
+        {
+            // Copy the ID to clipboard
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", id);
+
+            // Change icon to check mark
+            copiedIconIds.Clear();
+            copiedIconIds.Add(id);
+
+            // Start timer to revert icon
+            iconTimer?.Stop();
+            iconTimer?.Start();
+        }
+    }
+
+    private void ResetIcon(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Clear all copied icons
+        copiedIconIds.Clear();
+
+        // Trigger UI update
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        iconTimer?.Dispose();
+    }
+
+    private bool FilterFunc(Models.User user)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (user.Department?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (user.Email?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (user.FullName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (user.Location?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (user.Id?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        return false;
+    }
+
+    private void BackupItem(object element)
+    {
+        var user = (Models.User)element;
+        // Deep copy using JSON serialization
+        elementBeforeEdit = JsonSerializer.Deserialize<Models.User>(JsonSerializer.Serialize(user));
+        Logger.LogInformation("RowEditPreview event: made a backup of User {User}", user);
+        AddEditionEvent($"RowEditPreview event: made a backup of User {user.FullName}");
+    }
+
+    private void AddEditionEvent(string message)
+    {
+        editEvents.Add(message);
+        Snackbar.Add(message, Severity.Info, config => config.ShowCloseIcon = true);
+        // StateHasChanged();
+    }
+
+    private void ItemHasBeenCommitted(object element)
+    {
+        AddEditionEvent($"RowEditCommit event: Changes to User {((Models.User)element).FullName} committed");
+    }
+
+    private void ResetItemToOriginalValues(object element)
+    {
+        if (elementBeforeEdit is null)
+        {
+            Logger.LogWarning("RowEditCancel event: No backup found for User {User}", ((Models.User)element).FullName);
+            return; // No backup to reset to
+        }
+
+        element = (object)elementBeforeEdit;// Reset to original values
+        // Replace the element in the list with the original values
+        if (allUsers != null && element is Models.User user)
+        {
+            var index = allUsers.FindIndex(u => u.Id == user.Id);
+            if (index >= 0)
+            {
+                AddEditionEvent($"RowEditCancel event: Editing of User {user.FullName} canceled");
+                allUsers[index] = (Models.User)element;
+                //UpdatePagedUsers();
+            }
+        }
+        Logger.LogInformation("RowEditCancel event: Editing of User {User} canceled", ((Models.User)element).FullName);
+    }
+
+    private async Task OnSelectedEnvironmentChanged(MimerEnvironment environment)
+    {
+        Logger.LogInformation("Selected environment changed to: {Environment}", environment);
+        selectedEnvironment = environment;
+        isLoading = true;
+        await LoadTeamsAsync();
+        await LoadUsersAsync();
+        isLoading = false;
+    }
+
+    // get teams from Cosmos DB, add multiselect dropdown to each user row with teams
+    private void OnTeamsSelected(Models.User user, IEnumerable<Models.Team> selectedTeams)
+    {
+        user.Teams = selectedTeams.ToList();
+        user.TeamIds = user.Teams.Select(t => t.Id).ToList();
+        Logger.LogInformation("Teams selected for User {User}: {Teams}", user.FullName, string.Join(", ", user.Teams.Select(t => t.Name)));
+        AddEditionEvent($"Teams selected for User {user.FullName}: {string.Join(", ", user.Teams.Select(t => t.Name))}");
+    }
+
+    Func<Models.User, object>? SortByTeams = (Models.User x) => string.Join(", ", ((Models.User)(object)x).Teams.Select(t => t.Name).Order()); // For sorting teams in the table
+}
