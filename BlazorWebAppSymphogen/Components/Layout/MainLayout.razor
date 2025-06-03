@@ -1,28 +1,57 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
 
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<AuthorizeView>
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="1">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+                <MudText Typo="Typo.h5" Class="ml-3">BlazorWebAppSymphogen</MudText>
+                <MudSpacer />
+                <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Dense="true" Direction="Direction.Bottom" OffsetY="true">
+                    <MudText Class="px-4 py-2">Welcome, @context.User.Identity?.Name</MudText>
+                    <MudDivider />
+                    <MudMenuItem Href="MicrosoftIdentity/Account/SignOut">Sign Out</MudMenuItem>
+                </MudMenu>
+            </MudAppBar>
+            <MudDrawer @bind-Open="@drawerOpen" ClipMode="DrawerClipMode.Docked" Elevation="2">
+                <NavMenu />
+            </MudDrawer>
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="my-4 pt-4">
+                    @Body
+                </MudContainer>
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+    <NotAuthorized>
+        <MudLayout>
+            <MudAppBar Elevation="1">
+                <MudText Typo="Typo.h5" Class="ml-3">BlazorWebAppSymphogen</MudText>
+                <MudSpacer />
+                <MudButton Color="Color.Primary" Href="MicrosoftIdentity/Account/SignIn" Variant="Variant.Filled">Sign In</MudButton>
+            </MudAppBar>
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="my-4 pt-4">
+                    <MudPaper Class="pa-4 ma-4" Elevation="3">
+                        <MudText Typo="Typo.h5">Please sign in to access this application</MudText>
+                    </MudPaper>
+                </MudContainer>
+            </MudMainContent>
+        </MudLayout>
+    </NotAuthorized>
+</AuthorizeView>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+@code {
+    private bool drawerOpen = true;
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+    private void ToggleDrawer()
+    {
+        drawerOpen = !drawerOpen;
+    }
+}

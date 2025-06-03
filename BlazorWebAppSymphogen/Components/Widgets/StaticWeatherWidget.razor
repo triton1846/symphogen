@@ -1,0 +1,29 @@
+﻿@inject IJSRuntime JS
+
+<a class="weatherwidget-io" href="https://forecast7.com/en/55d6812d57/copenhagen/" data-label_1="COPENHAGEN" data-label_2="WEATHER" data-icons="Climacons Animated" data-days="5" data-theme="sky">COPENHAGEN WEATHER</a>
+
+<script>
+    window.initWeatherWidget = () => {
+        if (typeof __weatherwidget_init === "function") {
+            __weatherwidget_init();
+        } else {
+            var js = document.createElement("script");
+            js.id = "weatherwidget-io-js";
+            js.src = "https://weatherwidget.io/js/widget.min.js";
+            document.head.appendChild(js);
+        }
+    };
+</script>
+
+@code {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initWeatherWidget");
+        }
+    }
+}

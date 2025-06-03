@@ -68,13 +68,16 @@ public class CosmosService : ICosmosService
             var queryable = container.GetItemLinqQueryable<T>(requestOptions: queryRequestOptions, linqSerializerOptions: cosmosLinqSerializerOptions);
             filterExpression ??= q => q;
             var filteredQueryable = filterExpression(queryable);
+            var numberOfCalls = 0;
 
             using var iterator = filteredQueryable.ToFeedIterator();
             while (iterator.HasMoreResults)
             {
                 var response = await iterator.ReadNextAsync();
                 results.AddRange([.. response]);
+                numberOfCalls++;
             }
+            _logger.LogDebug("Query completed for {ContainerId} in {DatabaseId} with {NumberOfCalls} call(s)", containerId, databaseId, numberOfCalls);
         }
         catch (CosmosException ex)
         {

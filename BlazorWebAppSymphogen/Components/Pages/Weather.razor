@@ -1,11 +1,15 @@
 ﻿@page "/weather"
 @attribute [StreamRendering]
+@inject IJSRuntime JSRuntime
+@using BlazorWebAppSymphogen.Components.Widgets
 
 <PageTitle>Weather</PageTitle>
 
 <h1>Weather</h1>
 
 <p>This component demonstrates showing data.</p>
+
+<StaticWeatherWidget />
 
 @if (forecasts == null)
 {

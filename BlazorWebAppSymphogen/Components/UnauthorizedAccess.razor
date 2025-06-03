@@ -1,0 +1,24 @@
+﻿@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudContainer Class="d-flex justify-center align-center" Style="height: 80vh">
+    <MudPaper Elevation="3" Class="pa-6 ma-6 d-flex flex-column align-center">
+        <MudText Typo="Typo.h4" Class="mb-4">Unauthorized Access</MudText>
+        <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Error" Size="Size.Large" Class="mb-4" />
+        <MudText Typo="Typo.body1" Class="mb-4 text-center">
+            You do not have permissions to access this page. This resource requires domain authorization.
+        </MudText>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="@(() => Navigation.NavigateTo("/"))">
+            Return to Home
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Snackbar.Add("You don't have the required permissions to access this resource", Severity.Warning);
+    }
+}

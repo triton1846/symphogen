@@ -1,6 +1,40 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    @{
+                        var authState = CascadingAuthenticationStateProvider.GetAuthenticationStateAsync().Result;
+                        var user = authState.User;
+
+                        if (user.Identity?.IsAuthenticated == true)
+                        {
+                            // User is authenticated but not authorized (policy failure)
+                            <UnauthorizedAccess />
+                        }
+                        else
+                        {
+                            // User is not authenticated at all
+                            <RedirectToLogin />
+                        }
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(Layout.MainLayout)">
+                <p role="alert">Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code {
+    [Inject]
+    private AuthenticationStateProvider CascadingAuthenticationStateProvider { get; set; } = default!;
+}
