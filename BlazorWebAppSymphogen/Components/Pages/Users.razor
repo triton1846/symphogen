@@ -28,7 +28,7 @@ else
               Items="@allUsers"
               Loading="isLoading"
               OnCommitEditClick="@(() => Snackbar.Add("Commit Edit Handler Invoked"))"
-              ReadOnly="false"
+              ReadOnly="isLoading"
               RowEditCancel="ResetItemToOriginalValues"
               RowEditCommit="ItemHasBeenCommitted"
               RowEditPreview="BackupItem"
