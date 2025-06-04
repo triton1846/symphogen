@@ -1,6 +1,8 @@
+using BlazorWebAppSymphogen.Auth;
 using BlazorWebAppSymphogen.Components;
 using BlazorWebAppSymphogen.Services;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
@@ -16,8 +18,7 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     })
     .EnableTokenAcquisitionToCallDownstreamApi()
     .AddDownstreamApi("GraphApi", builder.Configuration.GetSection("GraphApi"))
-    .AddInMemoryTokenCaches();
-    //.AddDistributedTokenCaches();
+    .AddDistributedTokenCaches();
 
 // Add authorization policies
 builder.Services.AddAuthorization(options =>
@@ -26,24 +27,7 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = options.DefaultPolicy;
     options.AddPolicy("RequireDomain", policy =>
     {
-        // require speciific email domain for authenticated users
-        //policy.RequireClaim("email", "bo@augustenberg.dk");
-        policy.RequireAssertion(context =>
-        {
-            var rand = new Random();
-            var randomValue = rand.Next(0, 100);
-
-            return randomValue < 50; // 50% chance to allow access, can be customized later
-
-            //var user = context.User;
-            //if (!user.Identity?.IsAuthenticated ?? true)
-            //{
-            //    return false;
-            //}
-            //// Check if the email claim exists and contains the specific domain
-            //var emailClaim = user.FindFirst("email")?.Value;
-            //return emailClaim != null && emailClaim.EndsWith("@augustenberg.dk", StringComparison.OrdinalIgnoreCase);
-        });
+        policy.Requirements.Add(new RequireDomainRequirement("augustenberg.dk"));
     });
 });
 
@@ -72,6 +56,7 @@ builder.Services.AddSingleton<ICosmosService>(sp =>
         connectionStringQa);
 });
 builder.Services.AddScoped<IUserInfoService, UserInfoService>();
+builder.Services.AddScoped<IAuthorizationHandler, RequireDomainHandler>();
 
 // Logging
 Log.Logger = new LoggerConfiguration()
