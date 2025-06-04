@@ -1,5 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Identity.Web
 @inherits LayoutComponentBase
+@inject IUserInfoService UserInfoService
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
+@inject Microsoft.Extensions.Logging.ILogger<MainLayout> Logger
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -14,7 +18,7 @@
                 <MudText Typo="Typo.h5" Class="ml-3">Blazor Web App</MudText>
                 <MudSpacer />
                 <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Dense="true" Direction="Direction.Bottom" OffsetY="true">
-                    <MudText Class="px-4 py-2">Welcome, @context.User.Identity?.Name</MudText>
+                    <MudText Class="px-4 py-2">Welcome, @_displayName</MudText>
                     <MudDivider />
                     <MudMenuItem Href="MicrosoftIdentity/Account/SignOut">Sign Out</MudMenuItem>
                 </MudMenu>
@@ -49,9 +53,37 @@
 
 @code {
     private bool drawerOpen = true;
+    private string _displayName = "Guest";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetUserInfoAsync();
+            StateHasChanged(); // Refresh the UI after getting user info
+        }
+    }
 
     private void ToggleDrawer()
     {
         drawerOpen = !drawerOpen;
+    }
+
+    private async Task GetUserInfoAsync()
+    {
+        try
+        {
+            _displayName = await UserInfoService.GetDisplayNameAsync() ?? "Unknown User";
+        }
+        catch (MicrosoftIdentityWebChallengeUserException ex)
+        {
+            ConsentHandler.HandleException(ex);
+        }
+        catch (Exception ex)
+        {
+            // Log the exception and set a fallback display name
+            Logger.LogError(ex, "Failed to get user info");
+            _displayName = "Unknown User"; // Fallback
+        }
     }
 }
