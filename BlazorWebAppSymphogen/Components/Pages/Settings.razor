@@ -1,0 +1,114 @@
+﻿@page "/settings"
+@using BlazorWebAppSymphogen
+@inject IAppState AppState
+
+<PageTitle>Settings</PageTitle>
+
+<MudCard Class="mt-4">
+    <MudCardHeader>
+        <MudText Typo="Typo.h3">Settings</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid>
+
+            <MudItem md="3">
+                <MudCard Outlined="true">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Which data should be used?</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudToggleIconButton @bind-Toggled="AppState.UseTestData"
+                                                 Icon="@Icons.Material.Filled.Close"
+                                                 Color="Color.Warning"
+                                                 ToggledIcon="@Icons.Material.Filled.Done"
+                                                 ToggledColor="Color.Success"
+                                                 Size="Size.Medium" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>Use test data or real data.</MudText>
+                        <MudText Typo="Typo.body2">Test data is pseudo random generated data.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (AppState.UseTestData)
+                        {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Medium">Using test data</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Medium" Style="text-transform: uppercase">Using real data</MudChip>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem md="3">
+                <MudCard Outlined="true">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Delay for fetching user data?</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck"
+                                           Disabled="@(!AppState.UseTestData)"
+                                           OnClick="OnFetchUsersDelayButtonClicked"
+                                           Color="@(AppState.FetchUsersDelay > TimeSpan.Zero ? Color.Warning : Color.Success)" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>Delay for fetching user data from the server.</MudText>
+                        <MudText Typo="Typo.body2">
+                            This is useful for testing loading states.
+                            Note: This only works if the <code>UseTestData</code> is set to <code>true</code>.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions Class="mx-3">
+                        <MudSlider Value="@((int)AppState.FetchUsersDelay.TotalMilliseconds)"
+                                   ValueChanged="OnFetchUsersDelayChanged"
+                                   Disabled="@(!AppState.UseTestData)"
+                                   Min="0"
+                                   Max="10000"
+                                   Step="100"
+                                   T="int"
+                                   ValueLabel="true"
+                                   Color="Color.Primary">
+                            @FormatTimeSpan(AppState.FetchUsersDelay)
+                        </MudSlider>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+
+    private string FormatTimeSpan(TimeSpan ts)
+    {
+        return $"{ts.TotalMilliseconds:F0} milliseconds";
+    }
+
+    private void OnUseTestDataChanged(bool value)
+    {
+        AppState.UseTestData = value;
+    }
+
+    private void OnFetchUsersDelayChanged(int value)
+    {
+        AppState.FetchUsersDelay = TimeSpan.FromMilliseconds(value);
+    }
+
+    private void OnFetchUsersDelayButtonClicked(MouseEventArgs e)
+    {
+        if (AppState.FetchUsersDelay > TimeSpan.Zero)
+        {
+            AppState.FetchUsersDelay = TimeSpan.Zero;
+        }
+        else
+        {
+            AppState.FetchUsersDelay = TimeSpan.FromMilliseconds(2000);
+        }
+    }
+}

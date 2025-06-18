@@ -66,12 +66,14 @@ else
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ID">
-                <div class="d-flex justify-space-between align-center">
-                    <span>@context.Id</span>
-                    <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
-                                   Color="Color.Success"
-                                   OnClick="async () => await CopyId(context.Id)" />
-                </div>
+                @* <div class="d-flex justify-space-between align-center">
+                    <span>@context.Id</span> *@
+                    <MudTooltip Text="@context.Id">
+                        <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
+                                       Color="Color.Success"
+                                       OnClick="async () => await CopyId(context.Id)" />
+                    </MudTooltip>
+                @* </div> *@
             </MudTd>
             <MudTd DataLabel="Full Name">@context.FullName</MudTd>
             <MudTd DataLabel="Email">@context.Email</MudTd>
@@ -82,16 +84,26 @@ else
                 {
                     @foreach (var team in context.Teams.OrderBy(t => t.Name))
                     {
-                        <MudTooltip Text="@team.Id">
-                            @if (team.TeamExists)
-                            {
+                        @if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) == 1)
+                        {
+                            <MudTooltip Text="@team.Id">
                                 <MudChip T="string" Color="Color.Success" Size="Size.Small">@team.Name</MudChip>
-                            }
-                            else
-                            {
+                            </MudTooltip>
+                        }
+                        else if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) > 1)
+                        {
+                            <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")">
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                                    <MudText Style="font-weight: bold; text-transform: uppercase;">@team.Name</MudText>
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="@($"Team with id {context.Id} doesn't exists!")">
                                 <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
-                            }
-                        </MudTooltip>
+                            </MudTooltip>
+                        }
                     }
                 }
                 else
@@ -176,6 +188,7 @@ else
         allUsers = await CosmosService.GetUsersAsync(selectedEnvironment);
         foreach (var user in allUsers)
         {
+            user.Teams.Clear();
             foreach (var teamId in user.TeamIds ?? [])
             {
                 var team = allTeams.FirstOrDefault(t => t.Id == teamId);
@@ -292,6 +305,8 @@ else
         Logger.LogInformation("Selected environment changed to: {Environment}", environment);
         selectedEnvironment = environment;
         isLoading = true;
+        // allUsers?.Clear();
+        // allTeams.Clear();
         await LoadTeamsAsync();
         await LoadUsersAsync();
         isLoading = false;

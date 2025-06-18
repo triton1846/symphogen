@@ -1,3 +1,4 @@
+using BlazorWebAppSymphogen;
 using BlazorWebAppSymphogen.Auth;
 using BlazorWebAppSymphogen.Components;
 using BlazorWebAppSymphogen.Services;
@@ -52,11 +53,14 @@ builder.Services.AddSingleton<ICosmosService>(sp =>
     var connectionStringQa = configuration.GetConnectionString("CosmosDb-qa") ?? throw new InvalidOperationException("Connection string 'CosmosDb-qa' not found in configuration.");
     return new CosmosService(
         sp.GetRequiredService<ILogger<CosmosService>>(),
+        sp.GetRequiredService<IAppState>(),
         connectionStringSb1,
         connectionStringQa);
 });
 builder.Services.AddScoped<IUserInfoService, UserInfoService>();
 builder.Services.AddScoped<IAuthorizationHandler, RequireDomainHandler>();
+
+builder.Services.AddSingleton<IAppState, AppState>();
 
 // Logging
 Log.Logger = new LoggerConfiguration()
