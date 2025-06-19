@@ -1,6 +1,6 @@
 ﻿@page "/settings"
 @using BlazorWebAppSymphogen
-@inject IAppState AppState
+@inject IUserPreferences UserPreferences
 
 <PageTitle>Settings</PageTitle>
 
@@ -18,7 +18,7 @@
                             <MudText Typo="Typo.h6">Which data should be used?</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
-                            <MudToggleIconButton @bind-Toggled="AppState.UseTestData"
+                            <MudToggleIconButton @bind-Toggled="UserPreferences.UseTestData"
                                                  Icon="@Icons.Material.Filled.Close"
                                                  Color="Color.Warning"
                                                  ToggledIcon="@Icons.Material.Filled.Done"
@@ -31,7 +31,7 @@
                         <MudText Typo="Typo.body2">Test data is pseudo random generated data.</MudText>
                     </MudCardContent>
                     <MudCardActions>
-                        @if (AppState.UseTestData)
+                        @if (UserPreferences.UseTestData)
                         {
                             <MudChip T="string" Color="Color.Info" Size="Size.Medium">Using test data</MudChip>
                         }
@@ -51,9 +51,9 @@
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck"
-                                           Disabled="@(!AppState.UseTestData)"
+                                           Disabled="@(!UserPreferences.UseTestData)"
                                            OnClick="OnFetchUsersDelayButtonClicked"
-                                           Color="@(AppState.FetchUsersDelay > TimeSpan.Zero ? Color.Warning : Color.Success)" />
+                                           Color="@(UserPreferences.FetchUsersDelay > TimeSpan.Zero ? Color.Warning : Color.Success)" />
                         </CardHeaderActions>
                     </MudCardHeader>
                     <MudCardContent>
@@ -64,16 +64,16 @@
                         </MudText>
                     </MudCardContent>
                     <MudCardActions Class="mx-3">
-                        <MudSlider Value="@((int)AppState.FetchUsersDelay.TotalMilliseconds)"
+                        <MudSlider Value="@((int)UserPreferences.FetchUsersDelay.TotalMilliseconds)"
                                    ValueChanged="OnFetchUsersDelayChanged"
-                                   Disabled="@(!AppState.UseTestData)"
+                                   Disabled="@(!UserPreferences.UseTestData)"
                                    Min="0"
                                    Max="10000"
                                    Step="100"
                                    T="int"
                                    ValueLabel="true"
                                    Color="Color.Primary">
-                            @FormatTimeSpan(AppState.FetchUsersDelay)
+                            @FormatTimeSpan(UserPreferences.FetchUsersDelay)
                         </MudSlider>
                     </MudCardActions>
                 </MudCard>
@@ -85,6 +85,17 @@
 
 @code {
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Ensure user preferences are initialized
+        // This is necessary to handle if user browses to this page directly
+        if (!UserPreferences.IsInitialized)
+        {
+            await UserPreferences.InitializeAsync();
+            StateHasChanged(); // Refresh the UI after initialization
+        }
+    }
+
     private string FormatTimeSpan(TimeSpan ts)
     {
         return $"{ts.TotalMilliseconds:F0} milliseconds";
@@ -92,23 +103,23 @@
 
     private void OnUseTestDataChanged(bool value)
     {
-        AppState.UseTestData = value;
+        UserPreferences.UseTestData = value;
     }
 
     private void OnFetchUsersDelayChanged(int value)
     {
-        AppState.FetchUsersDelay = TimeSpan.FromMilliseconds(value);
+        UserPreferences.FetchUsersDelay = TimeSpan.FromMilliseconds(value);
     }
 
     private void OnFetchUsersDelayButtonClicked(MouseEventArgs e)
     {
-        if (AppState.FetchUsersDelay > TimeSpan.Zero)
+        if (UserPreferences.FetchUsersDelay > TimeSpan.Zero)
         {
-            AppState.FetchUsersDelay = TimeSpan.Zero;
+            UserPreferences.FetchUsersDelay = TimeSpan.Zero;
         }
         else
         {
-            AppState.FetchUsersDelay = TimeSpan.FromMilliseconds(2000);
+            UserPreferences.FetchUsersDelay = TimeSpan.FromMilliseconds(2000);
         }
     }
 }

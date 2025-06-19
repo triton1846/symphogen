@@ -46,21 +46,22 @@ builder.Services.AddMudServices();
 builder.Services.AddControllers()
     .AddMicrosoftIdentityUI();
 
-builder.Services.AddSingleton<ICosmosService>(sp =>
+builder.Services.AddScoped<ICosmosService>(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
     var connectionStringSb1 = configuration.GetConnectionString("CosmosDb-sb1") ?? throw new InvalidOperationException("Connection string 'CosmosDb-sb1' not found in configuration.");
     var connectionStringQa = configuration.GetConnectionString("CosmosDb-qa") ?? throw new InvalidOperationException("Connection string 'CosmosDb-qa' not found in configuration.");
     return new CosmosService(
         sp.GetRequiredService<ILogger<CosmosService>>(),
-        sp.GetRequiredService<IAppState>(),
+        sp.GetRequiredService<IUserPreferences>(),
         connectionStringSb1,
         connectionStringQa);
 });
 builder.Services.AddScoped<IUserInfoService, UserInfoService>();
 builder.Services.AddScoped<IAuthorizationHandler, RequireDomainHandler>();
 
-builder.Services.AddSingleton<IAppState, AppState>();
+builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+builder.Services.AddScoped<IUserPreferences, UserPreferences>();
 
 // Logging
 Log.Logger = new LoggerConfiguration()

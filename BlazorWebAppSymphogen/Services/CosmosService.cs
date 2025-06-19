@@ -8,7 +8,7 @@ namespace BlazorWebAppSymphogen.Services;
 public class CosmosService : ICosmosService
 {
     private readonly ILogger<CosmosService> _logger;
-    private readonly IAppState _appState;
+    private readonly IUserPreferences _userPreferences;
 
     private Dictionary<MimerEnvironment, string> _connectionStrings = [];
     private readonly Dictionary<MimerEnvironment, CosmosClient> _clients = [];
@@ -17,10 +17,10 @@ public class CosmosService : ICosmosService
     private Dictionary<MimerEnvironment, List<Models.User>> _users = [];
     private Dictionary<MimerEnvironment, List<Team>> _teams = [];
 
-    public CosmosService(ILogger<CosmosService> logger, IAppState appState, string connectionStringSb1, string connectionStringQa)
+    public CosmosService(ILogger<CosmosService> logger, IUserPreferences userPreferences, string connectionStringSb1, string connectionStringQa)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _appState = appState;
+        _userPreferences = userPreferences;
 
         _connectionStrings.Add(MimerEnvironment.SB1, connectionStringSb1);
         _connectionStrings.Add(MimerEnvironment.QA, connectionStringQa);
@@ -41,7 +41,7 @@ public class CosmosService : ICosmosService
         MimerEnvironment mimerEnvironment,
         Func<IQueryable<Models.User>, IQueryable<Models.User>>? filterExpression = null)
     {
-        if (!_appState.UseTestData)
+        if (!_userPreferences.UseTestData)
         {
             var users = await GetItemsAsync<Models.User>(mimerEnvironment, "users", "users_search", filterExpression);
             return [.. users];
@@ -53,7 +53,7 @@ public class CosmosService : ICosmosService
             return [.. _users[mimerEnvironment]];
         }
 
-        _users[mimerEnvironment] = await GetRandomUsers(mimerEnvironment, 100, _appState.FetchUsersDelay); // Simulate a delay for testing purposes
+        _users[mimerEnvironment] = await GetRandomUsers(mimerEnvironment, 100, _userPreferences.FetchUsersDelay); // Simulate a delay for testing purposes
 
         // Make data errors to test UI error handling
 
@@ -72,7 +72,7 @@ public class CosmosService : ICosmosService
         MimerEnvironment mimerEnvironment,
         Func<IQueryable<Team>, IQueryable<Team>>? filterExpression = null)
     {
-        if (!_appState.UseTestData)
+        if (!_userPreferences.UseTestData)
         {
             var teams = await GetItemsAsync<Team>(mimerEnvironment, "users", "teams", filterExpression);
             return [.. teams];
@@ -84,7 +84,7 @@ public class CosmosService : ICosmosService
             return [.. _teams[mimerEnvironment]];
         }
 
-        _teams[mimerEnvironment] = await GetRandomTeams(mimerEnvironment, _appState.FetchTeamsDelay); // Simulate a delay for testing purposes
+        _teams[mimerEnvironment] = await GetRandomTeams(mimerEnvironment, _userPreferences.FetchTeamsDelay); // Simulate a delay for testing purposes
         return _teams[mimerEnvironment];
     }
 

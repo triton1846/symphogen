@@ -2,6 +2,7 @@
 @using Microsoft.Identity.Web
 @inherits LayoutComponentBase
 @inject IUserInfoService UserInfoService
+@inject IUserPreferences UserPreferences
 @inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 @inject Microsoft.Extensions.Logging.ILogger<MainLayout> Logger
 
@@ -60,6 +61,7 @@
         if (firstRender)
         {
             await GetUserInfoAsync();
+            await UserPreferences.InitializeAsync();
             StateHasChanged(); // Refresh the UI after getting user info
         }
     }
