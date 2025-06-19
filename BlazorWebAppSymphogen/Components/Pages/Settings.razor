@@ -47,6 +47,42 @@
                 <MudCard Outlined="true">
                     <MudCardHeader>
                         <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Cache data?</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudToggleIconButton @bind-Toggled="UserPreferences.UseCacheData"
+                                                 Disabled="@(!UserPreferences.UseTestData)"
+                                                 Icon="@Icons.Material.Filled.Close"
+                                                 Color="Color.Warning"
+                                                 ToggledIcon="@Icons.Material.Filled.Done"
+                                                 ToggledColor="Color.Success"
+                                                 Size="Size.Medium" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>Cache data.</MudText>
+                        <MudText Typo="Typo.body2">
+                            Caching data can improve performance by reducing the need to fetch data from the server repeatedly.
+                            Note: This only works if the <code>UseTestData</code> is set to <code>true</code>.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (UserPreferences.UseCacheData)
+                        {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Medium">Caching data</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Default" Size="Size.Medium" Style="text-transform: uppercase">Not caching data</MudChip>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem md="3">
+                <MudCard Outlined="true">
+                    <MudCardHeader>
+                        <CardHeaderContent>
                             <MudText Typo="Typo.h6">Delay for fetching user data?</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
@@ -74,6 +110,42 @@
                                    ValueLabel="true"
                                    Color="Color.Primary">
                             @FormatTimeSpan(UserPreferences.FetchUsersDelay)
+                        </MudSlider>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem md="3">
+                <MudCard Outlined="true">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Delay for fetching team data?</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck"
+                                           Disabled="@(!UserPreferences.UseTestData)"
+                                           OnClick="OnFetchTeamsDelayButtonClicked"
+                                           Color="@(UserPreferences.FetchTeamsDelay > TimeSpan.Zero ? Color.Warning : Color.Success)" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>Delay for fetching team data from the server.</MudText>
+                        <MudText Typo="Typo.body2">
+                            This is useful for testing loading states.
+                            Note: This only works if the <code>UseTestData</code> is set to <code>true</code>.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions Class="mx-3">
+                        <MudSlider Value="@((int)UserPreferences.FetchTeamsDelay.TotalMilliseconds)"
+                                   ValueChanged="OnFetchTeamsDelayChanged"
+                                   Disabled="@(!UserPreferences.UseTestData)"
+                                   Min="0"
+                                   Max="10000"
+                                   Step="100"
+                                   T="int"
+                                   ValueLabel="true"
+                                   Color="Color.Primary">
+                            @FormatTimeSpan(UserPreferences.FetchTeamsDelay)
                         </MudSlider>
                     </MudCardActions>
                 </MudCard>
@@ -120,6 +192,23 @@
         else
         {
             UserPreferences.FetchUsersDelay = TimeSpan.FromMilliseconds(2000);
+        }
+    }
+
+    private void OnFetchTeamsDelayChanged(int value)
+    {
+        UserPreferences.FetchTeamsDelay = TimeSpan.FromMilliseconds(value);
+    }
+
+    private void OnFetchTeamsDelayButtonClicked(MouseEventArgs e)
+    {
+        if (UserPreferences.FetchTeamsDelay > TimeSpan.Zero)
+        {
+            UserPreferences.FetchTeamsDelay = TimeSpan.Zero;
+        }
+        else
+        {
+            UserPreferences.FetchTeamsDelay = TimeSpan.FromMilliseconds(2000);
         }
     }
 }

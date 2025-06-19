@@ -85,6 +85,7 @@ public class CosmosService : ICosmosService
         }
 
         _teams[mimerEnvironment] = await GetRandomTeams(mimerEnvironment, _userPreferences.FetchTeamsDelay); // Simulate a delay for testing purposes
+
         return _teams[mimerEnvironment];
     }
 
