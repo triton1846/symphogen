@@ -18,12 +18,18 @@
                             <MudText Typo="Typo.h6">Which data should be used?</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
-                            <MudToggleIconButton @bind-Toggled="UserPreferences.UseTestData"
-                                                 Icon="@Icons.Material.Filled.Close"
-                                                 Color="Color.Warning"
-                                                 ToggledIcon="@Icons.Material.Filled.Done"
-                                                 ToggledColor="Color.Success"
-                                                 Size="Size.Medium" />
+                            @if (UserPreferences.MimerEnvironment == MimerEnvironment.TestData)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.CloudOff"
+                                               Color="Color.Warning"
+                                               Size="Size.Medium" />
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.CloudDone"
+                                               Color="Color.Success"
+                                               Size="Size.Medium" />
+                            }
                         </CardHeaderActions>
                     </MudCardHeader>
                     <MudCardContent>
@@ -31,14 +37,11 @@
                         <MudText Typo="Typo.body2">Test data is pseudo random generated data.</MudText>
                     </MudCardContent>
                     <MudCardActions>
-                        @if (UserPreferences.UseTestData)
-                        {
-                            <MudChip T="string" Color="Color.Info" Size="Size.Medium">Using test data</MudChip>
-                        }
-                        else
-                        {
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Medium" Style="text-transform: uppercase">Using real data</MudChip>
-                        }
+                        <MudRadioGroup T="MimerEnvironment" Value="@UserPreferences.MimerEnvironment" ValueChanged="val => UserPreferences.MimerEnvironment = val">
+                            <MudRadio Value="MimerEnvironment.TestData">Test data</MudRadio>
+                            <MudRadio Value="MimerEnvironment.SB1">SB1</MudRadio>
+                            <MudRadio Value="MimerEnvironment.QA">QA</MudRadio>
+                        </MudRadioGroup>
                     </MudCardActions>
                 </MudCard>
             </MudItem>
@@ -51,7 +54,7 @@
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudToggleIconButton @bind-Toggled="UserPreferences.UseCacheData"
-                                                 Disabled="@(!UserPreferences.UseTestData)"
+                                                 Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                                  Icon="@Icons.Material.Filled.Close"
                                                  Color="Color.Warning"
                                                  ToggledIcon="@Icons.Material.Filled.Done"
@@ -87,7 +90,7 @@
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck"
-                                           Disabled="@(!UserPreferences.UseTestData)"
+                                           Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                            OnClick="OnFetchUsersDelayButtonClicked"
                                            Color="@(UserPreferences.FetchUsersDelay > TimeSpan.Zero ? Color.Warning : Color.Success)" />
                         </CardHeaderActions>
@@ -102,7 +105,7 @@
                     <MudCardActions Class="mx-3">
                         <MudSlider Value="@((int)UserPreferences.FetchUsersDelay.TotalMilliseconds)"
                                    ValueChanged="OnFetchUsersDelayChanged"
-                                   Disabled="@(!UserPreferences.UseTestData)"
+                                   Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                    Min="0"
                                    Max="10000"
                                    Step="100"
@@ -123,7 +126,7 @@
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudIconButton Icon="@Icons.Material.Filled.NetworkCheck"
-                                           Disabled="@(!UserPreferences.UseTestData)"
+                                           Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                            OnClick="OnFetchTeamsDelayButtonClicked"
                                            Color="@(UserPreferences.FetchTeamsDelay > TimeSpan.Zero ? Color.Warning : Color.Success)" />
                         </CardHeaderActions>
@@ -138,7 +141,7 @@
                     <MudCardActions Class="mx-3">
                         <MudSlider Value="@((int)UserPreferences.FetchTeamsDelay.TotalMilliseconds)"
                                    ValueChanged="OnFetchTeamsDelayChanged"
-                                   Disabled="@(!UserPreferences.UseTestData)"
+                                   Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                    Min="0"
                                    Max="10000"
                                    Step="100"
@@ -158,8 +161,8 @@
                             <MudText Typo="Typo.h6">Number of users to create?</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
-                            <MudIconButton Icon="@Icons.Material.Filled.ConfirmationNumber"
-                                           Disabled="@(!UserPreferences.UseTestData)"
+                            <MudIconButton Icon="@Icons.Material.Filled.People"
+                                           Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                            Color="Color.Success" />
                         </CardHeaderActions>
                     </MudCardHeader>
@@ -173,7 +176,7 @@
                     <MudCardActions Class="mx-3">
                         <MudSlider Value="@UserPreferences.TestDataNumberOfUsers"
                                    ValueChanged="OnNumberOfUsersChanged"
-                                   Disabled="@(!UserPreferences.UseTestData)"
+                                   Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                                    Min="0"
                                    Max="300"
                                    Step="10"
@@ -216,11 +219,6 @@
     private void OnNumberOfUsersChanged(int value)
     {
         UserPreferences.TestDataNumberOfUsers = value;
-    }
-
-    private void OnUseTestDataChanged(bool value)
-    {
-        UserPreferences.UseTestData = value;
     }
 
     private void OnFetchUsersDelayChanged(int value)

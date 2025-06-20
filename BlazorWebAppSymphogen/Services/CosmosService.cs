@@ -40,7 +40,7 @@ public class CosmosService : ICosmosService
         MimerEnvironment mimerEnvironment,
         Func<IQueryable<Models.User>, IQueryable<Models.User>>? filterExpression = null)
     {
-        if (!_userPreferences.UseTestData)
+        if (_userPreferences.MimerEnvironment != MimerEnvironment.TestData)
         {
             var users = await GetItemsAsync<Models.User>(mimerEnvironment, "users", "users_search", filterExpression);
             return [.. users];
@@ -71,7 +71,7 @@ public class CosmosService : ICosmosService
         MimerEnvironment mimerEnvironment,
         Func<IQueryable<Team>, IQueryable<Team>>? filterExpression = null)
     {
-        if (!_userPreferences.UseTestData)
+        if (_userPreferences.MimerEnvironment != MimerEnvironment.TestData)
         {
             var teams = await GetItemsAsync<Team>(mimerEnvironment, "users", "teams", filterExpression);
             return [.. teams];

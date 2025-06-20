@@ -16,6 +16,7 @@
 }
 else
 {
+    <MudText Typo="Typo.h3">Users</MudText>
     <MudTable @bind-SelectedItem="selectedItem"
               ApplyButtonPosition="TableApplyButtonPosition.End"
               CanCancelEdit="true"
@@ -35,18 +36,6 @@ else
               RowEditPreview="BackupItem"
               SortLabel="Sort By">
         <ToolBarContent>
-            <MudText Typo="Typo.h6">Users</MudText>
-            <MudSelect T="MimerEnvironment"
-                       @bind-Value="selectedEnvironment"
-                       Label="Environment"
-                       Class="ml-2"
-                       Dense="true"
-                       Style="max-width: 200px;"
-                       MultiSelection="false"
-                       SelectedValuesChanged="async val => await OnSelectedEnvironmentChanged(val.First())">
-                <MudSelectItem Value="MimerEnvironment.QA">QA</MudSelectItem>
-                <MudSelectItem Value="MimerEnvironment.SB1">SB1</MudSelectItem>
-            </MudSelect>
             <MudSpacer />
             <MudTextField @bind-Value="searchString"
                           Adornment="Adornment.Start"
@@ -67,14 +56,11 @@ else
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ID">
-                @* <div class="d-flex justify-space-between align-center">
-                    <span>@context.Id</span> *@
-                    <MudTooltip Text="@context.Id">
-                        <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
-                                       Color="Color.Success"
-                                       OnClick="async () => await CopyId(context.Id)" />
-                    </MudTooltip>
-                @* </div> *@
+                <MudTooltip Text="@context.Id">
+                    <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
+                                   Color="Color.Success"
+                                   OnClick="async () => await CopyId(context.Id)" />
+                </MudTooltip>
             </MudTd>
             <MudTd DataLabel="Full Name">@context.FullName</MudTd>
             <MudTd DataLabel="Email">@context.Email</MudTd>
@@ -160,11 +146,10 @@ else
     private List<BlazorWebAppSymphogen.Models.User>? allUsers;
     private HashSet<string?> copiedIconIds = new();
     private System.Timers.Timer? iconTimer;
-    private string searchString = "";
+    private string searchString = string.Empty;
     private Models.User selectedItem = default!;
     private Models.User? elementBeforeEdit;
     private List<string> editEvents = new();
-    private MimerEnvironment selectedEnvironment = MimerEnvironment.QA;
     private bool isLoading = true;
     private List<Models.Team> allTeams = [];
     private List<Models.Team> _selectedTeams = [];
@@ -185,8 +170,8 @@ else
 
     private async Task LoadUsersAsync()
     {
-        Logger.LogInformation("Loading users for environment: {Environment}", selectedEnvironment);
-        allUsers = await CosmosService.GetUsersAsync(selectedEnvironment);
+        Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
+        allUsers = await CosmosService.GetUsersAsync(UserPreferences.MimerEnvironment);
         foreach (var user in allUsers)
         {
             user.Teams.Clear();
@@ -205,8 +190,8 @@ else
 
     private async Task LoadTeamsAsync()
     {
-        Logger.LogInformation("Loading teams for environment: {Environment}", selectedEnvironment);
-        allTeams = await CosmosService.GetTeamsAsync(selectedEnvironment);
+        Logger.LogInformation("Loading teams for environment: {Environment}", UserPreferences.MimerEnvironment);
+        allTeams = await CosmosService.GetTeamsAsync(UserPreferences.MimerEnvironment);
     }
 
     private async Task CopyId(string? id)
@@ -299,17 +284,6 @@ else
             }
         }
         Logger.LogInformation("RowEditCancel event: Editing of User {User} canceled", ((Models.User)element).FullName);
-    }
-
-    private async Task OnSelectedEnvironmentChanged(MimerEnvironment environment)
-    {
-        Logger.LogInformation("Selected environment changed to: {Environment}", environment);
-        selectedEnvironment = environment;
-        isLoading = true;
-        UserPreferences.MimerEnvironment = environment;
-        await LoadTeamsAsync();
-        await LoadUsersAsync();
-        isLoading = false;
     }
 
     // get teams from Cosmos DB, add multiselect dropdown to each user row with teams

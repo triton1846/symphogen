@@ -37,24 +37,24 @@
         }
 
         @code {
-        private JsonDocument? graphApiResponse = null;
+            private JsonDocument? graphApiResponse = null;
 
-        protected override async Task OnInitializedAsync()
-        {
-            try
+            protected override async Task OnInitializedAsync()
             {
-                using var response = await downstreamApi.CallApiForUserAsync("GraphApi", options =>
+                try
                 {
-                    options.RelativePath = "me";
-                }).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-                graphApiResponse = await response.Content.ReadFromJsonAsync<JsonDocument>().ConfigureAwait(false);
+                    using var response = await downstreamApi.CallApiForUserAsync("GraphApi", options =>
+                    {
+                        options.RelativePath = "me";
+                    }).ConfigureAwait(false);
+                    response.EnsureSuccessStatusCode();
+                    graphApiResponse = await response.Content.ReadFromJsonAsync<JsonDocument>().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    ConsentHandler.HandleException(ex);
+                }
             }
-            catch (Exception ex)
-            {
-                ConsentHandler.HandleException(ex);
-            }
-        }
         }
     </Authorized>
 </AuthorizeView>
