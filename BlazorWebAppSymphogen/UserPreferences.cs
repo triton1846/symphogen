@@ -9,12 +9,15 @@ public class UserPreferences : IUserPreferences
     private const string UseCacheDataKey = "app_useCacheData";
     private const string FetchUsersDelayKey = "app_fetchUsersDelay";
     private const string FetchTeamsDelayKey = "app_fetchTeamsDelay";
+    private const string TestDataNumberOfUsersKey = "app_testDataNumberOfUsers";
 
     private bool _useTestData;
     private bool _useCacheData = true; // Default to using cache
     private TimeSpan _fetchUsersDelay = TimeSpan.FromSeconds(0);
     private TimeSpan _fetchTeamsDelay = TimeSpan.FromSeconds(0);
     private bool _isInitialized = false;
+    private MimerEnvironment _mimerEnvironment = MimerEnvironment.SB1;
+    private int _testDataNumberOfUsers = 100; // Default number of users for test data
 
     public UserPreferences(ILocalStorageService localStorage)
     {
@@ -61,6 +64,26 @@ public class UserPreferences : IUserPreferences
         }
     }
 
+    public MimerEnvironment MimerEnvironment
+    {
+        get => _mimerEnvironment;
+        set
+        {
+            _mimerEnvironment = value;
+            _ = _localStorage.SetItemAsync("app_mimerEnvironment", value.ToString());
+        }
+    }
+
+    public int TestDataNumberOfUsers
+    {
+        get => _testDataNumberOfUsers;
+        set
+        {
+            _testDataNumberOfUsers = value;
+            _ = _localStorage.SetItemAsync(TestDataNumberOfUsersKey, value);
+        }
+    }
+
     // Returns if the state is fully loaded from local storage
     public bool IsInitialized => _isInitialized;
 
@@ -83,6 +106,14 @@ public class UserPreferences : IUserPreferences
         if (fetchTeamsDelay.HasValue)
             _fetchTeamsDelay = TimeSpan.FromMilliseconds(fetchTeamsDelay.Value);
 
+        var mimerEnvironmentString = await _localStorage.GetItemAsync<string?>("app_mimerEnvironment");
+        if (!string.IsNullOrEmpty(mimerEnvironmentString) && Enum.TryParse<MimerEnvironment>(mimerEnvironmentString, out var environment))
+            _mimerEnvironment = environment;
+
+        var testDataNumberOfUsers = await _localStorage.GetItemAsync<int?>(TestDataNumberOfUsersKey);
+        if (testDataNumberOfUsers.HasValue)
+            _testDataNumberOfUsers = testDataNumberOfUsers.Value;
+
         _isInitialized = true;
     }
 }
@@ -95,4 +126,6 @@ public interface IUserPreferences
     bool UseCacheData { get; set; }
     TimeSpan FetchUsersDelay { get; set; }
     TimeSpan FetchTeamsDelay { get; set; }
+    MimerEnvironment MimerEnvironment { get; set; }
+    int TestDataNumberOfUsers { get; set; }
 }

@@ -1,7 +1,6 @@
 ﻿using BlazorWebAppSymphogen.Models;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace BlazorWebAppSymphogen.Services;
 
@@ -47,13 +46,13 @@ public class CosmosService : ICosmosService
             return [.. users];
         }
 
-        if (_users.TryGetValue(mimerEnvironment, out _) && _users[mimerEnvironment].Any())
+        if (_userPreferences.UseCacheData && _users.TryGetValue(mimerEnvironment, out _) && _users[mimerEnvironment].Any())
         {
             _logger.LogDebug("Returning cached users for {Environment}", mimerEnvironment);
             return [.. _users[mimerEnvironment]];
         }
 
-        _users[mimerEnvironment] = await GetRandomUsers(mimerEnvironment, 100, _userPreferences.FetchUsersDelay); // Simulate a delay for testing purposes
+        _users[mimerEnvironment] = await GetRandomUsers(mimerEnvironment, _userPreferences.TestDataNumberOfUsers, _userPreferences.FetchUsersDelay); // Simulate a delay for testing purposes
 
         // Make data errors to test UI error handling
 
@@ -78,7 +77,7 @@ public class CosmosService : ICosmosService
             return [.. teams];
         }
 
-        if (_teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Any())
+        if (_userPreferences.UseCacheData && _teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Any())
         {
             _logger.LogDebug("Returning cached teams for {Environment}", mimerEnvironment);
             return [.. _teams[mimerEnvironment]];

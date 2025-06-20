@@ -5,6 +5,7 @@
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
+@inject IUserPreferences UserPreferences
 @attribute [Authorize]
 
 @if (!isInitialized)
@@ -305,8 +306,7 @@ else
         Logger.LogInformation("Selected environment changed to: {Environment}", environment);
         selectedEnvironment = environment;
         isLoading = true;
-        // allUsers?.Clear();
-        // allTeams.Clear();
+        UserPreferences.MimerEnvironment = environment;
         await LoadTeamsAsync();
         await LoadUsersAsync();
         isLoading = false;

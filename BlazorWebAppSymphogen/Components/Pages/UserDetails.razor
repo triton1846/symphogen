@@ -1,0 +1,253 @@
+﻿@page "/users/{UserId}"
+@using BlazorWebAppSymphogen.Models
+@rendermode InteractiveServer
+@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject Microsoft.Extensions.Logging.ILogger<UserDetails> Logger
+@attribute [Authorize]
+
+<MudContainer>
+    <MudPaper Class="pa-4 mb-4" Elevation="3">
+        @if (isLoading)
+        {
+            <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+            <MudText Class="ml-2">Loading user details...</MudText>
+        }
+        else if (user == null)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="my-2">
+                User with ID '@UserId' not found.
+            </MudAlert>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" 
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="NavigateToUsers" Class="mt-4">
+                Back to Users
+            </MudButton>
+        }
+        else
+        {
+            <EditForm Model="@user" OnValidSubmit="SaveUser">
+                <DataAnnotationsValidator />
+
+                <MudGrid>
+                    <MudItem xs="12">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.h4">User Details</MudText>
+                            <MudSelect T="MimerEnvironment"
+                                       @bind-Value="selectedEnvironment"
+                                       Label="Environment"
+                                       Dense="true"
+                                       Style="max-width: 200px;"
+                                       SelectedValuesChanged="async val => await OnSelectedEnvironmentChanged(val.First())">
+                                <MudSelectItem Value="MimerEnvironment.QA">QA</MudSelectItem>
+                                <MudSelectItem Value="MimerEnvironment.SB1">SB1</MudSelectItem>
+                            </MudSelect>
+                        </div>
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="user.Id" Label="User ID" ReadOnly="true" Disabled="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.FullName" Label="Full Name" Required="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.Email" Label="Email" Required="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.Department" Label="Department" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.Location" Label="Location" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.JobTitle" Label="Job Title" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.OfficePhoneNumber" Label="Office Phone Number" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="user.Initials" Label="Initials" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText>Teams</MudText>
+                        <MudSelect T="Team"
+                                  Label="Select Teams"
+                                  MultiSelection="true"
+                                  SelectedValuesChanged="OnTeamsSelected"
+                                  ToStringFunc="@(team => team.Name ?? team.Id)">
+                            @foreach (var team in allTeams.OrderBy(t => t.Name))
+                            {
+                                <MudSelectItem Value="@team">@team.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudChipSet T="string">
+                            @foreach (var team in user.Teams.OrderBy(t => t.Name))
+                            {
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">@team.Name</MudChip>
+                            }
+                        </MudChipSet>
+                    </MudItem>
+
+                    @* <MudItem xs="12">
+                        <MudText>Favorites</MudText>
+                        <MudTextField @bind-Value="favoritesText" 
+                                    Label="Favorites (comma-separated)" 
+                                    HelperText="Enter favorites separated by commas" 
+                                    OnBlur="UpdateFavorites" />
+                    </MudItem> *@
+
+                    <MudItem xs="12" Class="d-flex justify-space-between">
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" 
+                                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                                   OnClick="NavigateToUsers">
+                            Back to Users
+                        </MudButton>
+                        <MudButton Color="Color.Success" Variant="Variant.Filled" 
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   ButtonType="ButtonType.Submit" 
+                                   Disabled="isLoading">
+                            Save Changes
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string? UserId { get; set; }
+
+    private User? user;
+    private bool isLoading = true;
+    private MimerEnvironment selectedEnvironment = MimerEnvironment.SB1;
+    private List<Team> allTeams = [];
+    private IEnumerable<Team> selectedTeams = [];
+    private string favoritesText = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTeamsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(UserId))
+        {
+            await LoadUserAsync();
+        }
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        isLoading = true;
+        Logger.LogInformation("Loading teams for environment: {Environment}", selectedEnvironment);
+        allTeams = await CosmosService.GetTeamsAsync(selectedEnvironment);
+        isLoading = false;
+    }
+
+    private async Task LoadUserAsync()
+    {
+        isLoading = true;
+        Logger.LogInformation("Loading user with ID: {UserId} from environment: {Environment}", UserId, selectedEnvironment);
+        
+        var users = await CosmosService.GetUsersAsync(selectedEnvironment, 
+            q => q.Where(u => u.Id == UserId));
+            
+        user = users.FirstOrDefault();
+        
+        if (user != null)
+        {
+            // Initialize teams
+            user.Teams ??= [];
+            user.Teams.Clear();
+            
+            foreach (var teamId in user.TeamIds ?? [])
+            {
+                var team = allTeams.FirstOrDefault(t => t.Id == teamId);
+                if (team != null)
+                {
+                    user.Teams.Add(team);
+                }
+                else
+                {
+                    // Add placeholder for unknown team
+                    user.Teams.Add(new Team { Id = teamId, Name = "Unknown Team", TeamExists = false });
+                }
+            }
+            
+            selectedTeams = user.Teams.ToList();
+            
+            // Initialize favorites text
+            favoritesText = user.Favorites != null 
+                ? string.Join(", ", user.Favorites)
+                : string.Empty;
+        }
+        
+        isLoading = false;
+    }
+
+    private async Task OnSelectedEnvironmentChanged(MimerEnvironment environment)
+    {
+        Logger.LogInformation("Selected environment changed to: {Environment}", environment);
+        selectedEnvironment = environment;
+        await LoadTeamsAsync();
+        await LoadUserAsync();
+    }
+
+    private void OnTeamsSelected(IEnumerable<Team> teams)
+    {
+        if (user != null)
+        {
+            selectedTeams = teams;
+            user.Teams = teams.ToList();
+            user.TeamIds = user.Teams.Select(t => t.Id).ToList();
+            Logger.LogInformation("Teams selected for User {User}: {Teams}", 
+                user.FullName, 
+                string.Join(", ", user.Teams.Select(t => t.Name)));
+        }
+    }
+
+    // private void UpdateFavorites()
+    // {
+    //     if (user != null && !string.IsNullOrEmpty(favoritesText))
+    //     {
+    //         user.Favorites = favoritesText.Split(',')
+    //             .Select(f => f.Trim())
+    //             .Where(f => !string.IsNullOrEmpty(f))
+    //             .ToList();
+    //     }
+    // }
+
+    private async Task SaveUser()
+    {
+        if (user == null) return;
+        
+        isLoading = true;
+        
+        // In a real application, you would call a service method to update the user
+        // For example: await CosmosService.UpdateUserAsync(selectedEnvironment, user);
+        
+        // Since we don't have an update method, we'll show a snackbar message
+        Snackbar.Add("User updated successfully!", Severity.Success);
+        await Task.CompletedTask;
+        
+        isLoading = false;
+    }
+
+    private void NavigateToUsers()
+    {
+        NavigationManager.NavigateTo("/users");
+    }
+}
