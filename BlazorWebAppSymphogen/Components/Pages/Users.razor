@@ -1,11 +1,13 @@
 ﻿@page "/users"
 @using System.Text.Json
+@using BlazorWebAppSymphogen.Components.Dialogs
 @rendermode InteractiveServer
 @inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @inject IUserPreferences UserPreferences
+@inject IDialogService DialogService
 @attribute [Authorize]
 
 @if (!isInitialized)
@@ -18,22 +20,14 @@ else
 {
     <MudText Typo="Typo.h3">Users</MudText>
     <MudTable @bind-SelectedItem="selectedItem"
-              ApplyButtonPosition="TableApplyButtonPosition.End"
-              CanCancelEdit="true"
-              CommitEditTooltip="Commit Edit"
               Dense="true"
-              EditButtonPosition="TableEditButtonPosition.End"
-              EditTrigger="TableEditTrigger.RowClick"
               Filter="new Func<Models.User, bool>(FilterFunc)"
               Hover="true"
-              IsEditRowSwitchingBlocked="false"
               Items="@allUsers"
               Loading="isLoading"
-              OnCommitEditClick="@(() => Snackbar.Add("Commit Edit Handler Invoked"))"
               ReadOnly="isLoading"
-              RowEditCancel="ResetItemToOriginalValues"
-              RowEditCommit="ItemHasBeenCommitted"
-              RowEditPreview="BackupItem"
+              T="Models.User"
+              OnRowClick="async model => await OpenEditUserDialog(model)"
               SortLabel="Sort By">
         <ToolBarContent>
             <MudSpacer />
@@ -101,37 +95,16 @@ else
                 }
             </MudTd>
         </RowTemplate>
-        <RowEditingTemplate>
-            <MudTd DataLabel="ID">@context.Id</MudTd>
-            <MudTd DataLabel="Full Name">
-                <MudTextField @bind-Value="context.FullName" Required />
+        <FooterContent>
+            <MudTd>
+                <MudTooltip Text="Add new user">
+                    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                   aria-label="add-user"
+                                   Color="Color.Success"
+                                   OnClick="OpenAddUserDialog" />
+                </MudTooltip>
             </MudTd>
-            <MudTd DataLabel="Email">
-                <MudTextField @bind-Value="context.Email" Required />
-            </MudTd>
-            <MudTd DataLabel="Department">
-                <MudTextField @bind-Value="context.Department" Required />
-            </MudTd>
-            <MudTd DataLabel="Location">
-                <MudTextField @bind-Value="context.Location" Required />
-            </MudTd>
-            <MudTd DataLabel="Teams">
-                <MudSelect T="Models.Team"
-                           Dense="true"
-                           MultiSelection="true"
-                           MultiSelectionTextFunc="@(teams => string.Join(", ", teams.Order()))"
-                           SelectedValues="context.Teams"
-                           SelectedValuesChanged="values => OnTeamsSelected(context, values)"
-                           ToStringFunc="@(team => team.Name)">
-                    @foreach (var team in allTeams.OrderBy(t => t.Name))
-                    {
-                        <MudSelectItem T="Models.Team"
-                                       Value="@team"
-                                       Disabled="@(!team.TeamExists && !context.Teams.Any(t => t.Id == team.Id))">@team.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudTd>
-        </RowEditingTemplate>
+        </FooterContent>
         <PagerContent>
             <MudTablePager />
         </PagerContent>
@@ -255,7 +228,6 @@ else
     {
         editEvents.Add(message);
         Snackbar.Add(message, Severity.Info, config => config.ShowCloseIcon = true);
-        // StateHasChanged();
     }
 
     private void ItemHasBeenCommitted(object element)
@@ -280,7 +252,6 @@ else
             {
                 AddEditionEvent($"RowEditCancel event: Editing of User {user.FullName} canceled");
                 allUsers[index] = (Models.User)element;
-                //UpdatePagedUsers();
             }
         }
         Logger.LogInformation("RowEditCancel event: Editing of User {User} canceled", ((Models.User)element).FullName);
@@ -296,4 +267,77 @@ else
     }
 
     Func<Models.User, object>? SortByTeams = (Models.User x) => string.Join(", ", ((Models.User)(object)x).Teams.Select(t => t.Name).Order()); // For sorting teams in the table
+
+    private async Task OpenAddUserDialog()
+    {
+        var parameters = new DialogParameters<AddUserDialog>
+        {
+            {
+                x => x.Teams, allTeams
+            }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
+        var dialog = await DialogService.ShowAsync<AddUserDialog>("Add User", parameters, options);
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            // Add the new user to the list
+            if (result.Data != null && result.Data is Models.User newUser && allUsers != null)
+            {
+                allUsers?.Add(newUser);
+                allUsers = allUsers?.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                Snackbar.Add($"User {newUser.FullName} added successfully!", Severity.Success);
+                Logger.LogInformation("Added new user: {UserName} ({UserId})", newUser.FullName, newUser.Id);
+            }
+        }
+    }
+
+    private async Task OpenEditUserDialog(MudBlazor.TableRowClickEventArgs<Models.User> args)
+    {
+        var parameters = new DialogParameters<AddUserDialog>
+        {
+            { x => x.Teams, allTeams },
+            { x => x.IsEditMode, true },
+            { x => x.User, args.Item }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
+        var dialog = await DialogService.ShowAsync<AddUserDialog>("Edit User", parameters, options);
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            // Update the user in the list
+            if (result.Data != null && result.Data is Models.User updatedUser && allUsers != null)
+            {
+                var index = allUsers.FindIndex(u => u.Id == updatedUser.Id);
+                if (index >= 0)
+                {
+                    allUsers[index] = updatedUser; // Update the user in the list
+                    allUsers = allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                    Snackbar.Add($"User {updatedUser.FullName} updated successfully!", Severity.Success);
+                    Logger.LogInformation("Updated user: {UserName} ({UserId})", updatedUser.FullName, updatedUser.Id);
+                }
+                else
+                {
+                    Snackbar.Add($"User {updatedUser.FullName} not found!", Severity.Error);
+                    Logger.LogWarning("User {UserName} ({UserId}) not found for update", updatedUser.FullName, updatedUser.Id);
+                }
+            }
+            else if (result.Data != null && result.Data is bool deleteUser && deleteUser)
+            {
+                var index = allUsers?.FindIndex(u => u.Id == args.Item?.Id);
+                if (index != null && index >= 0 && allUsers != null)
+                {
+                    var deletedUser = allUsers[index.Value];
+                    allUsers.RemoveAt(index.Value); // Remove the user from the list
+                    Snackbar.Add($"User {deletedUser.FullName} deleted successfully!", Severity.Success);
+                    Logger.LogInformation("Deleted user: {UserName} ({UserId})", deletedUser.FullName, deletedUser.Id);
+                }
+                else
+                {
+                    Snackbar.Add($"User {args.Item?.FullName} not found for deletion!", Severity.Error);
+                    Logger.LogWarning("User {UserName} ({UserId}) not found for deletion", args.Item?.FullName, args.Item?.Id);
+                }
+            }
+        }
+    }
 }
