@@ -27,7 +27,7 @@ else
               Loading="isLoading"
               ReadOnly="isLoading"
               T="Models.User"
-              OnRowClick="async model => await OpenEditUserDialog(model)"
+              OnRowClick="async model => await OpenUserEditorDialogAsync(model)"
               SortLabel="Sort By">
         <ToolBarContent>
             <MudSpacer />
@@ -101,7 +101,7 @@ else
                     <MudIconButton Icon="@Icons.Material.Filled.Add"
                                    aria-label="add-user"
                                    Color="Color.Success"
-                                   OnClick="OpenAddUserDialog" />
+                                   OnClick="async _ => await OpenUserEditorDialogAsync()" />
                 </MudTooltip>
             </MudTd>
         </FooterContent>
@@ -215,7 +215,7 @@ else
         return false;
     }
 
-    private void BackupItem(object element)
+    private void BackupItem(object element)//TODO: Used?
     {
         var user = (Models.User)element;
         // Deep copy using JSON serialization
@@ -268,73 +268,68 @@ else
 
     Func<Models.User, object>? SortByTeams = (Models.User x) => string.Join(", ", ((Models.User)(object)x).Teams.Select(t => t.Name).Order()); // For sorting teams in the table
 
-    private async Task OpenAddUserDialog()
+    private async Task OpenUserEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.User>? args = null)
     {
-        var parameters = new DialogParameters<AddUserDialog>
+        var parameters = new DialogParameters<UserEditorDialog>
         {
-            {
-                x => x.Teams, allTeams
-            }
+            { x => x.AllTeams, allTeams }
         };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
-        var dialog = await DialogService.ShowAsync<AddUserDialog>("Add User", parameters, options);
-        var result = await dialog.Result;
-        if (result?.Canceled == false)
-        {
-            // Add the new user to the list
-            if (result.Data != null && result.Data is Models.User newUser && allUsers != null)
-            {
-                allUsers?.Add(newUser);
-                allUsers = allUsers?.OrderBy(u => u.FullName ?? string.Empty).ToList();
-                Snackbar.Add($"User {newUser.FullName} added successfully!", Severity.Success);
-                Logger.LogInformation("Added new user: {UserName} ({UserId})", newUser.FullName, newUser.Id);
-            }
-        }
-    }
 
-    private async Task OpenEditUserDialog(MudBlazor.TableRowClickEventArgs<Models.User> args)
-    {
-        var parameters = new DialogParameters<AddUserDialog>
+        var isEditMode = args != null;
+        if (isEditMode)
         {
-            { x => x.Teams, allTeams },
-            { x => x.IsEditMode, true },
-            { x => x.User, args.Item }
-        };
+            parameters.Add(x => x.IsEditMode, true);
+            parameters.Add(x => x.User, args!.Item);
+        }
+
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
-        var dialog = await DialogService.ShowAsync<AddUserDialog>("Edit User", parameters, options);
+        var dialog = await DialogService.ShowAsync<UserEditorDialog>(null, parameters, options);
         var result = await dialog.Result;
-        if (result?.Canceled == false)
+
+        if (result?.Canceled == false && allUsers != null)
         {
-            // Update the user in the list
-            if (result.Data != null && result.Data is Models.User updatedUser && allUsers != null)
+            if (result.Data != null && result.Data is Models.User user)
             {
-                var index = allUsers.FindIndex(u => u.Id == updatedUser.Id);
-                if (index >= 0)
+                if (isEditMode)
                 {
-                    allUsers[index] = updatedUser; // Update the user in the list
-                    allUsers = allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
-                    Snackbar.Add($"User {updatedUser.FullName} updated successfully!", Severity.Success);
-                    Logger.LogInformation("Updated user: {UserName} ({UserId})", updatedUser.FullName, updatedUser.Id);
+                    // Update existing user
+                    var index = allUsers.FindIndex(u => u.Id == user.Id);
+                    if (index >= 0)
+                    {
+                        allUsers[index] = user;
+                        allUsers = allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                        Snackbar.Add($"User {user.FullName} updated successfully!", Severity.Success);
+                        Logger.LogInformation("Updated user: {UserName} ({UserId})", user.FullName, user.Id);
+                    }
+                    else
+                    {
+                        Snackbar.Add($"User {user.FullName} not found!", Severity.Error);
+                        Logger.LogWarning("User {UserName} ({UserId}) not found for update", user.FullName, user.Id);
+                    }
                 }
                 else
                 {
-                    Snackbar.Add($"User {updatedUser.FullName} not found!", Severity.Error);
-                    Logger.LogWarning("User {UserName} ({UserId}) not found for update", updatedUser.FullName, updatedUser.Id);
+                    // Add new user
+                    allUsers.Add(user);
+                    allUsers = allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                    Snackbar.Add($"User {user.FullName} added successfully!", Severity.Success);
+                    Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
                 }
             }
-            else if (result.Data != null && result.Data is bool deleteUser && deleteUser)
+            else if (result.Data != null && result.Data is bool deleteUser && deleteUser && isEditMode)
             {
-                var index = allUsers?.FindIndex(u => u.Id == args.Item?.Id);
-                if (index != null && index >= 0 && allUsers != null)
+                // Handle user deletion
+                var index = allUsers.FindIndex(u => u.Id == args!.Item?.Id);
+                if (index >= 0)
                 {
-                    var deletedUser = allUsers[index.Value];
-                    allUsers.RemoveAt(index.Value); // Remove the user from the list
+                    var deletedUser = allUsers[index];
+                    allUsers.RemoveAt(index);
                     Snackbar.Add($"User {deletedUser.FullName} deleted successfully!", Severity.Success);
                     Logger.LogInformation("Deleted user: {UserName} ({UserId})", deletedUser.FullName, deletedUser.Id);
                 }
                 else
                 {
-                    Snackbar.Add($"User {args.Item?.FullName} not found for deletion!", Severity.Error);
+                    Snackbar.Add($"User {args!.Item?.FullName} not found for deletion!", Severity.Error);
                     Logger.LogWarning("User {UserName} ({UserId}) not found for deletion", args.Item?.FullName, args.Item?.Id);
                 }
             }

@@ -1,0 +1,133 @@
+﻿@using BlazorWebAppSymphogen.Models.Validation
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(IsEditMode ? "Edit" : "Add New") User</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" Model="User" Validation="_userValidator.ValidateValue" ValidationDelay="0">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.FullName"
+                                  For="(() => User.FullName)"
+                                  Immediate="true"
+                                  Label="Full Name" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.Email"
+                                  For="@(() => User.Email)"
+                                  Immediate="true"
+                                  Label="Email" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.Department"
+                                  For="@(() => User.Department)"
+                                  Immediate="true"
+                                  Label="Department" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.Location"
+                                  For="@(() => User.Location)"
+                                  Immediate="true"
+                                  Label="Location" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.JobTitle"
+                                  For="@(() => User.JobTitle)"
+                                  Immediate="true"
+                                  Label="Job Title" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.OfficePhoneNumber"
+                                  For="@(() => User.OfficePhoneNumber)"
+                                  Immediate="true"
+                                  Label="Office Phone Number" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="User.Initials"
+                                  For="@(() => User.Initials)"
+                                  Immediate="true"
+                                  Label="Initials" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect Clearable="true"
+                               For="@(() => User.ValidationTeams)"
+                               Immediate="true"
+                               Label="Teams"
+                               MultiSelection="true"
+                               SelectedValues="User.Teams"
+                               SelectedValuesChanged="OnUserTeamsSelected"
+                               T="Models.Team"
+                               ToStringFunc="@(user => user.Name)">
+                        @foreach (var team in AllTeams.OrderBy(t => t.Name))
+                        {
+                            <MudSelectItem T="Models.Team"
+                                           Value="team"
+                                           Disabled="@(!team.TeamExists && !User.Teams.Any(t => t.Id == team.Id))">@team.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        @if (IsEditMode)
+        {
+            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => MudDialog?.Close(DialogResult.Ok(true))">
+                Delete
+            </MudButton>
+        }
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="SubmitUser">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public List<Models.Team> AllTeams { get; set; } = [];
+
+    [Parameter]
+    public bool IsEditMode { get; set; } = false;
+
+    [Parameter]
+    public Models.User User { get; set; } = new Models.User
+    {
+        Id = Guid.NewGuid().ToString(),
+        Teams = new List<Models.Team>(),
+        TeamIds = new List<string>()
+    };
+
+    private MudForm? _form;
+    private UserValidator _userValidator = new UserValidator();
+    private bool _isValid = true;
+    private string[] _errors = [];
+
+    private void OnUserTeamsSelected(IEnumerable<Models.Team> selectedTeams)
+    {
+        User.Teams = selectedTeams.ToList();
+        User.TeamIds = User.Teams.Select(t => t.Id).ToList();
+    }
+
+    private void Cancel() => MudDialog?.Cancel();
+    private void Submit() => MudDialog?.Close(DialogResult.Ok(User));
+
+    private async Task SubmitUser()
+    {
+        ArgumentNullException.ThrowIfNull(_form);
+
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            return; // Form is invalid, do not submit
+        }
+
+        Submit();
+    }
+}

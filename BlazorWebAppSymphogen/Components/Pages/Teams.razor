@@ -1,60 +1,274 @@
 ﻿@page "/teams"
 @rendermode InteractiveServer
 @using System.Text.Json
+@using BlazorWebAppSymphogen.Components.Dialogs
 @using Microsoft.Identity.Web
 @using Microsoft.Identity.Abstractions
-@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
-@inject ITokenAcquisition TokenAcquisition
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
 @inject IDownstreamApi downstreamApi
-@inject BlazorWebAppSymphogen.Services.IUserInfoService UserInfoService
 @inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
-@inject AuthenticationStateProvider AuthProvider
+@inject IUserPreferences UserPreferences
+@inject IDialogService DialogService
 @attribute [Authorize]
 
-<h3>Teams</h3>
+<PageTitle>Teams</PageTitle>
 
-<AuthorizeView>
-    <Authorized>
-        @if (graphApiResponse != null)
+@if (!isInitialized)
+{
+    <MudOverlay @bind-Visible="isLoading" DarkBackground>
+        <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+    </MudOverlay>
+}
+else
+{
+    <MudCard Class="mt-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h3">Teams</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTable Dense="true"
+                      Filter="new Func<Models.Team, bool>(FilterFunc)"
+                      Hover="true"
+                      Items="@allTeams"
+                      Loading="isLoading"
+                      ReadOnly="isLoading"
+                      T="Models.Team"
+                      OnRowClick="async model => await OpenTeamEditorDialogAsync(model)"
+                      SortLabel="Sort By">
+                <ToolBarContent>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Class="mt-0"
+                                  Clearable="true"
+                                  IconSize="Size.Medium"
+                                  Immediate="true"
+                                  Placeholder="Search"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Models.Team, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.Team, object>(x => x.Name ?? string.Empty)">Team Name</MudTableSortLabel></MudTh>
+                    <MudTh>Users</MudTh>
+                    <MudTh>Super Users</MudTh>
+                    @* <MudTh><MudTableSortLabel>Workflow Configurations</MudTableSortLabel></MudTh> *@
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID">
+                        <MudTooltip Text="@context.Id">
+                            <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
+                                           Color="Color.Success"
+                                           OnClick="async () => await CopyId(context.Id)" />
+                        </MudTooltip>
+                    </MudTd>
+                    <MudTd DataLabel="Team Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Users">
+                        @if (context.UserIds != null && context.UserIds.Any())
+                        {
+                            var usersInTeam = allUsers.Where(u => context.UserIds.Contains(u.Id)).OrderBy(u => u.FullName).ToList();
+                            var usersToDisplay = usersInTeam.Take(maxUserDisplayCount).ToList();
+                            @foreach (var userToDisplay in usersToDisplay)
+                            {
+                                @* <MudChip T="string" Color="Color.Primary" Size="Size.Small">@userToDisplay.FullName</MudChip> *@
+                                <MudText Class="mt-1">@userToDisplay.FullName</MudText>
+                            }
+                            @if (context.UserIds.Count() > maxUserDisplayCount)
+                            {
+                                <MudText Class="mt-1">+@((context.UserIds.Count() - maxUserDisplayCount).ToString()) more</MudText>
+                            }
+                            @if (context.Users.Any(u => !u.UserExists))
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Unknown Users</MudText>
+                            }
+                        }
+                        else
+                        {
+                            <MudText>No users assigned</MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Super Users">
+                        @if (context.SuperUserIds != null && context.SuperUserIds.Any())
+                        {
+                            var superUsersToDisplay = allUsers.Where(u => context.SuperUserIds.Contains(u.Id)).OrderBy(u => u.FullName).Take(maxUserDisplayCount).ToList();
+                            @foreach (var superUserToDisplay in superUsersToDisplay)
+                            {
+                                @* <MudChip T="string" Color="Color.Secondary" Size="Size.Small">@superUserToDisplay.FullName</MudChip> *@
+                                <MudText Class="mt-1">@superUserToDisplay.FullName</MudText>
+                            }
+                            @if (context.SuperUserIds.Count() > maxUserDisplayCount)
+                            {
+                                <MudText Class="mt-1">+@((context.SuperUserIds.Count() - maxUserDisplayCount).ToString()) more</MudText>
+                            }
+                            @if (context.SuperUsers.Any(u => !u.UserExists))
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Unknown Super Users</MudText>
+                            }
+                        }
+                        else
+                        {
+                            <MudText>No super users assigned</MudText>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudTd>
+                        <MudTooltip Text="Add new team">
+                            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                           aria-label="add-team"
+                                           Color="Color.Success"
+                                           OnClick="async _ => await OpenTeamEditorDialogAsync(null)" />
+                        </MudTooltip>
+                    </MudTd>
+                </FooterContent>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+                <EditButtonContent Context="button">
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+                </EditButtonContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private bool isInitialized = false;
+    private bool isLoading = true;
+    private List<BlazorWebAppSymphogen.Models.User> allUsers = [];
+    private List<Models.Team> allTeams = [];
+    private string searchString = string.Empty;
+    private HashSet<string?> copiedIconIds = new();
+    private System.Timers.Timer? iconTimer;
+    private int maxUserDisplayCount = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await LoadUsersAsync();
+        await LoadTeamsAsync();
+        isLoading = false;
+
+        iconTimer = new System.Timers.Timer(1000);
+        iconTimer.Elapsed += ResetIcon;
+        iconTimer.AutoReset = false;
+
+        isInitialized = true;
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
+        allUsers = await CosmosService.GetUsersAsync(UserPreferences.MimerEnvironment);
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        Logger.LogInformation("Loading teams for environment: {Environment}", UserPreferences.MimerEnvironment);
+        allTeams = await CosmosService.GetTeamsAsync(UserPreferences.MimerEnvironment);
+
+        foreach (var team in allTeams)
         {
-            <p>
-                Before rendering the page, the controller was able to make a call to
-                Microsoft Graph's <code>/me</code> API for your user and received the
-                following:
-            </p>
-
-            <p>
-                <pre><code class="language-js">@JsonSerializer.Serialize(graphApiResponse, new JsonSerializerOptions { WriteIndented = true })</code></pre>
-            </p>
-
-            <p>
-                Refreshing this page will continue to use the cached access token acquired for Microsoft Graph, which is valid
-                for future page views will attempt to refresh this token as it nears its expiration.
-            </p>
-        }
-
-        @code {
-            private JsonDocument? graphApiResponse = null;
-
-            protected override async Task OnInitializedAsync()
+            team.Users.Clear();
+            team.Users.AddRange(allUsers.Where(u => team.UserIds.Contains(u.Id)).ToList());
+            // Handle unknown users
+            foreach (var userId in team.UserIds)
             {
-                try
+                if (team.UserIds.Any(u => u == userId) && !team.Users.Any(u => u.Id == userId))
                 {
-                    using var response = await downstreamApi.CallApiForUserAsync("GraphApi", options =>
+                    team.Users.Add(new Models.User
                     {
-                        options.RelativePath = "me";
-                    }).ConfigureAwait(false);
-                    response.EnsureSuccessStatusCode();
-                    graphApiResponse = await response.Content.ReadFromJsonAsync<JsonDocument>().ConfigureAwait(false);
+                        Id = userId,
+                        FullName = "Unknown User",
+                        UserExists = false
+                    });
                 }
-                catch (Exception ex)
+            }
+
+            team.SuperUsers.Clear();
+            team.SuperUsers.AddRange(allUsers.Where(u => team.SuperUserIds.Contains(u.Id)).ToList());
+            // Handle unknown super users
+            foreach (var superUserId in team.SuperUserIds)
+            {
+                if (team.SuperUserIds.Any(u => u == superUserId) && !team.SuperUsers.Any(u => u.Id == superUserId))
                 {
-                    ConsentHandler.HandleException(ex);
+                    team.SuperUsers.Add(new Models.User
+                    {
+                        Id = superUserId,
+                        FullName = "Unknown Super User",
+                        UserExists = false
+                    });
                 }
             }
         }
-    </Authorized>
-</AuthorizeView>
+    }
+
+    private async Task CopyId(string? id)
+    {
+        if (!string.IsNullOrEmpty(id))
+        {
+            // Copy the ID to clipboard
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", id);
+
+            // Change icon to check mark
+            copiedIconIds.Clear();
+            copiedIconIds.Add(id);
+
+            // Start timer to revert icon
+            iconTimer?.Stop();
+            iconTimer?.Start();
+        }
+    }
+
+    private void ResetIcon(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Clear all copied icons
+        copiedIconIds.Clear();
+
+        // Trigger UI update
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        iconTimer?.Dispose();
+    }
+
+    private bool FilterFunc(Models.Team team)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (team.Id.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (team.Name?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (team.UserIds.Any(i => i.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true))
+            return true;
+        // TODO: Search for users using their names or emails
+        if (team.SuperUserIds.Any(i => i.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true))
+            return true;
+        // TODO: Search for super users using their names or emails
+
+        return false;
+    }
+
+    private async Task OpenTeamEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.Team>? args)
+    {
+        var parameters = new DialogParameters<TeamEditorDialog>
+        {
+            { x => x.Users, allUsers }
+        };
+
+        var isEditMode = args != null;
+        if (isEditMode)
+        {
+            parameters.Add(x => x.IsEditMode, true);
+            parameters.Add(x => x.Team, args!.Item);
+        }
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
+        var dialog = await DialogService.ShowAsync<TeamEditorDialog>(null, parameters, options);
+        var result = await dialog.Result;
+    }
+}

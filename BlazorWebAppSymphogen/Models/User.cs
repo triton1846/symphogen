@@ -36,6 +36,11 @@ public class User : IEntity
 
     public List<Team> Teams { get; set; } = [];
 
+    [JsonIgnore]// This property is used for validation purposes only and should not be serialized
+    public Team? ValidationTeams { get; set; }
+
+    public bool UserExists { get; set; } = true;
+
     [JsonIgnore]
     public string? GroupKey => null;
 }

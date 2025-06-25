@@ -1,0 +1,65 @@
+﻿@page "/me"
+@rendermode InteractiveServer
+@using System.Text.Json
+@using Microsoft.Identity.Web
+@using Microsoft.Identity.Abstractions
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
+@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
+@inject ITokenAcquisition TokenAcquisition
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@inject IDownstreamApi downstreamApi
+@inject BlazorWebAppSymphogen.Services.IUserInfoService UserInfoService
+@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
+@inject AuthenticationStateProvider AuthProvider
+@attribute [Authorize]
+
+<PageTitle>Me</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        @if (graphApiResponse != null)
+        {
+            <MudCard Class="mt-4">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h3">Me</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <p>
+                        Before rendering the page, the controller was able to make a call to
+                        Microsoft Graph's <code>/me</code> API for your user and received the
+                        following:
+                    </p>
+                    <p>
+                        <pre><code>@JsonSerializer.Serialize(graphApiResponse, new JsonSerializerOptions { WriteIndented = true })</code></pre>
+                    </p>
+                    <p>
+                        Refreshing this page will continue to use the cached access token acquired for Microsoft Graph, which is valid
+                        for future page views will attempt to refresh this token as it nears its expiration.
+                    </p>
+                </MudCardContent>
+            </MudCard>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private JsonDocument? graphApiResponse = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var response = await downstreamApi.CallApiForUserAsync("GraphApi", options =>
+            {
+                options.RelativePath = "me";
+            }).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            graphApiResponse = await response.Content.ReadFromJsonAsync<JsonDocument>().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            ConsentHandler.HandleException(ex);
+        }
+    }
+}

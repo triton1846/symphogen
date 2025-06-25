@@ -1,0 +1,147 @@
+﻿@using BlazorWebAppSymphogen.Models.Validation
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(IsEditMode ? "Edit" : "Add New") Team</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" Model="Team" Validation="_teamValidator.ValidateValue" ValidationDelay="0">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="Team.Name"
+                                  For="@(() => Team.Name)"
+                                  Immediate="true"
+                                  Label="Team Name" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect Clearable="true"
+                               For="@(() => Team.ValidationSuperUsers)"
+                               Immediate="true"
+                               Label="Super Users"
+                               MultiSelection="true"
+                               SelectedValues="Team.SuperUsers"
+                               SelectedValuesChanged="OnSuperUsersSelected"
+                               T="Models.User"
+                               ToStringFunc="@(user => user.FullName)">
+                        @foreach (var user in Users.OrderBy(u => u.FullName))
+                        {
+                            <MudSelectItem Disabled="@(!user.UserExists)"
+                                           T="Models.User"
+                                           Value="@user">@user.FullName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect Clearable="true"
+                               For="@(() => Team.ValidationUsers)"
+                               Immediate="true"
+                               Label="Users"
+                               MultiSelection="true"
+                               SelectedValues="Team.Users"
+                               SelectedValuesChanged="OnUsersSelected"
+                               T="Models.User"
+                               ToStringFunc="@(user => user.FullName)">
+                        @foreach (var user in Users.OrderBy(u => u.FullName))
+                        {
+                            <MudSelectItem Disabled="@(!user.UserExists)"
+                                           T="Models.User"
+                                           Value="@user">@user.FullName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect Clearable="true"
+                               Immediate="true"
+                               Label="Workflow Configurations"
+                               MultiSelection="true"
+                               SelectedValues="Team.WorkflowConfigurationIds"
+                               T="string">
+                        @foreach (var id in Team.WorkflowConfigurationIds ?? [])
+                        {
+                            <MudSelectItem T="string">@id</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                @* <MudItem xs="12" md="6">
+                    <MudSelect T="Models.WorkflowConfiguration"
+                               Label="Workflow Configurations"
+                               MultiSelection="true"
+                               Immediate="true"
+                               SelectedValues="Team.WorkflowConfigurationIds"
+                               SelectedValuesChanged="OnWorkflowConfigurationsSelected"
+                               ToStringFunc="@(config => config.Name)">
+                        @foreach (var config in WorkflowConfigurations.OrderBy(c => c.Name))
+                        {
+                            <MudSelectItem T="Models.WorkflowConfiguration" Value="@config">@config.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem> *@
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        @if (IsEditMode)
+        {
+            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => MudDialog?.Close(DialogResult.Ok(true))">
+                Delete
+            </MudButton>
+        }
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="SubmitTeam">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public List<Models.User> Users { get; set; } = [];
+
+    [Parameter]
+    public bool IsEditMode { get; set; } = false;
+
+    [Parameter]
+    public Models.Team Team { get; set; } = new Models.Team
+    {
+        Id = Guid.NewGuid().ToString(),
+        SuperUserIds = [],
+        UserIds = [],
+        WorkflowConfigurationIds = []
+    };
+
+    private MudForm? _form;
+    private TeamValidator _teamValidator = new TeamValidator();
+
+    private void Cancel() => MudDialog?.Cancel();
+    private void Submit() => MudDialog?.Close(DialogResult.Ok(Team));
+
+    private async Task SubmitTeam()
+    {
+        ArgumentNullException.ThrowIfNull(_form);
+
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            return; // Form is invalid, do not submit
+        }
+
+        Submit();
+    }
+
+    private void OnSuperUsersSelected(IEnumerable<Models.User> selectedUsers)
+    {
+        Team.SuperUsers = selectedUsers.ToList();
+        Team.SuperUserIds = Team.SuperUsers.Select(u => u.Id).ToList();
+    }
+
+    private void OnUsersSelected(IEnumerable<Models.User> selectedUsers)
+    {
+        Team.Users = selectedUsers.ToList();
+        Team.UserIds = Team.Users.Select(u => u.Id).ToList();
+    }
+}
