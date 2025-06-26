@@ -30,7 +30,15 @@ else
               OnRowClick="async model => await OpenUserEditorDialogAsync(model)"
               SortLabel="Sort By">
         <ToolBarContent>
-            <MudSpacer />
+            <MudTooltip Text="Add new user">
+                <MudIconButton Icon="@Icons.Material.Filled.Add"
+                               aria-label="add-user"
+                               Color="Color.Success"
+                               OnClick="async _ => await OpenUserEditorDialogAsync()" />
+            </MudTooltip>
+            <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
+                <MudSpacer />
+            </MudHidden>
             <MudTextField @bind-Value="searchString"
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
@@ -60,50 +68,59 @@ else
             <MudTd DataLabel="Email">@context.Email</MudTd>
             <MudTd DataLabel="Department">@context.Department</MudTd>
             <MudTd DataLabel="Location">@context.Location</MudTd>
-            <MudTd DataLabel="Teams">
-                @if (context.Teams.Any())
-                {
-                    @foreach (var team in context.Teams.OrderBy(t => t.Name))
+            <MudHidden Breakpoint="Breakpoint.LgAndDown" Invert="false">
+                <MudTd DataLabel="Teams">
+                    @if (context.Teams.Any())
                     {
-                        @if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) == 1)
+                        @foreach (var team in context.Teams.OrderBy(t => t.Name))
                         {
-                            <MudTooltip Text="@team.Id">
-                                <MudChip T="string" Color="Color.Default" Size="Size.Small">@team.Name</MudChip>
-                            </MudTooltip>
-                        }
-                        else if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) > 1)
-                        {
-                            <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")">
-                                <MudChip T="string" Color="Color.Error" Size="Size.Small">
-                                    <MudText Style="font-weight: bold; text-transform: uppercase;">@team.Name</MudText>
-                                </MudChip>
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudTooltip Text="@($"Team with id {context.Id} doesn't exists!")">
-                                <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
-                            </MudTooltip>
+                            @if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) == 1)
+                            {
+                                <MudTooltip Text="@team.Id">
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small">@team.Name</MudChip>
+                                </MudTooltip>
+                            }
+                            else if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) > 1)
+                            {
+                                <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")">
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                                        <MudText Style="font-weight: bold; text-transform: uppercase;">@team.Name</MudText>
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                            else
+                            {
+                                <MudTooltip Text="@($"Team with id {context.Id} doesn't exists!")">
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
+                                </MudTooltip>
+                            }
                         }
                     }
-                }
-                else
-                {
-                    <MudTooltip Text="@($"{context.FullName} is not a member of any team")">
-                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">No Teams</MudChip>
-                    </MudTooltip>
-                }
-            </MudTd>
+                    else
+                    {
+                        <MudTooltip Text="@($"{context.FullName} is not a member of any team")">
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">No Teams</MudChip>
+                        </MudTooltip>
+                    }
+                </MudTd>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.LgAndUp" Invert="false">
+                <MudTd DataLabel="Teams">
+                    <MudChip T="string" Size="Size.Small">@((context.Teams.Count())) team membership(s)</MudChip>
+                </MudTd>
+            </MudHidden>
         </RowTemplate>
         <FooterContent>
-            <MudTd>
-                <MudTooltip Text="Add new user">
-                    <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                   aria-label="add-user"
-                                   Color="Color.Success"
-                                   OnClick="async _ => await OpenUserEditorDialogAsync()" />
-                </MudTooltip>
-            </MudTd>
+            <MudTFootRow>
+                <MudTd>
+                    <MudTooltip Text="Add new user">
+                        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                       aria-label="add-user"
+                                       Color="Color.Success"
+                                       OnClick="async _ => await OpenUserEditorDialogAsync()" />
+                    </MudTooltip>
+                </MudTd>
+            </MudTFootRow>
         </FooterContent>
         <PagerContent>
             <MudTablePager />

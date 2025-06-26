@@ -35,7 +35,7 @@ public class TestDataService : ITestDataService
     {
         await Task.Delay(_userPreferences.FetchTeamsDelay);
 
-        if (_userPreferences.UseCacheData && _teams.Count != 0)
+        if (_teams.Count != 0)
         {
             return _teams;
         }
@@ -49,7 +49,7 @@ public class TestDataService : ITestDataService
     {
         await Task.Delay(_userPreferences.FetchUsersDelay);
 
-        if (_userPreferences.UseCacheData && _users.Count != 0)
+        if (_users.Count != 0)
         {
             return _users;
         }
@@ -62,6 +62,11 @@ public class TestDataService : ITestDataService
 
     private List<User> GetRandomUsers()
     {
+        if (_users.Count > 0)
+        {
+            return _users;
+        }
+
         var random = new Random();
         var randomUsers = new List<User>();
 
@@ -85,6 +90,8 @@ public class TestDataService : ITestDataService
 
             randomUsers.Add(user);
         }
+
+        _logger.LogInformation("Generated {Count} random users.", randomUsers.Count);
 
         return randomUsers;
     }
@@ -169,7 +176,7 @@ public class TestDataService : ITestDataService
 
         var random = new Random();
         var randomTeams = new List<Team>();
-        foreach (var teamId in GetTeamIds())//_teamIds[mimerEnvironment])
+        foreach (var teamId in GetTeamIds())
         {
             var team = new Bogus.Faker<Team>()
                 .RuleFor(t => t.Id, f => teamId)
@@ -196,20 +203,13 @@ public class TestDataService : ITestDataService
             randomTeams.Add(team);
         }
 
+        _logger.LogInformation("Generated {Count} random teams.", randomTeams.Count);
+
         return randomTeams;
     }
 
     private List<string> GetTeamIds()
     {
-        //if (!_teamIds.TryGetValue(mimerEnvironment, out _) || !_teamIds[mimerEnvironment].Any())
-        //{
-        //    _teamIds[mimerEnvironment] = [.. Enumerable.Range(1, numberOfTeamIds).Select(i => Guid.NewGuid().ToString())];
-        //}
-
-        //return _teamIds[mimerEnvironment];
-
-        //return [.. _users.SelectMany(u => u.TeamIds ?? [])];
-
         if (_teamIds.Count == 0 && _teams.Count > 0)
         {
             _teamIds = [.. _teams.Select(t => t.Id).Distinct()];

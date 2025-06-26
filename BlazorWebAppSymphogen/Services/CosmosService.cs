@@ -53,7 +53,7 @@ public class CosmosService : ICosmosService
             return [.. testDataUsers];
         }
 
-        if (_userPreferences.UseCacheData && _users.TryGetValue(mimerEnvironment, out _) && _users[mimerEnvironment].Any())
+        if (/*_userPreferences.UseCacheData && */_users.TryGetValue(mimerEnvironment, out _) && _users[mimerEnvironment].Any())
         {
             _logger.LogDebug("Returning cached users for {Environment}", mimerEnvironment);
             return [.. _users[mimerEnvironment]];
@@ -105,7 +105,7 @@ public class CosmosService : ICosmosService
             return [.. testDataTeams];
         }
 
-        if (_userPreferences.UseCacheData && _teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Any())
+        if (/*_userPreferences.UseCacheData && */_teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Any())
         {
             _logger.LogDebug("Returning cached teams for {Environment}", mimerEnvironment);
             return [.. _teams[mimerEnvironment]];

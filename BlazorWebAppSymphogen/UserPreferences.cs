@@ -5,7 +5,7 @@ namespace BlazorWebAppSymphogen;
 public class UserPreferences : IUserPreferences
 {
     private readonly ILocalStorageService _localStorage;
-    private const string UseCacheDataKey = "app_useCacheData";
+    //private const string UseCacheDataKey = "app_useCacheData";
     private const string MimerEnvironmentKey = "app_mimerEnvironment";
 
     #region Test Data Keys
@@ -21,7 +21,7 @@ public class UserPreferences : IUserPreferences
     #endregion Test Data Keys
 
     private bool _isInitialized = false;
-    private bool _useCacheData = true; // Default to using cache
+    //private bool _useCacheData = true; // Default to using cache
     private MimerEnvironment _mimerEnvironment = MimerEnvironment.TestData;
 
     #region Test Data preferences
@@ -41,15 +41,15 @@ public class UserPreferences : IUserPreferences
         _localStorage = localStorage;
     }
 
-    public bool UseCacheData
-    {
-        get => _useCacheData;
-        set
-        {
-            _useCacheData = value;
-            _ = _localStorage.SetItemAsync(UseCacheDataKey, value);
-        }
-    }
+    //public bool UseCacheData
+    //{
+    //    get => _useCacheData;
+    //    set
+    //    {
+    //        _useCacheData = value;
+    //        _ = _localStorage.SetItemAsync(UseCacheDataKey, value);
+    //    }
+    //}
 
     public MimerEnvironment MimerEnvironment
     {
@@ -158,9 +158,9 @@ public class UserPreferences : IUserPreferences
 
     public async Task InitializeAsync()
     {
-        var useCacheData = await _localStorage.GetItemAsync<bool?>(UseCacheDataKey);
-        if (useCacheData.HasValue)
-            _useCacheData = useCacheData.Value;
+        //var useCacheData = await _localStorage.GetItemAsync<bool?>(UseCacheDataKey);
+        //if (useCacheData.HasValue)
+        //    _useCacheData = useCacheData.Value;
 
         var mimerEnvironmentString = await _localStorage.GetItemAsync<string?>("app_mimerEnvironment");
         if (!string.IsNullOrEmpty(mimerEnvironmentString) && Enum.TryParse<MimerEnvironment>(mimerEnvironmentString, out var environment))
@@ -212,7 +212,7 @@ public interface IUserPreferences
 {
     bool IsInitialized { get; }
     Task InitializeAsync();
-    bool UseCacheData { get; set; }
+    //bool UseCacheData { get; set; }
     MimerEnvironment MimerEnvironment { get; set; }
 
     #region Test Data preferences
