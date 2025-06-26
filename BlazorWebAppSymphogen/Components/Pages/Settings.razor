@@ -22,7 +22,7 @@
                             {
                                 <MudIcon Icon="@Icons.Material.Filled.CloudOff"
                                          Color="Color.Warning"
-                                         Class="mr-2 mt-2"
+                                         Class="mr-3 mt-3"
                                          Size="Size.Medium" />
                             }
                             else
@@ -186,6 +186,39 @@
                                    Color="Color.Primary">
                             @FormatUsersCount(UserPreferences.TestDataNumberOfUsers)
                         </MudSlider>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem md="3">
+                <MudCard Outlined="true">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Create unknown users?</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.People"
+                                           Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                                           OnClick="@(val => {UserPreferences.TestDataCreateUnknownUsersAsTeamMembers = !UserPreferences.TestDataCreateUnknownUsersAsTeamMembers;})"
+                                           Color="@(UserPreferences.TestDataCreateUnknownUsersAsTeamMembers ? Color.Warning : Color.Success)" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>This enables the creation of unknown users when using test data.</MudText>
+                        <MudText Typo="Typo.body2">
+                            This is useful for testing purposes, allowing you to simulate a scenario where some users are unknown.
+                            Note: This only works if the <code>UseTestData</code> is set to <code>true</code>.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions Class="mx-3">
+                        @if (UserPreferences.TestDataCreateUnknownUsersAsTeamMembers)
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Medium">Unknown users</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Default" Size="Size.Medium" Style="text-transform: uppercase">No unknown users</MudChip>
+                        }
                     </MudCardActions>
                 </MudCard>
             </MudItem>

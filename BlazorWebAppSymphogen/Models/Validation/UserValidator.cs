@@ -29,7 +29,7 @@ public class UserValidator : BaseValidator<User>
         RuleFor(user => user.JobTitle).NotEmpty().WithMessage("'Job Title' is required.");
 
         RuleFor(user => user.OfficePhoneNumber)
-            .Matches(@"^(?:(?:\+|00)?\d{1,3}[\s\-]?)?(?:\d{2,4}[\s\-]?){2,5}$")
+            .Matches(@"^(\+?\d{1,4}|\(?\d{1,4}\)?)[\s\-]?(\d{1,4}[\s\-]?){1,5}$")
             .When(user => !string.IsNullOrWhiteSpace(user.OfficePhoneNumber))
             .WithMessage("Invalid phone number format.");
 
@@ -45,7 +45,16 @@ public class UserValidator : BaseValidator<User>
     
                     // Check if all teams exist
                     return teams.All(team => team.TeamExists);
-             })
-             .WithMessage("'Teams' cannot include teams that do not exist.");
+             }).WithMessage("'Teams' cannot include teams that do not exist.")
+             .Must(teams =>
+             {
+                 if (teams == null || teams.Count == 0)
+                     return true; // Allow empty teams
+
+                 // Check for duplicate teams
+                 return teams
+                     .GroupBy(team => team.Id)
+                     .All(group => group.Count() == 1);
+             }).WithMessage("'Teams' cannot include duplicates.");
     }
 }

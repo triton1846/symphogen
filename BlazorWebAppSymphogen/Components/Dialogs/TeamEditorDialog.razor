@@ -23,11 +23,20 @@
                                SelectedValuesChanged="OnSuperUsersSelected"
                                T="Models.User"
                                ToStringFunc="@(user => user.FullName)">
-                        @foreach (var user in Users.OrderBy(u => u.FullName))
+                        @foreach (var user in _superUsers.OrderByDescending(u => Team.SuperUsers.Contains(u)).ThenBy(u => u.FullName))
                         {
-                            <MudSelectItem Disabled="@(!user.UserExists)"
+                            <MudSelectItem Disabled="@(!user.UserExists && !Team.SuperUsers.Any(t => t.Id == user.Id))"
                                            T="Models.User"
-                                           Value="@user">@user.FullName</MudSelectItem>
+                                           Value="@user">
+                                @if (user.UserExists)
+                                {
+                                    @user.FullName
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Error">@user.FullName</MudText>
+                                }
+                            </MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -41,11 +50,20 @@
                                SelectedValuesChanged="OnUsersSelected"
                                T="Models.User"
                                ToStringFunc="@(user => user.FullName)">
-                        @foreach (var user in Users.OrderBy(u => u.FullName))
+                        @foreach (var user in _users.OrderByDescending(u => Team.Users.Contains(u)).ThenBy(u => u.FullName))
                         {
-                            <MudSelectItem Disabled="@(!user.UserExists)"
+                            <MudSelectItem Disabled="@(!user.UserExists && !Team.Users.Any(t => t.Id == user.Id))"
                                            T="Models.User"
-                                           Value="@user">@user.FullName</MudSelectItem>
+                                           Value="@user">
+                                @if (user.UserExists)
+                                {
+                                    @user.FullName
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Error">@user.FullName</MudText>
+                                }
+                            </MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -116,9 +134,55 @@
 
     private MudForm? _form;
     private TeamValidator _teamValidator = new TeamValidator();
+    private IEnumerable<Models.User> _users = [];
+    private IEnumerable<Models.User> _superUsers = [];
 
     private void Cancel() => MudDialog?.Cancel();
     private void Submit() => MudDialog?.Close(DialogResult.Ok(Team));
+
+    protected override void OnInitialized()
+    {
+        if (IsEditMode && Team == null)
+        {
+            throw new ArgumentNullException(nameof(Team), "Team cannot be null in edit mode.");
+        }
+        _users = Users.Where(u => (u.UserExists || Team.Users.Any(t => t.Id == u.Id)) && u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
+        _superUsers = Users.Where(u => u.UserExists || Team.SuperUsers.Any(t => t.Id == u.Id) && u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
+
+        // // Temp code to add random users and super users
+        // var su = _superUsers.Where(u => u.UserExists).OrderBy(u => new Random().Next()).ToList();
+        // var u1 = _users.Where(u => u.UserExists).OrderBy(u => new Random().Next()).ToList();
+        // for (int i = 0; i < 3; i++)
+        // {
+        //     var superUserToAdd = su.ElementAt(i);
+        //     Team.SuperUsers.Add(superUserToAdd);
+        //     Team.SuperUserIds = Team.SuperUsers.Select(u => u.Id).ToList();
+
+        //     var userToAdd = u1.ElementAt(i);
+        //     Team.Users.Add(userToAdd);
+        //     Team.UserIds = Team.Users.Select(u => u.Id).ToList();
+        // }
+
+        // Make sure duplicates are shown
+        var duplicateSuperUsers = Team.SuperUsers.GroupBy(u => u.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
+        foreach (var duplicateSuperUser in duplicateSuperUsers.Skip(1))
+        {
+            _superUsers = _superUsers.Append(duplicateSuperUser).ToList();
+        }
+        var duplicateUsers = Team.Users.GroupBy(u => u.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
+        foreach (var duplicateUser in duplicateUsers.Skip(1))
+        {
+            _users = _users.Append(duplicateUser).ToList();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsEditMode && Team != null && _form != null)
+        {
+            await _form.Validate();
+        }
+    }
 
     private async Task SubmitTeam()
     {

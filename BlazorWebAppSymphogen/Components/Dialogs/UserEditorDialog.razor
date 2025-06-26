@@ -1,4 +1,5 @@
 ﻿@using BlazorWebAppSymphogen.Models.Validation
+@inject ISnackbar Snackbar
 
 <MudDialog>
     <TitleContent>
@@ -59,11 +60,11 @@
                                SelectedValuesChanged="OnUserTeamsSelected"
                                T="Models.Team"
                                ToStringFunc="@(user => user.Name)">
-                        @foreach (var team in AllTeams.OrderBy(t => t.Name))
+                        @foreach (var team in _allTeams.OrderByDescending(t => User.Teams.Contains(t)).ThenBy(t => t.Name))
                         {
-                            <MudSelectItem T="Models.Team"
-                                           Value="team"
-                                           Disabled="@(!team.TeamExists && !User.Teams.Any(t => t.Id == team.Id))">@team.Name</MudSelectItem>
+                            <MudSelectItem Disabled="@(!team.TeamExists && !User.Teams.Any(t => t.Id == team.Id))"
+                                           T="Models.Team"
+                                           Value="team"><MudText Color="@GetTeamNameColor(team)">@team.Name</MudText></MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -100,19 +101,56 @@
     public Models.User User { get; set; } = new Models.User
     {
         Id = Guid.NewGuid().ToString(),
-        Teams = new List<Models.Team>(),
-        TeamIds = new List<string>()
+        Teams = [],
+        TeamIds = []
     };
 
     private MudForm? _form;
     private UserValidator _userValidator = new UserValidator();
-    private bool _isValid = true;
-    private string[] _errors = [];
+    private List<Models.Team> _allTeams = [];
 
-    private void OnUserTeamsSelected(IEnumerable<Models.Team> selectedTeams)
+    protected override void OnInitialized()
     {
+        if (IsEditMode && User == null)
+        {
+            throw new ArgumentNullException(nameof(User), "User cannot be null in edit mode.");
+        }
+        else if (IsEditMode && User != null)
+        {
+            _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
+
+            // If User.Teams has unknown teams, remove and inform user using snackbar
+            var unknownTeams = User.Teams.Where(t => !t.TeamExists).ToList();
+            if (unknownTeams.Any())
+            {
+                Snackbar.Add($"{unknownTeams.Count} unknown team(s) has been removed automatically", Severity.Warning);
+                User.Teams = User.Teams.Where(t => t.TeamExists).ToList();
+            }
+            // If User.Teams has duplicate teams, remove duplicates and inform user using snackbar
+            var duplicateTeams = User.Teams.GroupBy(t => t.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
+            if (duplicateTeams.Any())
+            {
+                Snackbar.Add($"{duplicateTeams.Count} duplicate team(s) have been removed automatically", Severity.Warning);
+                User.Teams = User.Teams.DistinctBy(t => t.Id).ToList();
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsEditMode && User != null && _form != null)
+        {
+            await _form.Validate();
+        }
+    }
+
+    private async Task OnUserTeamsSelected(IEnumerable<Models.Team> selectedTeams)
+    {
+        ArgumentNullException.ThrowIfNull(_form);
+
         User.Teams = selectedTeams.ToList();
         User.TeamIds = User.Teams.Select(t => t.Id).ToList();
+        await _form.Validate();
     }
 
     private void Cancel() => MudDialog?.Cancel();
@@ -129,5 +167,16 @@
         }
 
         Submit();
+    }
+
+    private Color GetTeamNameColor(Models.Team team)
+    {
+        if (!team.TeamExists || User.Teams.Count(t => t.Id == team.Id) > 1)
+        {
+            return Color.Error;
+            
+        }
+        
+        return Color.Default;
     }
 }

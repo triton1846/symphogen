@@ -55,13 +55,15 @@ builder.Services.AddScoped<ICosmosService>(sp =>
         sp.GetRequiredService<ILogger<CosmosService>>(),
         sp.GetRequiredService<IUserPreferences>(),
         connectionStringSb1,
-        connectionStringQa);
+        connectionStringQa,
+        sp.GetRequiredService<ITestDataService>());
 });
 builder.Services.AddScoped<IUserInfoService, UserInfoService>();
 builder.Services.AddScoped<IAuthorizationHandler, RequireDomainHandler>();
 
 builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
 builder.Services.AddScoped<IUserPreferences, UserPreferences>();
+builder.Services.AddScoped<ITestDataService, TestDataService>();
 
 // Logging
 Log.Logger = new LoggerConfiguration()

@@ -71,16 +71,19 @@ else
                             var usersToDisplay = usersInTeam.Take(maxUserDisplayCount).ToList();
                             @foreach (var userToDisplay in usersToDisplay)
                             {
-                                @* <MudChip T="string" Color="Color.Primary" Size="Size.Small">@userToDisplay.FullName</MudChip> *@
                                 <MudText Class="mt-1">@userToDisplay.FullName</MudText>
                             }
                             @if (context.UserIds.Count() > maxUserDisplayCount)
                             {
-                                <MudText Class="mt-1">+@((context.UserIds.Count() - maxUserDisplayCount).ToString()) more</MudText>
+                                <MudChip T="string" Size="Size.Small">+@((context.UserIds.Count() - maxUserDisplayCount).ToString()) more</MudChip>
                             }
                             @if (context.Users.Any(u => !u.UserExists))
                             {
                                 <MudText Class="mt-1" Color="Color.Error">Contains Unknown Users</MudText>
+                            }
+                            @if (context.UserIds.GroupBy(u => u).Where(g => g.Count() > 1).Any())
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Duplicates</MudText>
                             }
                         }
                         else
@@ -94,16 +97,19 @@ else
                             var superUsersToDisplay = allUsers.Where(u => context.SuperUserIds.Contains(u.Id)).OrderBy(u => u.FullName).Take(maxUserDisplayCount).ToList();
                             @foreach (var superUserToDisplay in superUsersToDisplay)
                             {
-                                @* <MudChip T="string" Color="Color.Secondary" Size="Size.Small">@superUserToDisplay.FullName</MudChip> *@
                                 <MudText Class="mt-1">@superUserToDisplay.FullName</MudText>
                             }
                             @if (context.SuperUserIds.Count() > maxUserDisplayCount)
                             {
-                                <MudText Class="mt-1">+@((context.SuperUserIds.Count() - maxUserDisplayCount).ToString()) more</MudText>
+                                <MudChip T="string" Size="Size.Small">+@((context.SuperUserIds.Count() - maxUserDisplayCount).ToString()) more</MudChip>
                             }
                             @if (context.SuperUsers.Any(u => !u.UserExists))
                             {
                                 <MudText Class="mt-1" Color="Color.Error">Contains Unknown Super Users</MudText>
+                            }
+                            @if (context.SuperUserIds.GroupBy(u => u).Where(g => g.Count() > 1).Any())
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Duplicates</MudText>
                             }
                         }
                         else
@@ -255,9 +261,21 @@ else
 
     private async Task OpenTeamEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.Team>? args)
     {
+        var users = allUsers;
+        if (args?.Item?.Users.Any(u => u.UserExists == false) == true)
+        {
+            // If the team has unknown users, add them to the list to make it possible to unselect them
+            users = allUsers.Concat(args.Item.Users.Where(u => !u.UserExists)).ToList();
+        }
+        if (args?.Item?.SuperUsers.Any(u => u.UserExists == false) == true)
+        {
+            // If the team has unknown super users, add them to the list to make it possible to unselect them
+            users = users.Concat(args.Item.SuperUsers.Where(u => !u.UserExists)).ToList();
+        }
+
         var parameters = new DialogParameters<TeamEditorDialog>
         {
-            { x => x.Users, allUsers }
+            { x => x.Users, users }
         };
 
         var isEditMode = args != null;
