@@ -68,63 +68,77 @@ else
                 <IdCopyButton Id="@context.Id" TooltipText="@context.Id" />
             </MudTd>
             <MudTd DataLabel="Team Name">@context.Name</MudTd>
-            <MudTd DataLabel="Users">
-                <MudStack Spacing="0" StretchItems="StretchItems.None">
-                    @if (context.UserIds != null && context.UserIds.Any())
-                    {
-                        var usersInTeam = _allUsers.Where(u => context.UserIds.Contains(u.Id)).OrderBy(u => u.FullName).ToList();
-                        var usersToDisplay = usersInTeam.Take(_maxUserDisplayCount).ToList();
-                        @foreach (var userToDisplay in usersToDisplay)
+            <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
+                <MudTd DataLabel="Users">
+                    <MudStack Spacing="0" StretchItems="StretchItems.None">
+                        @if (context.UserIds != null && context.UserIds.Any())
                         {
-                            <MudText Class="mt-1" Style="text-wrap">@userToDisplay.FullName</MudText>
+                            var usersInTeam = _allUsers.Where(u => context.UserIds.Contains(u.Id)).OrderBy(u => u.FullName).ToList();
+                            var usersToDisplay = usersInTeam.Take(_maxUserDisplayCount).ToList();
+                            @foreach (var userToDisplay in usersToDisplay)
+                            {
+                                <MudText Class="mt-1" Style="text-wrap">@userToDisplay.FullName</MudText>
+                            }
+                            @if (context.UserIds.Count() > _maxUserDisplayCount)
+                            {
+                                <MudChip T="string" Size="Size.Small">+@((context.UserIds.Count() - _maxUserDisplayCount).ToString()) more</MudChip>
+                            }
+                            @if (context.Users.Any(u => !u.UserExists))
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Unknown Users</MudText>
+                            }
+                            @if (context.UserIds.GroupBy(u => u).Where(g => g.Count() > 1).Any())
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Duplicates</MudText>
+                            }
                         }
-                        @if (context.UserIds.Count() > _maxUserDisplayCount)
+                        else
                         {
-                            <MudChip T="string" Size="Size.Small">+@((context.UserIds.Count() - _maxUserDisplayCount).ToString()) more</MudChip>
+                            <MudText>No users assigned</MudText>
                         }
-                        @if (context.Users.Any(u => !u.UserExists))
+                    </MudStack>
+                </MudTd>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.LgAndUp" Invert="false">
+                <MudTd DataLabel="Users">
+                    <MudChip T="string" Size="Size.Small">@((context.Users.Count())) user(s)</MudChip>
+                </MudTd>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
+                <MudTd DataLabel="Super Users">
+                    <MudStack Spacing="0" StretchItems="StretchItems.None">
+                        @if (context.SuperUserIds != null && context.SuperUserIds.Any())
                         {
-                            <MudText Class="mt-1" Color="Color.Error">Contains Unknown Users</MudText>
+                            var superUsersToDisplay = _allUsers.Where(u => context.SuperUserIds.Contains(u.Id)).OrderBy(u => u.FullName).Take(_maxUserDisplayCount).ToList();
+                            @foreach (var superUserToDisplay in superUsersToDisplay)
+                            {
+                                <MudText Class="mt-1">@superUserToDisplay.FullName</MudText>
+                            }
+                            @if (context.SuperUserIds.Count() > _maxUserDisplayCount)
+                            {
+                                <MudChip T="string" Size="Size.Small">+@((context.SuperUserIds.Count() - _maxUserDisplayCount).ToString()) more</MudChip>
+                            }
+                            @if (context.SuperUsers.Any(u => !u.UserExists))
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Unknown Super Users</MudText>
+                            }
+                            @if (context.SuperUserIds.GroupBy(u => u).Where(g => g.Count() > 1).Any())
+                            {
+                                <MudText Class="mt-1" Color="Color.Error">Contains Duplicates</MudText>
+                            }
                         }
-                        @if (context.UserIds.GroupBy(u => u).Where(g => g.Count() > 1).Any())
+                        else
                         {
-                            <MudText Class="mt-1" Color="Color.Error">Contains Duplicates</MudText>
+                            <MudText>No super users assigned</MudText>
                         }
-                    }
-                    else
-                    {
-                        <MudText>No users assigned</MudText>
-                    }
-                </MudStack>
-            </MudTd>
-            <MudTd DataLabel="Super Users">
-                <MudStack Spacing="0" StretchItems="StretchItems.None">
-                    @if (context.SuperUserIds != null && context.SuperUserIds.Any())
-                    {
-                        var superUsersToDisplay = _allUsers.Where(u => context.SuperUserIds.Contains(u.Id)).OrderBy(u => u.FullName).Take(_maxUserDisplayCount).ToList();
-                        @foreach (var superUserToDisplay in superUsersToDisplay)
-                        {
-                            <MudText Class="mt-1">@superUserToDisplay.FullName</MudText>
-                        }
-                        @if (context.SuperUserIds.Count() > _maxUserDisplayCount)
-                        {
-                            <MudChip T="string" Size="Size.Small">+@((context.SuperUserIds.Count() - _maxUserDisplayCount).ToString()) more</MudChip>
-                        }
-                        @if (context.SuperUsers.Any(u => !u.UserExists))
-                        {
-                            <MudText Class="mt-1" Color="Color.Error">Contains Unknown Super Users</MudText>
-                        }
-                        @if (context.SuperUserIds.GroupBy(u => u).Where(g => g.Count() > 1).Any())
-                        {
-                            <MudText Class="mt-1" Color="Color.Error">Contains Duplicates</MudText>
-                        }
-                    }
-                    else
-                    {
-                        <MudText>No super users assigned</MudText>
-                    }
-                </MudStack>
-            </MudTd>
+                    </MudStack>
+                </MudTd>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.LgAndUp" Invert="false">
+                <MudTd DataLabel="Super Users">
+                    <MudChip T="string" Size="Size.Small">@((context.SuperUsers.Count())) user(s)</MudChip>
+                </MudTd>
+            </MudHidden>
             <MudTd DataLabel="Workflow Configurations">
                 workflow configurations goes here...
             </MudTd>
