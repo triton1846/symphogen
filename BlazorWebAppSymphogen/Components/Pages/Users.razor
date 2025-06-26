@@ -30,12 +30,14 @@ else
               OnRowClick="async model => await OpenUserEditorDialogAsync(model)"
               SortLabel="Sort By">
         <ToolBarContent>
-            <MudTooltip Text="Add new user">
-                <MudIconButton Icon="@Icons.Material.Filled.Add"
-                               aria-label="add-user"
-                               Color="Color.Success"
-                               OnClick="async _ => await OpenUserEditorDialogAsync()" />
-            </MudTooltip>
+            <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
+                <MudTooltip Text="Add new user">
+                    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                   aria-label="add-user"
+                                   Color="Color.Success"
+                                   OnClick="async _ => await OpenUserEditorDialogAsync()" />
+                </MudTooltip>
+            </MudHidden>
             <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
                 <MudSpacer />
             </MudHidden>
@@ -68,7 +70,7 @@ else
             <MudTd DataLabel="Email">@context.Email</MudTd>
             <MudTd DataLabel="Department">@context.Department</MudTd>
             <MudTd DataLabel="Location">@context.Location</MudTd>
-            <MudHidden Breakpoint="Breakpoint.LgAndDown" Invert="false">
+            <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
                 <MudTd DataLabel="Teams">
                     @if (context.Teams.Any())
                     {
