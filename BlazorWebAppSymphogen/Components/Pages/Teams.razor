@@ -1,16 +1,16 @@
 ﻿@page "/teams"
 @rendermode InteractiveServer
-@using System.Text.Json
 @using BlazorWebAppSymphogen.Components.Dialogs
-@using Microsoft.Identity.Web
 @using Microsoft.Identity.Abstractions
-@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
-@inject ISnackbar Snackbar
-@inject IJSRuntime JSRuntime
-@inject IDownstreamApi downstreamApi
+@using Microsoft.Identity.Web
+@using System.Text.Json
 @inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
-@inject IUserPreferences UserPreferences
 @inject IDialogService DialogService
+@inject IDownstreamApi downstreamApi
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@inject IUserPreferences UserPreferences
+@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
 <PageTitle>Teams</PageTitle>
@@ -38,7 +38,17 @@ else
                       OnRowClick="async model => await OpenTeamEditorDialogAsync(model)"
                       SortLabel="Sort By">
                 <ToolBarContent>
-                    <MudSpacer />
+                    <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
+                        <MudTooltip Text="Add new user">
+                            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                           aria-label="add-user"
+                                           Color="Color.Success"
+                                           OnClick="async _ => await OpenTeamEditorDialogAsync()" />
+                        </MudTooltip>
+                    </MudHidden>
+                    <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
+                        <MudSpacer />
+                    </MudHidden>
                     <MudTextField @bind-Value="searchString"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Search"
@@ -119,14 +129,16 @@ else
                     </MudTd>
                 </RowTemplate>
                 <FooterContent>
-                    <MudTd>
-                        <MudTooltip Text="Add new team">
-                            <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                           aria-label="add-team"
-                                           Color="Color.Success"
-                                           OnClick="async _ => await OpenTeamEditorDialogAsync(null)" />
-                        </MudTooltip>
-                    </MudTd>
+                    <MudTFootRow>
+                        <MudTd>
+                            <MudTooltip Text="Add new team">
+                                <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                               aria-label="add-team"
+                                               Color="Color.Success"
+                                               OnClick="async _ => await OpenTeamEditorDialogAsync()" />
+                            </MudTooltip>
+                        </MudTd>
+                    </MudTFootRow>
                 </FooterContent>
                 <PagerContent>
                     <MudTablePager />
@@ -259,7 +271,7 @@ else
         return false;
     }
 
-    private async Task OpenTeamEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.Team>? args)
+    private async Task OpenTeamEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.Team>? args = null)
     {
         var users = allUsers;
         if (args?.Item?.Users.Any(u => u.UserExists == false) == true)
