@@ -18,6 +18,12 @@ public class Team : IEquatable<Team>
 
     public IEnumerable<string>? WorkflowConfigurationIds { get; set; }
 
+    [JsonIgnore]
+    public List<WorkflowConfiguration> WorkflowConfigurations { get; set; } = [];
+
+    [JsonIgnore]// This property is used for validation purposes only and should not be serialized
+    public Team? ValidationWorkflowConfigurations { get; set; }
+
     public bool TeamExists { get; set; } = true;
 
     public bool Equals(Team? other)

@@ -1,0 +1,66 @@
+﻿@inject IJSRuntime JSRuntime
+
+<MudTooltip Text="@TooltipText" Disabled="@(!ShowTooltip)">
+    <MudIconButton Icon="@(_copiedIconIds.Contains(Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
+                   Color="@ButtonColor"
+                   OnClick="async () => await CopyId(Id)" />
+</MudTooltip>
+
+@code {
+    private HashSet<string?> _copiedIconIds = new();
+    private System.Timers.Timer? _iconTimer;
+
+    [Parameter]
+    public bool ShowTooltip { get; set; } = true;
+
+    [Parameter]
+    public string TooltipText { get; set; } = "Copy ID";
+
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    [Parameter]
+    public Color ButtonColor { get; set; } = Color.Success;
+
+    protected override void OnInitialized()
+    {
+        _iconTimer = new System.Timers.Timer(1000);
+        _iconTimer.Elapsed += ResetIcon;
+        _iconTimer.AutoReset = false;
+    }
+
+    private async Task CopyId(string? id)
+    {
+        if (!string.IsNullOrEmpty(id))
+        {
+            // Copy the ID to clipboard
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", id);
+
+            // Change icon to check mark
+            _copiedIconIds.Clear();
+            _copiedIconIds.Add(id);
+
+            // Start timer to revert icon
+            _iconTimer?.Stop();
+            _iconTimer?.Start();
+        }
+    }
+
+    private void ResetIcon(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Clear all copied icons
+        _copiedIconIds.Clear();
+
+        // Trigger UI update
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_iconTimer != null)
+        {
+            _iconTimer.Elapsed -= ResetIcon;
+            _iconTimer.Dispose();
+        }
+    }
+}

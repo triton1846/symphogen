@@ -10,6 +10,7 @@ public class TestDataService : ITestDataService
     private List<User> _users = [];
     private List<Team> _teams = [];
     private List<string> _teamIds = [];
+    private List<WorkflowConfiguration> _workflowConfigurations = [];
     private bool _createdUnknownUsersAsTeamMembers = false;
     //private bool _createdUnknownSuperUsersAsTeamMembers = false;
     private bool _createdDuplicateUsersAsTeamMembers = false;
@@ -24,11 +25,11 @@ public class TestDataService : ITestDataService
         _logger = logger;
         _userPreferences = userPreferences;
 
-        if (_userPreferences.MimerEnvironment != MimerEnvironment.TestData)
-        {
-            _logger.LogError("CreateInvalidData should only be called in TestData environment. Current environment: {Environment}", _userPreferences.MimerEnvironment);
-            throw new InvalidOperationException("TestDataService should only be used in TestData environment.");
-        }
+        //if (_userPreferences.MimerEnvironment != MimerEnvironment.TestData)
+        //{
+        //    _logger.LogError("CreateInvalidData should only be called in TestData environment. Current environment: {Environment}", _userPreferences.MimerEnvironment);
+        //    throw new InvalidOperationException("TestDataService should only be used in TestData environment.");
+        //}
     }
 
     public async Task<IEnumerable<Team>> GetTeamsAsync()
@@ -58,6 +59,20 @@ public class TestDataService : ITestDataService
         CreateInvalidData();
 
         return _users;
+    }
+
+    public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
+    {
+        //await Task.Delay(_userPreferences.FetchWorkflowConfigurationsDelay); // TODO: Implement delay if needed
+
+        if (_workflowConfigurations.Count != 0)
+        {
+            return _workflowConfigurations;
+        }
+
+        _workflowConfigurations = await GetRandomWorkflowConfigurations();
+
+        return _workflowConfigurations;
     }
 
     private List<User> GetRandomUsers()
@@ -187,7 +202,12 @@ public class TestDataService : ITestDataService
                         .Where(u => u.TeamIds?.Contains(teamId) == true)
                         .Select(u => u.Id)
                         .ToList();
-                }).Generate();
+                })
+                .RuleFor(t => t.WorkflowConfigurationIds, f =>
+                {
+                    return [.. f.Make(random.Next(0, 4), () => Guid.NewGuid().ToString()).Distinct()];
+                })
+                .Generate();
 
             // Ensure that names are unique
             while (randomTeams.Any(t => t.Name == team.Name))
@@ -223,11 +243,77 @@ public class TestDataService : ITestDataService
 
         return _teamIds;
     }
+
+    private async Task<List<WorkflowConfiguration>> GetRandomWorkflowConfigurations()
+    {
+        var teams = await GetTeamsAsync(); // Base workflow configurations on teams
+
+        var studyTypeKeys = new[] { "labbook", "external development", "N/A", "gmp_batch_no" };
+        var studyTypeInputTypes = new[] { "text", "number", "date", "select" };
+
+        var random = new Random();
+        var randomWorkflowConfigurations = new List<WorkflowConfiguration>();
+        foreach (var team in teams)
+        {
+            foreach (var workflowConfigurationId in team.WorkflowConfigurationIds ?? [])
+            {
+                var workflowConfiguration = new Bogus.Faker<WorkflowConfiguration>()
+                    .RuleFor(t => t.Id, f => workflowConfigurationId)
+                    .RuleFor(t => t.Name, f => f.Commerce.ProductName())
+                    .RuleFor(t => t.Department, f => f.Commerce.Department())
+                    .RuleFor(t => t.StudyTypes, f => 
+                    {
+                        //var studyTypes = new List<(string Key, string InputType)>();
+                        //var numberOfStudyTypes = random.Next(0, 5); // Random number of study types
+                        //for (int i = 0; i < numberOfStudyTypes; i++)
+                        //{
+                        //    var key = f.PickRandom(studyTypeKeys);
+                        //    var inputType = f.PickRandom(studyTypeInputTypes);
+                        //    studyTypes.Add((key, inputType));
+                        //}
+                        //return studyTypes;
+                        return [.. f.Make(random.Next(0, 5), () => new StudyType
+                        {
+                            Key = f.PickRandom(studyTypeKeys),
+                            InputType = f.PickRandom(studyTypeInputTypes)
+                        })];
+                    })
+                    .RuleFor(t => t.ParameterIdentifier, f =>
+                    {
+                        var identifiers = new[] { 
+                            "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id", 
+                            "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id", 
+                            "single_cell_id", "stability_id", "testing_id", "transfection_id" };
+                        return f.PickRandom(identifiers);
+                    })
+                    .RuleFor(t => t.ParameterRowCount, f => random.Next(1, 1000))
+                    .RuleFor(t => t.DatasourceConfigurationIds, f =>
+                    {
+                        return [.. f.Make(random.Next(0, 10), () => Guid.NewGuid().ToString()).Distinct()];
+                    })
+                    .RuleFor(t => t.IsActive, f => f.Random.Bool())
+                    .Generate();
+
+                // Ensure that names are unique
+                while (randomWorkflowConfigurations.Any(wc => wc.Name == workflowConfiguration.Name))
+                {
+                    workflowConfiguration.Name = new Bogus.Faker().Commerce.ProductName();
+                }
+
+                randomWorkflowConfigurations.Add(workflowConfiguration);
+            }
+
+            _logger.LogInformation("Generated {Count} random workflow configurations.", randomWorkflowConfigurations.Count);
+        }
+
+        return randomWorkflowConfigurations;
+    }
 }
 
 public interface ITestDataService
 {
     Task<IEnumerable<User>> GetUsersAsync();
     Task<IEnumerable<Team>> GetTeamsAsync();
+    Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync();
     void CreateInvalidData();
 }

@@ -15,6 +15,7 @@ public class CosmosService : ICosmosService
 
     private readonly Dictionary<MimerEnvironment, List<Models.User>> _users = [];
     private readonly Dictionary<MimerEnvironment, List<Team>> _teams = [];
+    private readonly Dictionary<MimerEnvironment, List<WorkflowConfiguration>> _workflowConfigurations = [];
 
     public CosmosService(
         ILogger<CosmosService> logger,
@@ -61,37 +62,8 @@ public class CosmosService : ICosmosService
 
         var users = await GetItemsAsync<Models.User>(mimerEnvironment, "users", "users_search", filterExpression);
         _users[mimerEnvironment] = users;
+
         return _users[mimerEnvironment];
-
-
-
-        //_users[mimerEnvironment] = await GetRandomUsers(mimerEnvironment, _userPreferences.TestDataNumberOfUsers, _userPreferences.FetchUsersDelay); // Simulate a delay for testing purposes
-
-        //// Make sure test data is consistent
-        //foreach (var user in _users[mimerEnvironment])
-        //{
-        //    foreach (var team in user.Teams)
-        //    {
-        //        if (_teams[mimerEnvironment].All(t => t.Id != team.Id))
-        //        {
-        //            _teams[mimerEnvironment].Add(team);
-        //        }
-        //    }
-        //}
-
-
-        //// TODO: Use user preferences to determine if we should simulate data errors
-        //// Make data errors to test UI error handling
-
-        //// Add a user with a duplicate team ID to simulate data inconsistency
-        //var userWithDuplicateTeamId = _users[mimerEnvironment].OrderBy(u => u.FullName).First(u => u.TeamIds?.Count() > 1);
-        //userWithDuplicateTeamId.TeamIds = userWithDuplicateTeamId.TeamIds!.Append(userWithDuplicateTeamId.TeamIds!.First());
-
-        //// Add a user with an unknown team ID to simulate data inconsistency
-        //var userWithUnknownTeamId = _users[mimerEnvironment].OrderBy(u => u.FullName).First();
-        //userWithUnknownTeamId.TeamIds = userWithUnknownTeamId.TeamIds?.Append("unknown-team-id");
-
-        //return _users[mimerEnvironment];
     }
 
     public async Task<List<Team>> GetTeamsAsync(
@@ -113,20 +85,31 @@ public class CosmosService : ICosmosService
 
         var teams = await GetItemsAsync<Team>(mimerEnvironment, "users", "teams", filterExpression);
         _teams[mimerEnvironment] = teams;
+
         return _teams[mimerEnvironment];
+    }
 
+    public async Task<List<WorkflowConfiguration>> GetWorkflowConfigurationsAsync(
+        MimerEnvironment mimerEnvironment,
+        Func<IQueryable<WorkflowConfiguration>, IQueryable<WorkflowConfiguration>>? filterExpression = null)
+    {
+        if (_userPreferences.MimerEnvironment == MimerEnvironment.TestData)
+        {
+            _logger.LogDebug("Using test data for workflow configurations in {Environment}", mimerEnvironment);
+            var testDataWorkflowConfigurations = await _testDataService.GetWorkflowConfigurationsAsync();
+            return [.. testDataWorkflowConfigurations];
+        }
 
+        if (/*_userPreferences.UseCacheData && */_workflowConfigurations.TryGetValue(mimerEnvironment, out _) && _workflowConfigurations[mimerEnvironment].Any())
+        {
+            _logger.LogDebug("Returning cached workflow configurations for {Environment}", mimerEnvironment);
+            return [.. _workflowConfigurations[mimerEnvironment]];
+        }
 
-        //_teams[mimerEnvironment] = await GetRandomTeams(mimerEnvironment, _userPreferences.FetchTeamsDelay); // Simulate a delay for testing purposes
+        var workflowConfigurations = await GetItemsAsync<WorkflowConfiguration>(mimerEnvironment, "workflows", "workflowConfigurations", filterExpression);
+        _workflowConfigurations[mimerEnvironment] = workflowConfigurations;
 
-        //// TODO: Use user preferences to determine if we should simulate data errors
-        //// Add a user duplicate team ID to simulate data inconsistency
-        //var teamWithDuplicateUserId = _teams[mimerEnvironment].OrderBy(t => t.Name).First(t => t.UserIds.Count() > 1);
-        //teamWithDuplicateUserId.UserIds = teamWithDuplicateUserId.UserIds.Append(teamWithDuplicateUserId.UserIds.First()).ToList();
-        //var teamWithDuplicateSuperUserId = _teams[mimerEnvironment].OrderBy(t => t.Name).First(t => t.SuperUserIds.Count() > 1);
-        //teamWithDuplicateSuperUserId.SuperUserIds = teamWithDuplicateSuperUserId.SuperUserIds.Append(teamWithDuplicateSuperUserId.SuperUserIds.First()).ToList();
-
-        //return _teams[mimerEnvironment];
+        return _workflowConfigurations[mimerEnvironment];
     }
 
     public async Task<List<T>> GetItemsAsync<T>(

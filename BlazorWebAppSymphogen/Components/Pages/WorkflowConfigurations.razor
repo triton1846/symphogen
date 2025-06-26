@@ -1,0 +1,183 @@
+﻿@page "/workflowconfigurations"
+@rendermode InteractiveServer
+@using System.Text.Json
+@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@inject IUserPreferences UserPreferences
+@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
+@attribute [Authorize]
+
+@if (!_isInitialized)
+{
+    <MudOverlay @bind-Visible="_isLoading" DarkBackground>
+        <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+    </MudOverlay>
+}
+else
+{
+    <MudText Typo="Typo.h3">Workflow Configurations</MudText>
+    <MudTable AllowUnsorted="false"
+              Dense="true"
+              Filter="new Func<WorkflowConfiguration, bool>(FilterFunc)"
+              Hover="true"
+              Items="_allWorkflowConfigurations"
+              Loading="_isLoading"
+              ReadOnly="_isLoading"
+              T="WorkflowConfiguration"
+              OnRowClick="async model => await OpenWorkflowConfigurationEditorDialogAsync(model)"
+              SortLabel="Sort By">
+        <ToolBarContent>
+            <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
+                <MudTooltip Text="Add new workflow configuration">
+                    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                   aria-label="add-workflowconfiguration"
+                                   Color="Color.Success"
+                                   OnClick="async _ => await OpenWorkflowConfigurationEditorDialogAsync()" />
+                </MudTooltip>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
+                <MudSpacer />
+            </MudHidden>
+            <MudTextField @bind-Value="_searchString"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="mt-0"
+                          Clearable="true"
+                          IconSize="Size.Medium"
+                          Immediate="true"
+                          Placeholder="Search"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<WorkflowConfiguration, object>(x => x.Id)">ID</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<WorkflowConfiguration, object>(x => x.Name ?? string.Empty)">Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<WorkflowConfiguration, object>(x => x.Department ?? string.Empty)">Department</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="SortByStudyTypes">Study Types</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<WorkflowConfiguration, object>(x => x.ParameterIdentifier ?? string.Empty)">Parameter Identifier</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<WorkflowConfiguration, object>(x => x.ParameterRowCount)">Parameter Row Count</MudTableSortLabel>
+            </MudTh>
+            <MudTh>Datasource Configuration Ids</MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<WorkflowConfiguration, object>(x => x.IsActive)">Status</MudTableSortLabel>
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="ID">
+                <IdCopyButton Id="@context.Id" TooltipText="@context.Id" />
+            </MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Department">@context.Department</MudTd>
+            <MudTd DataLabel="Study Types">
+                <MudStack Spacing="0" StretchItems="StretchItems.All">
+                    @foreach (var studyType in context.StudyTypes.OrderBy(s => s.Key).ThenBy(t => t.InputType))
+                    {
+                        @($"{studyType.Key} - {studyType.InputType}")
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Parameter Identifier">@context.ParameterIdentifier</MudTd>
+            <MudTd DataLabel="Parameter Count">@context.ParameterRowCount</MudTd>
+            <MudTd DataLabel="Datasource Configuration Ids">
+                <MudStack Spacing="0" StretchItems="StretchItems.All">
+                    @foreach (var id in context.DatasourceConfigurationIds)
+                    {
+                        <MudText>@id</MudText>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Status">@(context.IsActive ? "Active" : "Inactive")</MudTd>
+        </RowTemplate>
+        <FooterContent>
+            <MudTFootRow>
+                <MudTd>
+                    <MudTooltip Text="Add new team">
+                        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                       aria-label="add-team"
+                                       Color="Color.Success"
+                                       OnClick="async _ => await OpenWorkflowConfigurationEditorDialogAsync()" />
+                    </MudTooltip>
+                </MudTd>
+            </MudTFootRow>
+        </FooterContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+        <EditButtonContent Context="button">
+            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+        </EditButtonContent>
+    </MudTable>
+}
+
+@code {
+    private bool _isInitialized = false;
+    private bool _isLoading = true;
+    private List<WorkflowConfiguration> _allWorkflowConfigurations = [];
+    private string _searchString = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        await LoadWorkflowConfigurationsAsync();
+        _isLoading = false;
+
+        _isInitialized = true;
+    }
+
+    private async Task LoadWorkflowConfigurationsAsync()
+    {
+        Logger.LogInformation("Loading workflow configurations for environment: {Environment}", UserPreferences.MimerEnvironment);
+        _allWorkflowConfigurations = await CosmosService.GetWorkflowConfigurationsAsync(UserPreferences.MimerEnvironment);
+
+        // TODO: Handle unknown workflow configurations
+    }
+
+    private bool FilterFunc(WorkflowConfiguration workflowConfiguration)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (workflowConfiguration.Id.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (workflowConfiguration.Name?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (workflowConfiguration.Department?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (workflowConfiguration.ParameterIdentifier?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (workflowConfiguration.StudyTypes.Any(st => st.Key.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                                                       st.InputType.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+        if (workflowConfiguration.ParameterRowCount.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (workflowConfiguration.IsActive.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (_searchString.Equals("active", StringComparison.InvariantCultureIgnoreCase) && workflowConfiguration.IsActive)
+            return true;
+        if (_searchString.Equals("inactive", StringComparison.InvariantCultureIgnoreCase) && !workflowConfiguration.IsActive)
+            return true;
+
+        return false;
+    }
+
+    private async Task OpenWorkflowConfigurationEditorDialogAsync(MudBlazor.TableRowClickEventArgs<WorkflowConfiguration>? args = null)
+    {
+        Snackbar.Add("Opening workflow configuration editor dialog...", Severity.Info);
+        await Task.CompletedTask;
+    }
+
+    private Func<WorkflowConfiguration, object> SortByStudyTypes =>
+        workflowConfiguration => string.Join(string.Empty, workflowConfiguration.StudyTypes
+            .OrderBy(st => st.Key)
+            .Select(st => $"{st.Key} - {st.InputType}"));
+}

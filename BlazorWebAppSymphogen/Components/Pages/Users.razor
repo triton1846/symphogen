@@ -10,25 +10,26 @@
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
-@if (!isInitialized)
+@if (!_isInitialized)
 {
-    <MudOverlay @bind-Visible="isLoading" DarkBackground>
+    <MudOverlay @bind-Visible="_isLoading" DarkBackground>
         <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
     </MudOverlay>
 }
 else
 {
     <MudText Typo="Typo.h3">Users</MudText>
-    <MudTable @bind-SelectedItem="selectedItem"
+    <MudTable @bind-SelectedItem="_selectedItem"
+              AllowUnsorted="false"
               Dense="true"
               Filter="new Func<Models.User, bool>(FilterFunc)"
               Hover="true"
-              Items="@allUsers"
-              Loading="isLoading"
-              ReadOnly="isLoading"
-              T="Models.User"
+              Items="_allUsers"
+              Loading="_isLoading"
               OnRowClick="async model => await OpenUserEditorDialogAsync(model)"
-              SortLabel="Sort By">
+              ReadOnly="_isLoading"
+              SortLabel="Sort By"
+              T="Models.User">
         <ToolBarContent>
             <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
                 <MudTooltip Text="Add new user">
@@ -41,7 +42,7 @@ else
             <MudHidden Breakpoint="Breakpoint.MdAndDown" Invert="false">
                 <MudSpacer />
             </MudHidden>
-            <MudTextField @bind-Value="searchString"
+            <MudTextField @bind-Value="_searchString"
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           Class="mt-0"
@@ -60,11 +61,7 @@ else
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ID">
-                <MudTooltip Text="@context.Id">
-                    <MudIconButton Icon="@(copiedIconIds.Contains(context.Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
-                                   Color="Color.Success"
-                                   OnClick="async () => await CopyId(context.Id)" />
-                </MudTooltip>
+                <IdCopyButton Id="@context.Id" TooltipText="@context.Id" />
             </MudTd>
             <MudTd DataLabel="Full Name">@context.FullName</MudTd>
             <MudTd DataLabel="Email">@context.Email</MudTd>
@@ -134,46 +131,39 @@ else
 }
 
 @code {
-    private bool isInitialized = false;
-    private List<BlazorWebAppSymphogen.Models.User>? allUsers;
-    private HashSet<string?> copiedIconIds = new();
-    private System.Timers.Timer? iconTimer;
-    private string searchString = string.Empty;
-    private Models.User selectedItem = default!;
-    private List<string> editEvents = new();
-    private bool isLoading = true;
-    private List<Models.Team> allTeams = [];
+    private bool _isInitialized = false;
+    private List<BlazorWebAppSymphogen.Models.User>? _allUsers;
+    private string _searchString = string.Empty;
+    private Models.User _selectedItem = default!;
+    private List<string> _editEvents = new();
+    private bool _isLoading = true;
+    private List<Models.Team> _allTeams = [];
     private List<Models.Team> _selectedTeams = [];
 
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
+        _isLoading = true;
         await LoadTeamsAsync();
         await LoadUsersAsync();
-        isLoading = false;
-
-        iconTimer = new System.Timers.Timer(1000);
-        iconTimer.Elapsed += ResetIcon;
-        iconTimer.AutoReset = false;
-
-        isInitialized = true;
+        _isLoading = false;
+        _isInitialized = true;
     }
 
     private async Task LoadUsersAsync()
     {
         Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
-        allUsers = await CosmosService.GetUsersAsync(UserPreferences.MimerEnvironment);
-        foreach (var user in allUsers)
+        _allUsers = await CosmosService.GetUsersAsync(UserPreferences.MimerEnvironment);
+        foreach (var user in _allUsers)
         {
             user.Teams.Clear();
             foreach (var teamId in user.TeamIds ?? [])
             {
-                var team = allTeams.FirstOrDefault(t => t.Id == teamId);
+                var team = _allTeams.FirstOrDefault(t => t.Id == teamId);
                 var unknownTeam = new Models.Team { Id = teamId, Name = "Unknown Team", TeamExists = false };
                 user.Teams.Add(team ?? unknownTeam);
-                if (!allTeams.Any(t => t.Id == teamId))
+                if (!_allTeams.Any(t => t.Id == teamId))
                 {
-                    allTeams.Add(unknownTeam);
+                    _allTeams.Add(unknownTeam);
                 }
             }
         }
@@ -182,53 +172,22 @@ else
     private async Task LoadTeamsAsync()
     {
         Logger.LogInformation("Loading teams for environment: {Environment}", UserPreferences.MimerEnvironment);
-        allTeams = await CosmosService.GetTeamsAsync(UserPreferences.MimerEnvironment);
-    }
-
-    private async Task CopyId(string? id)
-    {
-        if (!string.IsNullOrEmpty(id))
-        {
-            // Copy the ID to clipboard
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", id);
-
-            // Change icon to check mark
-            copiedIconIds.Clear();
-            copiedIconIds.Add(id);
-
-            // Start timer to revert icon
-            iconTimer?.Stop();
-            iconTimer?.Start();
-        }
-    }
-
-    private void ResetIcon(object? sender, System.Timers.ElapsedEventArgs e)
-    {
-        // Clear all copied icons
-        copiedIconIds.Clear();
-
-        // Trigger UI update
-        InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        iconTimer?.Dispose();
+        _allTeams = await CosmosService.GetTeamsAsync(UserPreferences.MimerEnvironment);
     }
 
     private bool FilterFunc(Models.User user)
     {
-        if (string.IsNullOrWhiteSpace(searchString))
+        if (string.IsNullOrWhiteSpace(_searchString))
             return true;
-        if (user.Department?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Department?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
-        if (user.Email?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Email?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
-        if (user.FullName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+        if (user.FullName?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
-        if (user.Location?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Location?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
-        if (user.Id?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Id?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
         return false;
     }
@@ -247,7 +206,7 @@ else
         var isEditMode = args != null;
         var parameters = new DialogParameters<UserEditorDialog>
         {
-            { x => x.AllTeams, allTeams },
+            { x => x.AllTeams, _allTeams },
             { x => x.IsEditMode, isEditMode }
         };
         if (isEditMode)
@@ -255,23 +214,27 @@ else
             parameters.Add(x => x.User, args!.Item);
         }
 
-        var userBefore = isEditMode ? JsonSerializer.Deserialize<Models.User>(JsonSerializer.Serialize(args!.Item)) : null;
+        var jsonSerializerOptions = new JsonSerializerOptions
+        {
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
+        };
+        var userBefore = isEditMode ? JsonSerializer.Deserialize<Models.User>(JsonSerializer.Serialize(args!.Item), jsonSerializerOptions) : null;
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
         var dialog = await DialogService.ShowAsync<UserEditorDialog>(null, parameters, options);
         var result = await dialog.Result;
 
-        if (result?.Canceled == false && allUsers != null)
+        if (result?.Canceled == false && _allUsers != null)
         {
             if (result.Data != null && result.Data is Models.User user)
             {
                 if (isEditMode)
                 {
                     // Update existing user
-                    var index = allUsers.FindIndex(u => u.Id == user.Id);
+                    var index = _allUsers.FindIndex(u => u.Id == user.Id);
                     if (index >= 0)
                     {
-                        allUsers[index] = user;
-                        allUsers = allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                        _allUsers[index] = user;
+                        _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
                         Snackbar.Add($"User {user.FullName} updated successfully!", Severity.Success);
                         Logger.LogInformation("Updated user: {UserName} ({UserId})", user.FullName, user.Id);
                     }
@@ -284,8 +247,8 @@ else
                 else
                 {
                     // Add new user
-                    allUsers.Add(user);
-                    allUsers = allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                    _allUsers.Add(user);
+                    _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
                     Snackbar.Add($"User {user.FullName} added successfully!", Severity.Success);
                     Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
                 }
@@ -293,11 +256,11 @@ else
             else if (result.Data != null && result.Data is bool deleteUser && deleteUser && isEditMode)
             {
                 // Handle user deletion
-                var index = allUsers.FindIndex(u => u.Id == args!.Item?.Id);
+                var index = _allUsers.FindIndex(u => u.Id == args!.Item?.Id);
                 if (index >= 0)
                 {
-                    var deletedUser = allUsers[index];
-                    allUsers.RemoveAt(index);
+                    var deletedUser = _allUsers[index];
+                    _allUsers.RemoveAt(index);
                     Snackbar.Add($"User {deletedUser.FullName} deleted successfully!", Severity.Success);
                     Logger.LogInformation("Deleted user: {UserName} ({UserId})", deletedUser.FullName, deletedUser.Id);
                 }
@@ -310,11 +273,11 @@ else
         }
         else
         {
-            var index = allUsers!.FindIndex(u => u.Id == args?.Item?.Id);
+            var index = _allUsers!.FindIndex(u => u.Id == args?.Item?.Id);
             if (index >= 0 && userBefore != null)
             {
                 // Reset to original values if dialog was canceled
-                allUsers[index] = userBefore;
+                _allUsers[index] = userBefore;
                 Snackbar.Add($"Changes to user {userBefore.FullName} were canceled.", Severity.Info);
                 Logger.LogInformation("Changes to user {UserName} ({UserId}) were canceled", userBefore.FullName, userBefore.Id);
             }

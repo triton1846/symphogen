@@ -34,6 +34,7 @@ public class User : IEntity
     [JsonProperty(PropertyName = "teamIds")]
     public IEnumerable<string>? TeamIds { get; set; }
 
+    [JsonIgnore]
     public List<Team> Teams { get; set; } = [];
 
     [JsonIgnore]// This property is used for validation purposes only and should not be serialized
