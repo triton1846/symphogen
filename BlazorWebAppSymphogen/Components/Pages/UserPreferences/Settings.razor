@@ -6,21 +6,24 @@
 <PageTitle>Settings</PageTitle>
 
 <MudText Typo="Typo.h3" Class="mb-4">Settings</MudText>
-<MudText Typo="Typo.body1" Class="mb-4">
-    Customize application behavior and data usage settings to suit your needs.
-</MudText>
 
 <MudGrid>
 
-    <MudItem xs="12" sm="12" md="8" lg="6">
-        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-4">
-            Note: Some of these settings are only applicable if <code>UseTestData</code> is set to <code>true</code>.
-        </MudAlert>
+    <MudItem xs="12" sm="12" md="12" lg="9">
+        <MudText Typo="Typo.body1" Class="mb-4">
+            Adjust the application settings to match your preferences.
+            Configure data usage, environment settings, and automation options to enhance your experience.
+            Tailor the behavior of the application to suit your specific needs and requirements.
+        </MudText>
     </MudItem>
 
     <MudItem xs="12" />
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4">General Settings</MudText>
+    </MudItem>
+
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <MudCard Outlined="true">
             <MudCardHeader>
                 <CardHeaderContent>
@@ -48,7 +51,7 @@
             </MudCardContent>
             <MudCardActions>
                 <MudRadioGroup T="MimerEnvironment" Value="@UserPreferences.MimerEnvironment" ValueChanged="val => UserPreferences.MimerEnvironment = val">
-                    <MudRadio Value="MimerEnvironment.TestData">Test data</MudRadio>
+                    <MudRadio Value="MimerEnvironment.TestData">Test Data</MudRadio>
                     <MudRadio Value="MimerEnvironment.SB1">SB1</MudRadio>
                     <MudRadio Value="MimerEnvironment.QA">QA</MudRadio>
                 </MudRadioGroup>
@@ -56,7 +59,7 @@
         </MudCard>
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.RemoveInvalidDataAutomatically"
                      Description="This enables the automatic removal of invalid data."
                      DisabledText="Invalid data not removed"
@@ -67,7 +70,19 @@
                      Title="Remove invalid data automatically?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4">Settings for Test Data Usage</MudText>
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="8" lg="6">
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-4">
+            Note: These settings are only applicable if <code>environment</code> is set to <code>Test Data</code>.
+        </MudAlert>
+    </MudItem>
+
+    <MudItem xs="12" />
+
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <SliderCard @bind-CurrentValue="@UserPreferences.FetchUsersDelay"
                     Description="Delay for fetching user data from the server."
                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -75,7 +90,7 @@
                     Title="Delay for fetching user data?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <SliderCard @bind-CurrentValue="@UserPreferences.FetchTeamsDelay"
                     Description="Delay for fetching team data from the server."
                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -83,7 +98,7 @@
                     Title="Delay for fetching team data?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <SliderCard @bind-CurrentValue="@UserPreferences.FetchWorkflowConfigurationsDelay"
                     Description="Delay for fetching workflow configuration data from the server."
                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -91,7 +106,7 @@
                     Title="Delay for fetching workflow configuration data?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <MudCard Outlined="true">
             <MudCardHeader>
                 <CardHeaderContent>
@@ -125,7 +140,7 @@
         </MudCard>
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.TestDataCreateUnknownUsersAsTeamMembers"
                      Description="This enables the creation of unknown users when using test data."
                      Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -135,7 +150,7 @@
                      Title="Create unknown users?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.TestDataCreateDuplicateTeamMembershipsForUsers"
                      Description="This enables the creation of duplicate team memberships for users when using test data."
                      Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -145,7 +160,7 @@
                      Title="Create duplicate team memberships?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers"
                      Description="This enables the creation of unknown super users when using test data."
                      Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -155,7 +170,7 @@
                      Title="Create unknown super users?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers"
                      Description="This enables the creation of duplicate team memberships for super users when using test data."
                      Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -165,7 +180,7 @@
                      Title="Create duplicate team memberships for super users?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.TestDataCreateUnknownTeams"
                      Description="This enables the creation of unknown teams when using test data."
                      Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -175,7 +190,7 @@
                      Title="Create unknown teams?" />
     </MudItem>
 
-    <MudItem xs="12" sm="12" md="4" lg="3">
+    <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
         <BooleanCard @bind-Value="UserPreferences.TestDataCreateDuplicateTeams"
                      Description="This enables the creation of duplicate teams when using test data."
                      Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -189,6 +204,10 @@
 
 @code {
     private TimeSpan _defaultTimeSpan = TimeSpan.FromMilliseconds(2000);
+    private int _cardXs = 12;
+    private int _cardSm = 12;
+    private int _cardMd = 6;
+    private int _cardLg = 3;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
