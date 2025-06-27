@@ -1,0 +1,58 @@
+﻿<MudCard Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icon"
+                           Disabled="@Disabled"
+                           OnClick="@OnToggle"
+                           Color="@(EffectiveValue ? Color.Warning : Color.Success)" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText>@Description</MudText>
+        <MudText Typo="Typo.body2">
+            @if (!string.IsNullOrWhiteSpace(BodyText))
+            {
+                <MudText Typo="Typo.body2">
+                    @BodyText
+                </MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2">
+                    This is useful for testing loading states.
+                </MudText>
+            }
+        </MudText>
+    </MudCardContent>
+    <MudCardActions Class="mx-3">
+        <MudSwitch @bind-Value="Value"
+                   ThumbIcon="@(Value? Icons.Material.Filled.Done : Icons.Material.Filled.Close)"
+                   ThumbIconColor="@(EffectiveValue? Color.Warning: Color.Success)">@(Value? EnabledText : DisabledText)</MudSwitch>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool InvertValue { get; set; } = false;
+    [Parameter] public bool Value { get; set; }
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+    [Parameter] public string? BodyText { get; set; }
+    [Parameter] public string Description { get; set; } = "";
+    [Parameter] public string DisabledText { get; set; } = "Disabled";
+    [Parameter] public string EnabledText { get; set; } = "Enabled";
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.People;
+    [Parameter] public string Title { get; set; } = "";
+
+    private bool EffectiveValue => InvertValue ? !Value : Value;
+
+    private async Task OnToggle()
+    {
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(!Value);
+        }
+    }
+}

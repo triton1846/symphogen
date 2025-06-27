@@ -12,11 +12,11 @@ public class TestDataService : ITestDataService
     private List<string> _teamIds = [];
     private List<WorkflowConfiguration> _workflowConfigurations = [];
     private bool _createdUnknownUsersAsTeamMembers = false;
-    //private bool _createdUnknownSuperUsersAsTeamMembers = false;
+    private bool _createdUnknownSuperUsersAsTeamMembers = false;
     private bool _createdDuplicateUsersAsTeamMembers = false;
-    //private bool _createdDuplicateSuperUsers = false;
-    //private bool _createdUnknownTeams = false;
-    //private bool _createdDuplicateTeams = false;
+    private bool _createdDuplicateSuperUsersAsTeamMembers = false;
+    private bool _createdUnknownTeams = false;
+    private bool _createdDuplicateTeams = false;
 
     public TestDataService(
         ILogger<TestDataService> logger,
@@ -24,12 +24,6 @@ public class TestDataService : ITestDataService
     {
         _logger = logger;
         _userPreferences = userPreferences;
-
-        //if (_userPreferences.MimerEnvironment != MimerEnvironment.TestData)
-        //{
-        //    _logger.LogError("CreateInvalidData should only be called in TestData environment. Current environment: {Environment}", _userPreferences.MimerEnvironment);
-        //    throw new InvalidOperationException("TestDataService should only be used in TestData environment.");
-        //}
     }
 
     public async Task<IEnumerable<Team>> GetTeamsAsync()
@@ -63,7 +57,7 @@ public class TestDataService : ITestDataService
 
     public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
     {
-        //await Task.Delay(_userPreferences.FetchWorkflowConfigurationsDelay); // TODO: Implement delay if needed
+        await Task.Delay(_userPreferences.FetchWorkflowConfigurationsDelay);
 
         if (_workflowConfigurations.Count != 0)
         {
@@ -113,9 +107,10 @@ public class TestDataService : ITestDataService
 
     public void CreateInvalidData()
     {
+        // OK
         if (_userPreferences.TestDataCreateUnknownUsersAsTeamMembers && !_createdUnknownUsersAsTeamMembers)
         {
-            var numberOfUnknownUsers = 3; // TODO: Move to user preferences?
+            var numberOfUnknownUsers = new Random().Next(1, 4);
             for (int i = 0; i < numberOfUnknownUsers; i++)
             {
                 var user = _users.OrderBy(u => u.FullName).Skip(i).FirstOrDefault(u => u.TeamIds != null);
@@ -125,6 +120,7 @@ public class TestDataService : ITestDataService
             _createdUnknownUsersAsTeamMembers = true;
         }
 
+        // OK
         if (_userPreferences.TestDataCreateDuplicateTeamMembershipsForUsers && !_createdDuplicateUsersAsTeamMembers)
         {
             var user = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds?.Count() > 1);
@@ -136,53 +132,54 @@ public class TestDataService : ITestDataService
             _createdDuplicateUsersAsTeamMembers = true;
         }
 
-        //if (_userPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers && !_createdUnknownSuperUsersAsTeamMembers)
-        //{
-        //    //var superUser = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds != null);
-        //    //ArgumentNullException.ThrowIfNull(user, "No user with a team ID found to add the unknown user to.");
-        //    //user.TeamIds = user.TeamIds!.Append(Guid.NewGuid().ToString());
-        //    //_createdUnknownSuperUsersAsTeamMembers = true;
-        //}
+        // Needs testing
+        if (_userPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers && !_createdUnknownSuperUsersAsTeamMembers)
+        {
+            var numberOfUnknownSuperUsers = new Random().Next(1, 4);
+            for (int i = 0; i < numberOfUnknownSuperUsers; i++)
+            {
+                var superUser = _users.OrderBy(u => u.FullName).Skip(i).FirstOrDefault(u => u.TeamIds != null);
+                ArgumentNullException.ThrowIfNull(superUser, "No user with a team ID found to add the unknown super user to.");
+                superUser.TeamIds = superUser.TeamIds!.Append(Guid.NewGuid().ToString());
+            }
+            _createdUnknownSuperUsersAsTeamMembers = true;
+        }
 
-        //if (_userPreferences.TestDataCreateUnknownTeams && !_createdUnknownTeams)
-        //{
-        //    var unknownTeam = new Team
-        //    {
-        //        Id = Guid.NewGuid().ToString(),
-        //        Name = "Unknown Team",
-        //        UserIds = [],
-        //        SuperUserIds = [],
-        //        WorkflowConfigurationIds = []
-        //    };
-        //    _teams.Add(unknownTeam);
-        //    _createdUnknownTeams = true;
-        //}
+        // Needs testing
+        if (_userPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers && !_createdDuplicateSuperUsersAsTeamMembers)
+        {
+            var superUser = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds?.Count() > 1);
+            ArgumentNullException.ThrowIfNull(superUser, "No user with multiple team IDs found to create a duplicate super user membership.");
+            ArgumentNullException.ThrowIfNull(superUser.TeamIds, "User's TeamIds cannot be null.");
+            superUser.TeamIds = superUser.TeamIds.Append(superUser.TeamIds.First());
+            superUser.TeamIds = superUser.TeamIds.Append(superUser.TeamIds.First());
+            superUser.TeamIds = superUser.TeamIds.Append(superUser.TeamIds.First());
+            _createdDuplicateSuperUsersAsTeamMembers = true;
+        }
 
+        // Needs testing
+        if (_userPreferences.TestDataCreateUnknownTeams && !_createdUnknownTeams)
+        {
+            var unknownTeam = new Team
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Unknown Team",
+                UserIds = [],
+                SuperUserIds = [],
+                WorkflowConfigurationIds = []
+            };
+            _teams.Add(unknownTeam);
+            _createdUnknownTeams = true;
+        }
 
-
-        //// Make sure test data is consistent
-        //foreach (var user in _users[mimerEnvironment])
-        //{
-        //    foreach (var team in user.Teams)
-        //    {
-        //        if (_teams[mimerEnvironment].All(t => t.Id != team.Id))
-        //        {
-        //            _teams[mimerEnvironment].Add(team);
-        //        }
-        //    }
-        //}
-
-
-        //// TODO: Use user preferences to determine if we should simulate data errors
-        //// Make data errors to test UI error handling
-
-        //// Add a user with a duplicate team ID to simulate data inconsistency
-        //var userWithDuplicateTeamId = _users[mimerEnvironment].OrderBy(u => u.FullName).First(u => u.TeamIds?.Count() > 1);
-        //userWithDuplicateTeamId.TeamIds = userWithDuplicateTeamId.TeamIds!.Append(userWithDuplicateTeamId.TeamIds!.First());
-
-        //// Add a user with an unknown team ID to simulate data inconsistency
-        //var userWithUnknownTeamId = _users[mimerEnvironment].OrderBy(u => u.FullName).First();
-        //userWithUnknownTeamId.TeamIds = userWithUnknownTeamId.TeamIds?.Append("unknown-team-id");
+        // Needs testing
+        if (_userPreferences.TestDataCreateDuplicateTeams && !_createdDuplicateTeams)
+        {
+            var duplicateTeam = _teams.OrderBy(t => t.Name).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(duplicateTeam, "No team found to create a duplicate.");
+            _teams.Add(duplicateTeam);
+            _createdDuplicateTeams = true;
+        }
     }
 
     private List<Team> CreateRandomTeams()
@@ -261,17 +258,8 @@ public class TestDataService : ITestDataService
                     .RuleFor(t => t.Id, f => workflowConfigurationId)
                     .RuleFor(t => t.Name, f => f.Commerce.ProductName())
                     .RuleFor(t => t.Department, f => f.Commerce.Department())
-                    .RuleFor(t => t.StudyTypes, f => 
+                    .RuleFor(t => t.StudyTypes, f =>
                     {
-                        //var studyTypes = new List<(string Key, string InputType)>();
-                        //var numberOfStudyTypes = random.Next(0, 5); // Random number of study types
-                        //for (int i = 0; i < numberOfStudyTypes; i++)
-                        //{
-                        //    var key = f.PickRandom(studyTypeKeys);
-                        //    var inputType = f.PickRandom(studyTypeInputTypes);
-                        //    studyTypes.Add((key, inputType));
-                        //}
-                        //return studyTypes;
                         return [.. f.Make(random.Next(0, 5), () => new StudyType
                         {
                             Key = f.PickRandom(studyTypeKeys),
@@ -280,9 +268,9 @@ public class TestDataService : ITestDataService
                     })
                     .RuleFor(t => t.ParameterIdentifier, f =>
                     {
-                        var identifiers = new[] { 
-                            "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id", 
-                            "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id", 
+                        var identifiers = new[] {
+                            "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id",
+                            "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id",
                             "single_cell_id", "stability_id", "testing_id", "transfection_id" };
                         return f.PickRandom(identifiers);
                     })

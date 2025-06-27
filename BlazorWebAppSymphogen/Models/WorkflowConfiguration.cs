@@ -1,6 +1,7 @@
 ﻿namespace BlazorWebAppSymphogen.Models;
 
-public class WorkflowConfiguration
+[Serializable]
+public class WorkflowConfiguration : ICloneable
 {
     public required string Id { get; set; }
     public required string Name { get; set; }
@@ -11,10 +12,20 @@ public class WorkflowConfiguration
     public int ParameterRowCount { get; set; }
     public IEnumerable<string> DatasourceConfigurationIds { get; set; } = [];
     public bool IsActive { get; set; } = true;
-}
 
-public class StudyType
-{
-    public required string Key { get; set; }
-    public required string InputType { get; set; }
+    public object Clone()
+    {
+        return new WorkflowConfiguration
+        {
+            Id = Id,
+            Name = Name,
+            Department = Department,
+            StudyTypes = [.. StudyTypes.Select(st => (StudyType)st.Clone())],
+            WorkflowPropertyHeaders = [.. WorkflowPropertyHeaders],
+            ParameterIdentifier = ParameterIdentifier,
+            ParameterRowCount = ParameterRowCount,
+            DatasourceConfigurationIds = [.. DatasourceConfigurationIds],
+            IsActive = IsActive
+        };
+    }
 }

@@ -1,5 +1,6 @@
 ﻿@using BlazorWebAppSymphogen.Models.Validation
 @inject ISnackbar Snackbar
+@inject IUserPreferences UserPreferences
 
 <MudDialog>
     <TitleContent>
@@ -60,7 +61,7 @@
                                SelectedValuesChanged="OnUserTeamsSelected"
                                T="Models.Team"
                                ToStringFunc="@(user => user.Name)">
-                        @foreach (var team in _allTeams.OrderByDescending(t => User.Teams.Contains(t)).ThenBy(t => t.Name))
+                        @foreach (var team in _allTeams.Where(t => !User.TeamIds.Contains(t.Id)).Concat(User.Teams).OrderByDescending(t => User.Teams.Contains(t)).ThenBy(t => t.Name))
                         {
                             <MudSelectItem Disabled="@(!team.TeamExists && !User.Teams.Any(t => t.Id == team.Id))"
                                            T="Models.Team"
@@ -100,9 +101,7 @@
     [Parameter]
     public Models.User User { get; set; } = new Models.User
     {
-        Id = Guid.NewGuid().ToString(),
-        Teams = [],
-        TeamIds = []
+        Id = Guid.NewGuid().ToString()
     };
 
     private MudForm? _form;
@@ -119,16 +118,16 @@
         {
             _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
 
-            // If User.Teams has unknown teams, remove and inform user using snackbar
+            // If User.Teams has unknown teams, remove and inform user using snackbar - if UserPreferences.RemoveInvalidDataAutomatically is true
             var unknownTeams = User.Teams.Where(t => !t.TeamExists).ToList();
-            if (unknownTeams.Any())
+            if (UserPreferences.RemoveInvalidDataAutomatically && unknownTeams.Any())
             {
                 Snackbar.Add($"{unknownTeams.Count} unknown team(s) has been removed automatically", Severity.Warning);
                 User.Teams = User.Teams.Where(t => t.TeamExists).ToList();
             }
             // If User.Teams has duplicate teams, remove duplicates and inform user using snackbar
             var duplicateTeams = User.Teams.GroupBy(t => t.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
-            if (duplicateTeams.Any())
+            if (UserPreferences.RemoveInvalidDataAutomatically && duplicateTeams.Any())
             {
                 Snackbar.Add($"{duplicateTeams.Count} duplicate team(s) have been removed automatically", Severity.Warning);
                 User.Teams = User.Teams.DistinctBy(t => t.Id).ToList();
@@ -174,9 +173,8 @@
         if (!team.TeamExists || User.Teams.Count(t => t.Id == team.Id) > 1)
         {
             return Color.Error;
-            
         }
-        
+
         return Color.Default;
     }
 }

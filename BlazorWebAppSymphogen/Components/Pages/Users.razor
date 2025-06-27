@@ -214,11 +214,7 @@ else
             parameters.Add(x => x.User, args!.Item);
         }
 
-        var jsonSerializerOptions = new JsonSerializerOptions
-        {
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
-        };
-        var userBefore = isEditMode ? JsonSerializer.Deserialize<Models.User>(JsonSerializer.Serialize(args!.Item), jsonSerializerOptions) : null;
+        var userBefore = isEditMode ? (User)args!.Item!.Clone() : null;
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
         var dialog = await DialogService.ShowAsync<UserEditorDialog>(null, parameters, options);
         var result = await dialog.Result;

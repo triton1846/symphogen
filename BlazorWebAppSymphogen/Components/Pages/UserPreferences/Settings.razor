@@ -1,0 +1,213 @@
+﻿@page "/settings"
+@using BlazorWebAppSymphogen
+@using BlazorWebAppSymphogen.Components.Pages.UserPreferences
+@inject IUserPreferences UserPreferences
+
+<PageTitle>Settings</PageTitle>
+
+<MudText Typo="Typo.h3" Class="mb-4">Settings</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Customize application behavior and data usage settings to suit your needs.
+</MudText>
+
+<MudGrid>
+
+    <MudItem xs="12" sm="12" md="8" lg="6">
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-4">
+            Note: Some of these settings are only applicable if <code>UseTestData</code> is set to <code>true</code>.
+        </MudAlert>
+    </MudItem>
+
+    <MudItem xs="12" />
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <MudCard Outlined="true">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Which data should be used?</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    @if (UserPreferences.MimerEnvironment == MimerEnvironment.TestData)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.CloudOff"
+                                 Color="Color.Warning"
+                                 Class="mr-3 mt-3"
+                                 Size="Size.Medium" />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.CloudDone"
+                                       Color="Color.Success"
+                                       Size="Size.Medium" />
+                    }
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText>Use test data or real data.</MudText>
+                <MudText Typo="Typo.body2">Test data is pseudo random generated data.</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudRadioGroup T="MimerEnvironment" Value="@UserPreferences.MimerEnvironment" ValueChanged="val => UserPreferences.MimerEnvironment = val">
+                    <MudRadio Value="MimerEnvironment.TestData">Test data</MudRadio>
+                    <MudRadio Value="MimerEnvironment.SB1">SB1</MudRadio>
+                    <MudRadio Value="MimerEnvironment.QA">QA</MudRadio>
+                </MudRadioGroup>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.RemoveInvalidDataAutomatically"
+                     Description="This enables the automatic removal of invalid data."
+                     DisabledText="Invalid data not removed"
+                     EnabledText="Remove invalid data automatically"
+                     Icon="@Icons.Material.Filled.DeleteForever"
+                     InvertValue="true"
+                     BodyText="This setting is useful for maintaining a clean dataset. It will automatically remove any data that does not meet the validation criteria when opening edit dialogs. Changes will be cancelled upon cancellation in dialog."
+                     Title="Remove invalid data automatically?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <SliderCard @bind-CurrentValue="@UserPreferences.FetchUsersDelay"
+                    Description="Delay for fetching user data from the server."
+                    Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                    FormattedValue="@FormatTimeSpan(UserPreferences.FetchUsersDelay)"
+                    Title="Delay for fetching user data?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <SliderCard @bind-CurrentValue="@UserPreferences.FetchTeamsDelay"
+                    Description="Delay for fetching team data from the server."
+                    Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                    FormattedValue="@FormatTimeSpan(UserPreferences.FetchTeamsDelay)"
+                    Title="Delay for fetching team data?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <SliderCard @bind-CurrentValue="@UserPreferences.FetchWorkflowConfigurationsDelay"
+                    Description="Delay for fetching workflow configuration data from the server."
+                    Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                    FormattedValue="@FormatTimeSpan(UserPreferences.FetchWorkflowConfigurationsDelay)"
+                    Title="Delay for fetching workflow configuration data?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <MudCard Outlined="true">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Number of users to create?</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.People"
+                                   Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                                   Color="Color.Success" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText>The number of users to create when using test data.</MudText>
+                <MudText Typo="Typo.body2">
+                    This is useful for testing purposes, allowing you to simulate a larger dataset.
+                    Note: This only works if the <code>UseTestData</code> is set to <code>true</code>.
+                </MudText>
+            </MudCardContent>
+            <MudCardActions Class="mx-3">
+                <MudSlider @bind-Value="@UserPreferences.TestDataNumberOfUsers"
+                           Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                           Min="0"
+                           Max="300"
+                           Step="10"
+                           T="int"
+                           ValueLabel="true"
+                           Color="Color.Primary">
+                    @FormatUsersCount(UserPreferences.TestDataNumberOfUsers)
+                </MudSlider>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.TestDataCreateUnknownUsersAsTeamMembers"
+                     Description="This enables the creation of unknown users when using test data."
+                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                     DisabledText="No unknown users"
+                     EnabledText="Create unknown users"
+                     Icon="@Icons.Material.Filled.PersonOff"
+                     Title="Create unknown users?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.TestDataCreateDuplicateTeamMembershipsForUsers"
+                     Description="This enables the creation of duplicate team memberships for users when using test data."
+                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                     DisabledText="No duplicates"
+                     EnabledText="Create duplicate memberships"
+                     Icon="@Icons.Material.Filled.GroupAdd"
+                     Title="Create duplicate team memberships?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers"
+                     Description="This enables the creation of unknown super users when using test data."
+                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                     DisabledText="No unknown super users"
+                     EnabledText="Create unknown super users"
+                     Icon="@Icons.Material.Filled.PersonOff"
+                     Title="Create unknown super users?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers"
+                     Description="This enables the creation of duplicate team memberships for super users when using test data."
+                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                     DisabledText="No duplicates"
+                     EnabledText="Create duplicate memberships"
+                     Icon="@Icons.Material.Filled.GroupAdd"
+                     Title="Create duplicate team memberships for super users?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.TestDataCreateUnknownTeams"
+                     Description="This enables the creation of unknown teams when using test data."
+                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                     DisabledText="No unknown teams"
+                     EnabledText="Create unknown teams"
+                     Icon="@Icons.Material.Filled.GroupOff"
+                     Title="Create unknown teams?" />
+    </MudItem>
+
+    <MudItem xs="12" sm="12" md="4" lg="3">
+        <BooleanCard @bind-Value="UserPreferences.TestDataCreateDuplicateTeams"
+                     Description="This enables the creation of duplicate teams when using test data."
+                     Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                     DisabledText="No duplicates"
+                     EnabledText="Create duplicate teams"
+                     Icon="@Icons.Material.Filled.Diversity3"
+                     Title="Create duplicate teams?" />
+    </MudItem>
+
+</MudGrid>
+
+@code {
+    private TimeSpan _defaultTimeSpan = TimeSpan.FromMilliseconds(2000);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Ensure user preferences are initialized
+        // This is necessary to handle if user browses to this page directly
+        if (!UserPreferences.IsInitialized)
+        {
+            await UserPreferences.InitializeAsync();
+            StateHasChanged(); // Refresh the UI after initialization
+        }
+    }
+
+    private string FormatTimeSpan(TimeSpan ts)
+    {
+        return $"{ts.TotalMilliseconds:F0} milliseconds";
+    }
+
+    private string FormatUsersCount(int count)
+    {
+        return $"{count} user{(count != 1 ? "s" : string.Empty)}";
+    }
+}

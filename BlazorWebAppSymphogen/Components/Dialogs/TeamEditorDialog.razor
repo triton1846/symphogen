@@ -80,20 +80,6 @@
                         }
                     </MudSelect>
                 </MudItem>
-                @* <MudItem xs="12" md="6">
-                    <MudSelect T="Models.WorkflowConfiguration"
-                               Label="Workflow Configurations"
-                               MultiSelection="true"
-                               Immediate="true"
-                               SelectedValues="Team.WorkflowConfigurationIds"
-                               SelectedValuesChanged="OnWorkflowConfigurationsSelected"
-                               ToStringFunc="@(config => config.Name)">
-                        @foreach (var config in WorkflowConfigurations.OrderBy(c => c.Name))
-                        {
-                            <MudSelectItem T="Models.WorkflowConfiguration" Value="@config">@config.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem> *@
             </MudGrid>
         </MudForm>
     </DialogContent>
@@ -149,21 +135,7 @@
         _users = Users.Where(u => (u.UserExists || Team.Users.Any(t => t.Id == u.Id)) && u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
         _superUsers = Users.Where(u => u.UserExists || Team.SuperUsers.Any(t => t.Id == u.Id) && u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
 
-        // // Temp code to add random users and super users
-        // var su = _superUsers.Where(u => u.UserExists).OrderBy(u => new Random().Next()).ToList();
-        // var u1 = _users.Where(u => u.UserExists).OrderBy(u => new Random().Next()).ToList();
-        // for (int i = 0; i < 3; i++)
-        // {
-        //     var superUserToAdd = su.ElementAt(i);
-        //     Team.SuperUsers.Add(superUserToAdd);
-        //     Team.SuperUserIds = Team.SuperUsers.Select(u => u.Id).ToList();
-
-        //     var userToAdd = u1.ElementAt(i);
-        //     Team.Users.Add(userToAdd);
-        //     Team.UserIds = Team.Users.Select(u => u.Id).ToList();
-        // }
-
-        // Make sure duplicates are shown
+        // Make sure duplicates are shown - TODO: Is this needed? Setting SuperUsers and Users should handle duplicates?
         var duplicateSuperUsers = Team.SuperUsers.GroupBy(u => u.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
         foreach (var duplicateSuperUser in duplicateSuperUsers.Skip(1))
         {
@@ -199,13 +171,13 @@
 
     private void OnSuperUsersSelected(IEnumerable<Models.User> selectedUsers)
     {
-        Team.SuperUsers = selectedUsers.ToList();
         Team.SuperUserIds = Team.SuperUsers.Select(u => u.Id).ToList();
+        Team.SuperUsers = selectedUsers.ToList();
     }
 
     private void OnUsersSelected(IEnumerable<Models.User> selectedUsers)
     {
-        Team.Users = selectedUsers.ToList();
         Team.UserIds = Team.Users.Select(u => u.Id).ToList();
+        Team.Users = selectedUsers.ToList();
     }
 }
