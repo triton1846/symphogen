@@ -15,7 +15,7 @@ public class User : ICloneable
 
     public string? Location { get; set; }
 
-    public IEnumerable<string>? Favorites { get; set; }
+    public IEnumerable<string> Favorites { get; set; } = [];
 
     public string? Initials { get; set; }
 
@@ -51,11 +51,11 @@ public class User : ICloneable
             FullName = FullName,
             Department = Department,
             Location = Location,
-            Favorites = Favorites?.ToList(),
+            Favorites = [.. Favorites],
             Initials = Initials,
             JobTitle = JobTitle,
             OfficePhoneNumber = OfficePhoneNumber,
-            TeamIds = TeamIds?.ToList(),
+            TeamIds = [.. TeamIds],
             Teams = [.. Teams.Select(t => (Team)t.Clone())],
             ValidationTeams = ValidationTeams,
             UserExists = UserExists

@@ -2,9 +2,8 @@
 
 namespace BlazorWebAppSymphogen;
 
-public class UserPreferences : IUserPreferences
+public class UserPreferences(ILocalStorageService localStorage) : IUserPreferences
 {
-    private readonly ILocalStorageService _localStorage;
     private const string MimerEnvironmentKey = "app_mimerEnvironment";
     private const string RemoveInvalidDataAutomaticallyKey = "app_removeInvalidDataAutomatically";
 
@@ -36,12 +35,8 @@ public class UserPreferences : IUserPreferences
     private bool _testDataCreateDuplicateTeamMembershipsForSuperUsers = true;
     private bool _testDataCreateUnknownTeams = true;
     private bool _testDataCreateDuplicateTeams = true;
-    #endregion Test Data preferences
 
-    public UserPreferences(ILocalStorageService localStorage)
-    {
-        _localStorage = localStorage;
-    }
+    #endregion Test Data preferences
 
     public MimerEnvironment MimerEnvironment
     {
@@ -49,7 +44,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _mimerEnvironment = value;
-            _ = _localStorage.SetItemAsync(MimerEnvironmentKey, value.ToString());
+            _ = localStorage.SetItemAsync(MimerEnvironmentKey, value.ToString());
         }
     }
 
@@ -59,7 +54,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _removeInvalidDataAutomatically = value;
-            _ = _localStorage.SetItemAsync(RemoveInvalidDataAutomaticallyKey, value);
+            _ = localStorage.SetItemAsync(RemoveInvalidDataAutomaticallyKey, value);
         }
     }
 
@@ -70,7 +65,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _fetchUsersDelay = value;
-            _ = _localStorage.SetItemAsync(FetchUsersDelayKey, value.TotalMilliseconds);
+            _ = localStorage.SetItemAsync(FetchUsersDelayKey, value.TotalMilliseconds);
         }
     }
 
@@ -80,7 +75,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _fetchTeamsDelay = value;
-            _ = _localStorage.SetItemAsync(FetchTeamsDelayKey, value.TotalMilliseconds);
+            _ = localStorage.SetItemAsync(FetchTeamsDelayKey, value.TotalMilliseconds);
         }
     }
 
@@ -90,7 +85,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _fetchWorkflowConfigurationsDelay = value;
-            _ = _localStorage.SetItemAsync(FetchWorkflowConfigurationsDelayKey, value.TotalMilliseconds);
+            _ = localStorage.SetItemAsync(FetchWorkflowConfigurationsDelayKey, value.TotalMilliseconds);
         }
     }
 
@@ -100,7 +95,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataNumberOfUsers = value;
-            _ = _localStorage.SetItemAsync(TestDataNumberOfUsersKey, value);
+            _ = localStorage.SetItemAsync(TestDataNumberOfUsersKey, value);
         }
     }
 
@@ -110,7 +105,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataCreateUnknownUsersAsTeamMembers = value;
-            _ = _localStorage.SetItemAsync(TestDataCreateUnknownUsersAsTeamMembersKey, value);
+            _ = localStorage.SetItemAsync(TestDataCreateUnknownUsersAsTeamMembersKey, value);
         }
     }
 
@@ -120,7 +115,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataCreateDuplicateTeamMembershipsForUsers = value;
-            _ = _localStorage.SetItemAsync(TestDataCreateDuplicateTeamMembershipsForUsersKey, value);
+            _ = localStorage.SetItemAsync(TestDataCreateDuplicateTeamMembershipsForUsersKey, value);
         }
     }
 
@@ -130,7 +125,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataCreateUnknownSuperUsersAsTeamMembers = value;
-            _ = _localStorage.SetItemAsync(TestDataCreateUnknownSuperUsersAsTeamMembersKey, value);
+            _ = localStorage.SetItemAsync(TestDataCreateUnknownSuperUsersAsTeamMembersKey, value);
         }
     }
 
@@ -140,7 +135,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataCreateDuplicateTeamMembershipsForSuperUsers = value;
-            _ = _localStorage.SetItemAsync(TestDataCreateDuplicateTeamMembershipsForSuperUsersKey, value);
+            _ = localStorage.SetItemAsync(TestDataCreateDuplicateTeamMembershipsForSuperUsersKey, value);
         }
     }
 
@@ -150,7 +145,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataCreateUnknownTeams = value;
-            _ = _localStorage.SetItemAsync(TestDataCreateUnknownTeamsKey, value);
+            _ = localStorage.SetItemAsync(TestDataCreateUnknownTeamsKey, value);
         }
     }
 
@@ -160,7 +155,7 @@ public class UserPreferences : IUserPreferences
         set
         {
             _testDataCreateDuplicateTeams = value;
-            _ = _localStorage.SetItemAsync(TestDataCreateDuplicateTeamsKey, value);
+            _ = localStorage.SetItemAsync(TestDataCreateDuplicateTeamsKey, value);
         }
     }
     #endregion Test Data preferences
@@ -170,52 +165,52 @@ public class UserPreferences : IUserPreferences
 
     public async Task InitializeAsync()
     {
-        var mimerEnvironmentString = await _localStorage.GetItemAsync<string?>("app_mimerEnvironment");
+        var mimerEnvironmentString = await localStorage.GetItemAsync<string?>("app_mimerEnvironment");
         if (!string.IsNullOrEmpty(mimerEnvironmentString) && Enum.TryParse<MimerEnvironment>(mimerEnvironmentString, out var environment))
             _mimerEnvironment = environment;
 
-        var removeInvalidDataAutomatically = await _localStorage.GetItemAsync<bool?>(RemoveInvalidDataAutomaticallyKey);
+        var removeInvalidDataAutomatically = await localStorage.GetItemAsync<bool?>(RemoveInvalidDataAutomaticallyKey);
         if (removeInvalidDataAutomatically.HasValue)
             _removeInvalidDataAutomatically = removeInvalidDataAutomatically.Value;
 
         #region Test Data preferences
-        var fetchUsersDelay = await _localStorage.GetItemAsync<double?>(FetchUsersDelayKey);
+        var fetchUsersDelay = await localStorage.GetItemAsync<double?>(FetchUsersDelayKey);
         if (fetchUsersDelay.HasValue)
             _fetchUsersDelay = TimeSpan.FromMilliseconds(fetchUsersDelay.Value);
 
-        var fetchTeamsDelay = await _localStorage.GetItemAsync<double?>(FetchTeamsDelayKey);
+        var fetchTeamsDelay = await localStorage.GetItemAsync<double?>(FetchTeamsDelayKey);
         if (fetchTeamsDelay.HasValue)
             _fetchTeamsDelay = TimeSpan.FromMilliseconds(fetchTeamsDelay.Value);
 
-        var fetchWorkflowConfigurationsDelay = await _localStorage.GetItemAsync<double?>(FetchWorkflowConfigurationsDelayKey);
+        var fetchWorkflowConfigurationsDelay = await localStorage.GetItemAsync<double?>(FetchWorkflowConfigurationsDelayKey);
         if (fetchWorkflowConfigurationsDelay.HasValue)
             _fetchWorkflowConfigurationsDelay = TimeSpan.FromMilliseconds(fetchWorkflowConfigurationsDelay.Value);
 
-        var testDataNumberOfUsers = await _localStorage.GetItemAsync<int?>(TestDataNumberOfUsersKey);
+        var testDataNumberOfUsers = await localStorage.GetItemAsync<int?>(TestDataNumberOfUsersKey);
         if (testDataNumberOfUsers.HasValue)
             _testDataNumberOfUsers = testDataNumberOfUsers.Value;
 
-        var testDataCreateUnknownUsersAsTeamMembers = await _localStorage.GetItemAsync<bool?>(TestDataCreateUnknownUsersAsTeamMembersKey);
+        var testDataCreateUnknownUsersAsTeamMembers = await localStorage.GetItemAsync<bool?>(TestDataCreateUnknownUsersAsTeamMembersKey);
         if (testDataCreateUnknownUsersAsTeamMembers.HasValue)
             _testDataCreateUnknownUsersAsTeamMembers = testDataCreateUnknownUsersAsTeamMembers.Value;
 
-        var testDataCreateDuplicateTeamMembershipsForUsers = await _localStorage.GetItemAsync<bool?>(TestDataCreateDuplicateTeamMembershipsForUsersKey);
+        var testDataCreateDuplicateTeamMembershipsForUsers = await localStorage.GetItemAsync<bool?>(TestDataCreateDuplicateTeamMembershipsForUsersKey);
         if (testDataCreateDuplicateTeamMembershipsForUsers.HasValue)
             _testDataCreateDuplicateTeamMembershipsForUsers = testDataCreateDuplicateTeamMembershipsForUsers.Value;
 
-        var testDataCreateUnknownSuperUsersAsTeamMembers = await _localStorage.GetItemAsync<bool?>(TestDataCreateUnknownSuperUsersAsTeamMembersKey);
+        var testDataCreateUnknownSuperUsersAsTeamMembers = await localStorage.GetItemAsync<bool?>(TestDataCreateUnknownSuperUsersAsTeamMembersKey);
         if (testDataCreateUnknownSuperUsersAsTeamMembers.HasValue)
             _testDataCreateUnknownSuperUsersAsTeamMembers = testDataCreateUnknownSuperUsersAsTeamMembers.Value;
 
-        var testDataCreateDuplicateTeamMembershipsForSuperUsers = await _localStorage.GetItemAsync<bool?>(TestDataCreateDuplicateTeamMembershipsForSuperUsersKey);
+        var testDataCreateDuplicateTeamMembershipsForSuperUsers = await localStorage.GetItemAsync<bool?>(TestDataCreateDuplicateTeamMembershipsForSuperUsersKey);
         if (testDataCreateDuplicateTeamMembershipsForSuperUsers.HasValue)
             _testDataCreateDuplicateTeamMembershipsForSuperUsers = testDataCreateDuplicateTeamMembershipsForSuperUsers.Value;
 
-        var testDataCreateUnknownTeams = await _localStorage.GetItemAsync<bool?>(TestDataCreateUnknownTeamsKey);
+        var testDataCreateUnknownTeams = await localStorage.GetItemAsync<bool?>(TestDataCreateUnknownTeamsKey);
         if (testDataCreateUnknownTeams.HasValue)
             _testDataCreateUnknownTeams = testDataCreateUnknownTeams.Value;
 
-        var testDataCreateDuplicateTeams = await _localStorage.GetItemAsync<bool?>(TestDataCreateDuplicateTeamsKey);
+        var testDataCreateDuplicateTeams = await localStorage.GetItemAsync<bool?>(TestDataCreateDuplicateTeamsKey);
         if (testDataCreateDuplicateTeams.HasValue)
             _testDataCreateDuplicateTeams = testDataCreateDuplicateTeams.Value;
         #endregion Test Data preferences

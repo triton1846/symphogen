@@ -2,11 +2,10 @@
 
 namespace BlazorWebAppSymphogen.Services;
 
-public class TestDataService : ITestDataService
+public class TestDataService(
+    ILogger<TestDataService> logger,
+    IUserPreferences userPreferences) : ITestDataService
 {
-    private readonly ILogger<TestDataService> _logger;
-    private readonly IUserPreferences _userPreferences;
-
     private List<User> _users = [];
     private List<Team> _teams = [];
     private List<string> _teamIds = [];
@@ -18,17 +17,9 @@ public class TestDataService : ITestDataService
     private bool _createdUnknownTeams = false;
     private bool _createdDuplicateTeams = false;
 
-    public TestDataService(
-        ILogger<TestDataService> logger,
-        IUserPreferences userPreferences)
-    {
-        _logger = logger;
-        _userPreferences = userPreferences;
-    }
-
     public async Task<IEnumerable<Team>> GetTeamsAsync()
     {
-        await Task.Delay(_userPreferences.FetchTeamsDelay);
+        await Task.Delay(userPreferences.FetchTeamsDelay);
 
         if (_teams.Count != 0)
         {
@@ -42,7 +33,7 @@ public class TestDataService : ITestDataService
 
     public async Task<IEnumerable<User>> GetUsersAsync()
     {
-        await Task.Delay(_userPreferences.FetchUsersDelay);
+        await Task.Delay(userPreferences.FetchUsersDelay);
 
         if (_users.Count != 0)
         {
@@ -57,7 +48,7 @@ public class TestDataService : ITestDataService
 
     public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
     {
-        await Task.Delay(_userPreferences.FetchWorkflowConfigurationsDelay);
+        await Task.Delay(userPreferences.FetchWorkflowConfigurationsDelay);
 
         if (_workflowConfigurations.Count != 0)
         {
@@ -79,7 +70,7 @@ public class TestDataService : ITestDataService
         var random = new Random();
         var randomUsers = new List<User>();
 
-        for (int i = 0; i < _userPreferences.TestDataNumberOfUsers; i++)
+        for (int i = 0; i < userPreferences.TestDataNumberOfUsers; i++)
         {
             // Use Bogus to generate random user data
             var user = new Bogus.Faker<User>()
@@ -100,7 +91,7 @@ public class TestDataService : ITestDataService
             randomUsers.Add(user);
         }
 
-        _logger.LogInformation("Generated {Count} random users.", randomUsers.Count);
+        logger.LogInformation("Generated {Count} random users.", randomUsers.Count);
 
         return randomUsers;
     }
@@ -108,7 +99,7 @@ public class TestDataService : ITestDataService
     public void CreateInvalidData()
     {
         // OK
-        if (_userPreferences.TestDataCreateUnknownUsersAsTeamMembers && !_createdUnknownUsersAsTeamMembers)
+        if (userPreferences.TestDataCreateUnknownUsersAsTeamMembers && !_createdUnknownUsersAsTeamMembers)
         {
             var numberOfUnknownUsers = new Random().Next(1, 4);
             for (int i = 0; i < numberOfUnknownUsers; i++)
@@ -121,7 +112,7 @@ public class TestDataService : ITestDataService
         }
 
         // OK
-        if (_userPreferences.TestDataCreateDuplicateTeamMembershipsForUsers && !_createdDuplicateUsersAsTeamMembers)
+        if (userPreferences.TestDataCreateDuplicateTeamMembershipsForUsers && !_createdDuplicateUsersAsTeamMembers)
         {
             var user = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds?.Count() > 1);
             ArgumentNullException.ThrowIfNull(user, "No user with multiple team IDs found to create a duplicate membership.");
@@ -133,7 +124,7 @@ public class TestDataService : ITestDataService
         }
 
         // Needs testing
-        if (_userPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers && !_createdUnknownSuperUsersAsTeamMembers)
+        if (userPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers && !_createdUnknownSuperUsersAsTeamMembers)
         {
             var numberOfUnknownSuperUsers = new Random().Next(1, 4);
             for (int i = 0; i < numberOfUnknownSuperUsers; i++)
@@ -146,7 +137,7 @@ public class TestDataService : ITestDataService
         }
 
         // Needs testing
-        if (_userPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers && !_createdDuplicateSuperUsersAsTeamMembers)
+        if (userPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers && !_createdDuplicateSuperUsersAsTeamMembers)
         {
             var superUser = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds?.Count() > 1);
             ArgumentNullException.ThrowIfNull(superUser, "No user with multiple team IDs found to create a duplicate super user membership.");
@@ -158,7 +149,7 @@ public class TestDataService : ITestDataService
         }
 
         // Needs testing
-        if (_userPreferences.TestDataCreateUnknownTeams && !_createdUnknownTeams)
+        if (userPreferences.TestDataCreateUnknownTeams && !_createdUnknownTeams)
         {
             var unknownTeam = new Team
             {
@@ -173,7 +164,7 @@ public class TestDataService : ITestDataService
         }
 
         // Needs testing
-        if (_userPreferences.TestDataCreateDuplicateTeams && !_createdDuplicateTeams)
+        if (userPreferences.TestDataCreateDuplicateTeams && !_createdDuplicateTeams)
         {
             var duplicateTeam = _teams.OrderBy(t => t.Name).FirstOrDefault();
             ArgumentNullException.ThrowIfNull(duplicateTeam, "No team found to create a duplicate.");
@@ -195,10 +186,9 @@ public class TestDataService : ITestDataService
                 .RuleFor(t => t.Name, f => f.Commerce.Department())
                 .RuleFor(t => t.UserIds, f =>
                 {
-                    return users
+                    return [.. users
                         .Where(u => u.TeamIds?.Contains(teamId) == true)
-                        .Select(u => u.Id)
-                        .ToList();
+                        .Select(u => u.Id)];
                 })
                 .RuleFor(t => t.WorkflowConfigurationIds, f =>
                 {
@@ -220,7 +210,7 @@ public class TestDataService : ITestDataService
             randomTeams.Add(team);
         }
 
-        _logger.LogInformation("Generated {Count} random teams.", randomTeams.Count);
+        logger.LogInformation("Generated {Count} random teams.", randomTeams.Count);
 
         return randomTeams;
     }
@@ -234,7 +224,7 @@ public class TestDataService : ITestDataService
         else if (_teamIds.Count == 0)
         {
             // If no teams are available, generate a default set of team IDs
-            var numberOfTeamIds = Math.Max(10, _userPreferences.TestDataNumberOfUsers / 10); // Default to 10% of users
+            var numberOfTeamIds = Math.Max(10, userPreferences.TestDataNumberOfUsers / 10); // Default to 10% of users
             _teamIds = [.. Enumerable.Range(1, numberOfTeamIds).Select(i => Guid.NewGuid().ToString())];
         }
 
@@ -247,6 +237,10 @@ public class TestDataService : ITestDataService
 
         var studyTypeKeys = new[] { "labbook", "external development", "N/A", "gmp_batch_no" };
         var studyTypeInputTypes = new[] { "text", "number", "date", "select" };
+        var parameterIdentifier = new[] {
+                            "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id",
+                            "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id",
+                            "single_cell_id", "stability_id", "testing_id", "transfection_id" };
 
         var random = new Random();
         var randomWorkflowConfigurations = new List<WorkflowConfiguration>();
@@ -268,11 +262,7 @@ public class TestDataService : ITestDataService
                     })
                     .RuleFor(t => t.ParameterIdentifier, f =>
                     {
-                        var identifiers = new[] {
-                            "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id",
-                            "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id",
-                            "single_cell_id", "stability_id", "testing_id", "transfection_id" };
-                        return f.PickRandom(identifiers);
+                        return f.PickRandom(parameterIdentifier);
                     })
                     .RuleFor(t => t.ParameterRowCount, f => random.Next(1, 1000))
                     .RuleFor(t => t.DatasourceConfigurationIds, f =>
@@ -291,7 +281,7 @@ public class TestDataService : ITestDataService
                 randomWorkflowConfigurations.Add(workflowConfiguration);
             }
 
-            _logger.LogInformation("Generated {Count} random workflow configurations.", randomWorkflowConfigurations.Count);
+            logger.LogInformation("Generated {Count} random workflow configurations.", randomWorkflowConfigurations.Count);
         }
 
         return randomWorkflowConfigurations;

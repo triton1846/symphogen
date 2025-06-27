@@ -13,7 +13,7 @@ public class TeamValidator : BaseValidator<Team>
         RuleFor(team => team.Users)
             .Must(users =>
             {
-                if (users == null || !users.Any())
+                if (users == null || users.Count == 0)
                     return true; // Allow empty users
 
                 // Check if all users exist
@@ -41,7 +41,7 @@ public class TeamValidator : BaseValidator<Team>
             }).WithMessage("'Super Users' cannot include users that do not exist.")
             .Must(superUsers =>
             {
-                if (superUsers == null || !superUsers.Any())
+                if (superUsers == null || superUsers.Count == 0)
                     return true; // Allow empty super users
 
                 // Check for duplicate super users

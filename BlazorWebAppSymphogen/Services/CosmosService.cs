@@ -10,7 +10,7 @@ public class CosmosService : ICosmosService
     private readonly IUserPreferences _userPreferences;
     private readonly ITestDataService _testDataService;
 
-    private Dictionary<MimerEnvironment, string> _connectionStrings = [];
+    private readonly Dictionary<MimerEnvironment, string> _connectionStrings = [];
     private readonly Dictionary<MimerEnvironment, CosmosClient> _clients = [];
 
     private readonly Dictionary<MimerEnvironment, List<Models.User>> _users = [];
@@ -54,7 +54,7 @@ public class CosmosService : ICosmosService
             return [.. testDataUsers];
         }
 
-        if (/*_userPreferences.UseCacheData && */_users.TryGetValue(mimerEnvironment, out _) && _users[mimerEnvironment].Any())
+        if (_users.TryGetValue(mimerEnvironment, out _) && _users[mimerEnvironment].Count != 0)
         {
             _logger.LogDebug("Returning cached users for {Environment}", mimerEnvironment);
             return [.. _users[mimerEnvironment]];
@@ -77,7 +77,7 @@ public class CosmosService : ICosmosService
             return [.. testDataTeams];
         }
 
-        if (/*_userPreferences.UseCacheData && */_teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Any())
+        if (_teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Count != 0)
         {
             _logger.LogDebug("Returning cached teams for {Environment}", mimerEnvironment);
             return [.. _teams[mimerEnvironment]];
@@ -100,7 +100,7 @@ public class CosmosService : ICosmosService
             return [.. testDataWorkflowConfigurations];
         }
 
-        if (/*_userPreferences.UseCacheData && */_workflowConfigurations.TryGetValue(mimerEnvironment, out _) && _workflowConfigurations[mimerEnvironment].Any())
+        if (_workflowConfigurations.TryGetValue(mimerEnvironment, out _) && _workflowConfigurations[mimerEnvironment].Count != 0)
         {
             _logger.LogDebug("Returning cached workflow configurations for {Environment}", mimerEnvironment);
             return [.. _workflowConfigurations[mimerEnvironment]];
