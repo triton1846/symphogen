@@ -1,4 +1,5 @@
 ﻿using BlazorWebAppSymphogen.Models;
+using BlazorWebAppSymphogen.Settings;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 

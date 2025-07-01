@@ -28,9 +28,12 @@
         </MudText>
     </MudCardContent>
     <MudCardActions Class="mx-3">
-        <MudSwitch @bind-Value="Value"
+        <MudSwitch Value="Value"
+                   ValueChanged="ValueChanged"
                    ThumbIcon="@(Value? Icons.Material.Filled.Done : Icons.Material.Filled.Close)"
-                   ThumbIconColor="@(EffectiveValue? Color.Warning: Color.Success)">@(Value? EnabledText : DisabledText)</MudSwitch>
+                   ThumbIconColor="@(EffectiveValue? Color.Warning: Color.Success)">
+            @(Value? EnabledText : DisabledText)
+        </MudSwitch>
     </MudCardActions>
 </MudCard>
 
@@ -47,6 +50,11 @@
     [Parameter] public string Title { get; set; } = "";
 
     private bool EffectiveValue => InvertValue ? !Value : Value;
+
+    private async Task OnValueChanged(bool value)
+    {
+        await ValueChanged.InvokeAsync(value);
+    }
 
     private async Task OnToggle()
     {

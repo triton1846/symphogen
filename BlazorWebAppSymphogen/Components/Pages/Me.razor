@@ -50,6 +50,12 @@
     {
         try
         {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity == null || !authState.User.Identity.IsAuthenticated)
+            {
+                return; // Don't proceed if user is not authenticated
+            }
+
             using var response = await downstreamApi.CallApiForUserAsync("GraphApi", options =>
             {
                 options.RelativePath = "me";
@@ -57,7 +63,7 @@
             response.EnsureSuccessStatusCode();
             graphApiResponse = await response.Content.ReadFromJsonAsync<JsonDocument>().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (MicrosoftIdentityWebChallengeUserException ex)
         {
             ConsentHandler.HandleException(ex);
         }

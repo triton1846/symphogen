@@ -1,7 +1,9 @@
 ﻿@page "/users"
 @rendermode InteractiveServer
-@using BlazorWebAppSymphogen.Components.Dialogs
 @using System.Text.Json
+@using BlazorWebAppSymphogen.Components.Dialogs
+@using BlazorWebAppSymphogen.Settings
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
@@ -10,9 +12,9 @@
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
-@if (!_isInitialized)
+@if (!UserPreferences.IsInitialized)
 {
-    <MudOverlay @bind-Visible="_isLoading" DarkBackground>
+    <MudOverlay DarkBackground>
         <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
     </MudOverlay>
 }
@@ -131,22 +133,39 @@ else
 }
 
 @code {
-    private bool _isInitialized = false;
     private List<BlazorWebAppSymphogen.Models.User>? _allUsers;
     private string _searchString = string.Empty;
     private Models.User _selectedItem = default!;
     private List<string> _editEvents = new();
-    private bool _isLoading = true;
+    private bool _isLoading = false;
     private List<Models.Team> _allTeams = [];
     private List<Models.Team> _selectedTeams = [];
 
     protected override async Task OnInitializedAsync()
     {
+        if (!UserPreferences.IsInitialized)
+        {
+            return;
+        }
+
         _isLoading = true;
+
         await LoadTeamsAsync();
         await LoadUsersAsync();
         _isLoading = false;
-        _isInitialized = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!UserPreferences.IsInitialized)
+        {
+            _isLoading = true;
+            await UserPreferences.InitializeAsync();
+            await LoadTeamsAsync();
+            await LoadUsersAsync();
+            _isLoading = false;
+            StateHasChanged(); // Refresh the UI after initialization
+        }
     }
 
     private async Task LoadUsersAsync()

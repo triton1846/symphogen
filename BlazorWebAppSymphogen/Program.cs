@@ -1,7 +1,7 @@
-using BlazorWebAppSymphogen;
 using BlazorWebAppSymphogen.Auth;
 using BlazorWebAppSymphogen.Components;
 using BlazorWebAppSymphogen.Services;
+using BlazorWebAppSymphogen.Settings;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
@@ -61,7 +61,6 @@ builder.Services.AddScoped<ICosmosService>(sp =>
 builder.Services.AddScoped<IUserInfoService, UserInfoService>();
 builder.Services.AddScoped<IAuthorizationHandler, RequireDomainHandler>();
 
-builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
 builder.Services.AddScoped<IUserPreferences, UserPreferences>();
 builder.Services.AddScoped<ITestDataService, TestDataService>();
 
