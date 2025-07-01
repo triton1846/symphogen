@@ -12,9 +12,9 @@
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
-@if (!UserPreferences.IsInitialized)
+@if (!UserPreferences.IsInitialized || _isLoading)
 {
-    <MudOverlay DarkBackground>
+    <MudOverlay Visible="true" DarkBackground>
         <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
     </MudOverlay>
 }
@@ -149,7 +149,6 @@ else
         }
 
         _isLoading = true;
-
         await LoadTeamsAsync();
         await LoadUsersAsync();
         _isLoading = false;
