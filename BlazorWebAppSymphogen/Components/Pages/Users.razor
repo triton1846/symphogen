@@ -221,7 +221,8 @@ else
 
     private async Task OpenUserEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.User>? args = null)
     {
-        var isEditMode = args != null;
+        User? userToEdit = args?.Item;
+        var isEditMode = userToEdit != null;
         var parameters = new DialogParameters<UserEditorDialog>
         {
             { x => x.AllTeams, _allTeams },
@@ -229,10 +230,10 @@ else
         };
         if (isEditMode)
         {
-            parameters.Add(x => x.User, args!.Item);
+            parameters.Add(x => x.User, userToEdit);
         }
 
-        var userBefore = isEditMode ? (User)args!.Item!.Clone() : null;
+        var userBefore = isEditMode ? _allUsers?.Single(u => u.Id == userToEdit?.Id).Clone() : null;
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
         var dialog = await DialogService.ShowAsync<UserEditorDialog>(null, parameters, options);
         var result = await dialog.Result;
@@ -291,9 +292,10 @@ else
             if (index >= 0 && userBefore != null)
             {
                 // Reset to original values if dialog was canceled
-                _allUsers[index] = userBefore;
-                Snackbar.Add($"Changes to user {userBefore.FullName} were canceled.", Severity.Info);
-                Logger.LogInformation("Changes to user {UserName} ({UserId}) were canceled", userBefore.FullName, userBefore.Id);
+                var originalUser = (User)userBefore;
+                _allUsers[index] = originalUser;
+                Snackbar.Add($"Changes to user {originalUser.FullName} were canceled.", Severity.Info);
+                Logger.LogInformation("Changes to user {UserName} ({UserId}) were canceled", originalUser.FullName, originalUser.Id);
             }
         }
     }

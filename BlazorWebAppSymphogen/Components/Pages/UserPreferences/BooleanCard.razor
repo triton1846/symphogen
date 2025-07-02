@@ -28,7 +28,8 @@
         </MudText>
     </MudCardContent>
     <MudCardActions Class="mx-3">
-        <MudSwitch Value="Value"
+        <MudSwitch Disabled="@Disabled"
+                   Value="Value"
                    ValueChanged="ValueChanged"
                    ThumbIcon="@(Value? Icons.Material.Filled.Done : Icons.Material.Filled.Close)"
                    ThumbIconColor="@(EffectiveValue? Color.Warning: Color.Success)">
