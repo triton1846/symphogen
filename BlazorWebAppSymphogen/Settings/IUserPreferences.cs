@@ -13,6 +13,9 @@ public interface IUserPreferences
     /// <returns>A task that represents the asynchronous operation.</returns>
     Task InitializeAsync();
 
+    /// <summary>
+    /// Gets the Mimer environment.
+    /// </summary>
     MimerEnvironment MimerEnvironment { get; }
 
     /// <summary>
@@ -27,18 +30,93 @@ public interface IUserPreferences
     /// </returns>
     Task SetAsync<TValue>(string propertyName, TValue value);
 
+    /// <summary>
+    /// Gets or sets a value indicating whether invalid data should be removed automatically when editing data.
+    /// If true, invalid data will be removed automatically when editing data.
+    /// </summary>
     bool RemoveInvalidDataAutomatically { get; set; }
 
     #region Test Data preferences
+
+    /// <summary>
+    /// Delays for fetching users.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     TimeSpan FetchUsersDelay { get; set; }
+
+    /// <summary>
+    /// Delays for fetching teams.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     TimeSpan FetchTeamsDelay { get; set; }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     TimeSpan FetchWorkflowConfigurationsDelay { get; set; }
+
+    /// <summary>
+    /// Specifies the number of users to create for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     int TestDataNumberOfUsers { get; set; }
+
+    /// <summary>
+    /// Creates unknown users as team members for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     bool TestDataCreateUnknownUsersAsTeamMembers { get; set; }
+
+    /// <summary>
+    /// Creates duplicate team memberships for users for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     bool TestDataCreateDuplicateTeamMembershipsForUsers { get; set; }
+
+    /// <summary>
+    /// Creates unknown super users as team members for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     bool TestDataCreateUnknownSuperUsersAsTeamMembers { get; set; }
+
+    /// <summary>
+    /// Creates duplicate team memberships for super users for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     bool TestDataCreateDuplicateTeamMembershipsForSuperUsers { get; set; }
+
+    /// <summary>
+    /// Creates unknown teams for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     bool TestDataCreateUnknownTeams { get; set; }
+
+    /// <summary>
+    /// Creates duplicate teams for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
     bool TestDataCreateDuplicateTeams { get; set; }
+
     #endregion Test Data preferences
 }
