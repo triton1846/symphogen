@@ -22,6 +22,7 @@ public class BaseTestContext : TestContext
 
     protected IUserPreferences UserPreferences = default!;
     protected Mock<ICosmosService> CosmosServiceMock = default!;
+    protected Mock<IUserService> UserServiceMock = default!;
 
     protected Mock<IDataProtector> DataProtectorMock = default!;
     protected Mock<IDataProtectionProvider> DataProtectionProviderMock = default!;
@@ -54,6 +55,7 @@ public class BaseTestContext : TestContext
         SetupDefaultData();
 
         AddCosmosService();
+        AddUserService();
 
         // Needed for MudBlazor components to work properly
         _ = RenderComponent<MudPopoverProvider>();
@@ -141,19 +143,6 @@ public class BaseTestContext : TestContext
         CosmosServiceMock = new Mock<ICosmosService>();
 
         CosmosServiceMock
-            .Setup(m => m.GetUsersAsync(It.IsAny<MimerEnvironment>(), It.IsAny<Func<IQueryable<BlazorWebAppSymphogen.Models.User>, IQueryable<BlazorWebAppSymphogen.Models.User>>?>()))
-            .ReturnsAsync((MimerEnvironment env, Func<IQueryable<BlazorWebAppSymphogen.Models.User>, IQueryable<BlazorWebAppSymphogen.Models.User>>? filter) =>
-            {
-                return env switch
-                {
-                    MimerEnvironment.SB1 => [.. DefaultData.UsersSB1],
-                    MimerEnvironment.QA => [.. DefaultData.UsersQA],
-                    _ => throw new NotSupportedException($"Environment {env} is not supported.")
-                };
-            })
-            .Verifiable();
-
-        CosmosServiceMock
             .Setup(m => m.GetTeamsAsync(It.IsAny<MimerEnvironment>(), It.IsAny<Func<IQueryable<BlazorWebAppSymphogen.Models.Team>, IQueryable<BlazorWebAppSymphogen.Models.Team>>?>()))
             .ReturnsAsync((MimerEnvironment env, Func<IQueryable<BlazorWebAppSymphogen.Models.Team>, IQueryable<BlazorWebAppSymphogen.Models.Team>>? filter) =>
             {
@@ -166,6 +155,23 @@ public class BaseTestContext : TestContext
             });
 
         Services.AddSingleton<ICosmosService>(service => CosmosServiceMock.Object);
+    }
+
+    private void AddUserService()
+    {
+        UserServiceMock = new Mock<IUserService>();
+        UserServiceMock
+            .Setup(m => m.GetUsersAsync(It.IsAny<MimerEnvironment>(), It.IsAny<Func<IQueryable<BlazorWebAppSymphogen.Models.User>, IQueryable<BlazorWebAppSymphogen.Models.User>>?>()))
+            .ReturnsAsync((MimerEnvironment env, Func<IQueryable<BlazorWebAppSymphogen.Models.User>, IQueryable<BlazorWebAppSymphogen.Models.User>>? filter) =>
+            {
+                return env switch
+                {
+                    MimerEnvironment.SB1 => [.. DefaultData.UsersSB1],
+                    MimerEnvironment.QA => [.. DefaultData.UsersQA],
+                    _ => throw new NotSupportedException($"Environment {env} is not supported.")
+                };
+            }).Verifiable();
+        Services.AddSingleton<IUserService>(service => UserServiceMock.Object);
     }
 
     private void SetupDefaultData()

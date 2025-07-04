@@ -40,8 +40,7 @@ public class UserPreferencesTests : BaseTestContext
         bool createUnknownSuperUsersAsTeamMembers,
         bool createDuplicateTeamMembershipsForSuperUsers,
         bool createUnknownTeams,
-        bool createDuplicateTeams
-        )
+        bool createDuplicateTeams)
     {
         // Arrange
         SetStorageValue(StorageKeys.MimerEnvironment, mimerEnvironment);

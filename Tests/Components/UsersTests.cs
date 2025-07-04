@@ -20,7 +20,7 @@ public class UsersTests : BaseTestContext
         var tables = cut.FindComponents<MudTable<User>>();
 
         // Assert
-        CosmosServiceMock.Verify(m => m.GetUsersAsync(MimerEnvironment.QA, It.IsAny<Func<IQueryable<User>, IQueryable<User>>?>()), Times.Once);
+        UserServiceMock.Verify(m => m.GetUsersAsync(MimerEnvironment.QA, It.IsAny<Func<IQueryable<User>, IQueryable<User>>?>()), Times.Once);
         var table = Assert.Single(tables);
         Assert.NotNull(table.Instance.Items);
         Assert.True(table.Instance.Items.SequenceEqual(DefaultData.UsersQA));
@@ -79,7 +79,7 @@ public class UsersTests : BaseTestContext
         });
 
         // Assert
-        CosmosServiceMock.Verify(m => m.DeleteUserAsync(userToDelete.Id, MimerEnvironment.QA), Times.Once);
+        UserServiceMock.Verify(m => m.DeleteUserAsync(MimerEnvironment.QA, userToDelete.Id), Times.Once);
         Assert.NotNull(table.Instance.Items);
         Assert.NotEmpty(table.Instance.Items);
         Assert.DoesNotContain(userToDelete, table.Instance.Items);
@@ -104,7 +104,7 @@ public class UsersTests : BaseTestContext
         });
 
         // Assert
-        CosmosServiceMock.Verify(m => m.SaveUserAsync(MimerEnvironment.QA, userToSave), Times.Once);
+        UserServiceMock.Verify(m => m.SaveUserAsync(MimerEnvironment.QA, userToSave), Times.Once);
         Assert.NotNull(table.Instance.Items);
         Assert.NotEmpty(table.Instance.Items);
         var updatedUser = table.Instance.Items.Single(i => i.Id == userToSave.Id);
@@ -123,7 +123,7 @@ public class UsersTests : BaseTestContext
         users.ElementAt(2).FullName = $"{users.ElementAt(2).FullName}_{searchText}";
         users.ElementAt(3).Location = $"{users.ElementAt(3).Location}_{searchText}";
         users.ElementAt(4).Id = searchText;
-        CosmosServiceMock.Setup(m => m.GetUsersAsync(MimerEnvironment.QA, It.IsAny<Func<IQueryable<User>, IQueryable<User>>?>()))
+        UserServiceMock.Setup(m => m.GetUsersAsync(MimerEnvironment.QA, It.IsAny<Func<IQueryable<User>, IQueryable<User>>?>()))
             .ReturnsAsync(users);
 
         var cut = RenderComponent<Users>();

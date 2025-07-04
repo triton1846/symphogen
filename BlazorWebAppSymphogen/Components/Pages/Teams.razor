@@ -12,6 +12,7 @@
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 @inject IUserPreferences UserPreferences
+@inject IUserService UserService
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
@@ -187,7 +188,7 @@ else
     private async Task LoadUsersAsync()
     {
         Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allUsers = await CosmosService.GetUsersAsync(UserPreferences.MimerEnvironment);
+        _allUsers = await UserService.GetUsersAsync(UserPreferences.MimerEnvironment);
     }
 
     private async Task LoadTeamsAsync()
