@@ -2,7 +2,9 @@
 
 namespace BlazorWebAppSymphogen.Settings;
 
-public class UserPreferences(ILogger<UserPreferences> logger, ProtectedLocalStorage protectedLocalStorage) : IUserPreferences
+public class UserPreferences(
+    ILogger<UserPreferences> logger, 
+    ProtectedLocalStorage protectedLocalStorage) : IUserPreferences
 {
     private bool _isInitialized = false;
 

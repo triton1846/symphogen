@@ -5,8 +5,10 @@ using BlazorWebAppSymphogen.Services;
 using BlazorWebAppSymphogen.Settings;
 using Bunit;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.DataProtection;
 using MudBlazor;
 using MudBlazor.Services;
+using System.Text;
 
 namespace Tests;
 
@@ -20,6 +22,10 @@ public class BaseTestContext : TestContext
 
     protected IUserPreferences UserPreferences = default!;
     protected Mock<ICosmosService> CosmosServiceMock = default!;
+
+    protected Mock<IDataProtector> DataProtectorMock = default!;
+    protected Mock<IDataProtectionProvider> DataProtectionProviderMock = default!;
+    protected ProtectedLocalStorage ProtectedLocalStorage = default!;
 
     protected DefaultData DefaultData { get; private set; } = new();
 
@@ -53,6 +59,16 @@ public class BaseTestContext : TestContext
         _ = RenderComponent<MudPopoverProvider>();
     }
 
+    public void SetStorageValue<TValue>(string storageKey, TValue value)
+    {
+        if (ProtectedLocalStorage == null)
+            throw new InvalidOperationException($"LocalStorage is not initialized. Call {nameof(SetupLocalStorage)} first.");
+        // Use the LocalStorage to set the value
+        var json = System.Text.Json.JsonSerializer.Serialize(value);
+        var base64Json = Convert.ToBase64String(Encoding.ASCII.GetBytes(json));
+        JSInterop.Setup<string>("localStorage.getItem", storageKey).SetResult(base64Json);
+    }
+
     private void AddServiceSnackbar()
     {
         SnackbarMock = new Mock<ISnackbar>();
@@ -72,7 +88,6 @@ public class BaseTestContext : TestContext
             .ReturnsAsync(dialogResult)
             .Verifiable();
         DialogServiceMock
-            //.Setup(m => m.ShowAsync(It.IsAny<Type>(), It.IsAny<string?>(), It.IsAny<DialogParameters>(), It.IsAny<DialogOptions>()))
             .Setup(m => m.ShowAsync<UserEditorDialog>(It.IsAny<string?>(), It.IsAny<DialogParameters>(), It.IsAny<DialogOptions>()))
             .ReturnsAsync(DialogReferenceMock.Object)
             .Verifiable();
@@ -91,10 +106,34 @@ public class BaseTestContext : TestContext
 
     private void SetupUserPreferences()
     {
+        if (ProtectedLocalStorage == null)
+            throw new InvalidOperationException($"LocalStorage is not initialized. Call {nameof(SetupLocalStorage)} first.");
+
         UserPreferences = new UserPreferences(
             NullLogger<UserPreferences>.Instance,
-            Fixture.Create<ProtectedLocalStorage>());
+            ProtectedLocalStorage);
         Services.AddSingleton<IUserPreferences>(service => UserPreferences);
+    }
+
+    private void SetupLocalStorage()
+    {
+        DataProtectionProviderMock = new Mock<IDataProtectionProvider>();
+        DataProtectorMock = new Mock<IDataProtector>();
+        DataProtectorMock.Setup(sut => sut.Protect(It.IsAny<byte[]>())).Returns((byte[] data) =>
+        {
+            return data; // Just return the data as is for testing purposes
+        }).Verifiable();
+        DataProtectorMock.Setup(sut => sut.Unprotect(It.IsAny<byte[]>())).Returns((byte[] protectedData) =>
+        {
+            return protectedData; // Just return the data as is for testing purposes
+        }).Verifiable();
+        DataProtectionProviderMock
+            .Setup(m => m.CreateProtector(It.IsAny<string>()))
+            .Returns(DataProtectorMock.Object)
+            .Verifiable();
+        Services.AddSingleton<IDataProtectionProvider>(service => DataProtectionProviderMock.Object);
+        ProtectedLocalStorage = new ProtectedLocalStorage(JSInterop.JSRuntime, DataProtectionProviderMock.Object);
+        Services.AddSingleton<ProtectedLocalStorage>(service => ProtectedLocalStorage);
     }
 
     private void AddCosmosService()
@@ -131,30 +170,29 @@ public class BaseTestContext : TestContext
 
     private void SetupDefaultData()
     {
+        SetupLocalStorage();
         SetupUserPreferences();
 
         var teamIds = Fixture.CreateMany<Guid>(15).ToList();// TODO: Use different IDs for environments?
         var random = new Random();
 
-        DefaultData.UsersSB1 = Fixture.CreateMany<BlazorWebAppSymphogen.Models.User>(20)
+        DefaultData.UsersSB1 = [.. Fixture.CreateMany<BlazorWebAppSymphogen.Models.User>(20)
             .Select(user => Fixture.Build<BlazorWebAppSymphogen.Models.User>()
                 .With(u => u.Id, Guid.NewGuid().ToString())
                 .With(u => u.TeamIds, teamIds.OrderBy(_ => random.Next()).Take(random.Next(1, 4)).Select(id => id.ToString()))
                 .With(u => u.Teams, [])
                 .Without(u => u.ValidationTeams)
-                .Create())
-            .ToList();
+                .Create())];
 
-        DefaultData.UsersQA = Fixture.CreateMany<BlazorWebAppSymphogen.Models.User>(25)
+        DefaultData.UsersQA = [.. Fixture.CreateMany<BlazorWebAppSymphogen.Models.User>(25)
             .Select(user => Fixture.Build<BlazorWebAppSymphogen.Models.User>()
                 .With(u => u.Id, Guid.NewGuid().ToString())
                 .With(u => u.TeamIds, teamIds.OrderBy(_ => random.Next()).Take(random.Next(1, 4)).Select(id => id.ToString()))
                 .With(u => u.Teams, [])
                 .Without(u => u.ValidationTeams)
-                .Create())
-            .ToList();
+                .Create())];
 
-        DefaultData.TeamsSB1 = teamIds
+        DefaultData.TeamsSB1 = [.. teamIds
             .Select(id => Fixture.Build<BlazorWebAppSymphogen.Models.Team>()
                 .With(t => t.Id, id.ToString())
                 .With(t => t.Users, [])
@@ -162,10 +200,9 @@ public class BaseTestContext : TestContext
                 .Without(t => t.ValidationSuperUsers)
                 .Without(t => t.ValidationUsers)
                 .Without(t => t.ValidationWorkflowConfigurations)
-            .Create())
-            .ToList();
+            .Create())];
 
-        DefaultData.TeamsQA = teamIds
+        DefaultData.TeamsQA = [.. teamIds
             .Select(id => Fixture.Build<BlazorWebAppSymphogen.Models.Team>()
                 .With(t => t.Id, id.ToString())
                 .With(t => t.Users, [])
@@ -173,7 +210,6 @@ public class BaseTestContext : TestContext
                 .Without(t => t.ValidationSuperUsers)
                 .Without(t => t.ValidationUsers)
                 .Without(t => t.ValidationWorkflowConfigurations)
-            .Create())
-            .ToList();
+            .Create())];
     }
 }
