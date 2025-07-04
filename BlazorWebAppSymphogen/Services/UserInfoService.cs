@@ -13,7 +13,11 @@ public class UserInfoService : IUserInfoService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(30);
 
-    public UserInfoService(ILogger<UserInfoService> logger, IDownstreamApi downstreamApi, IMemoryCache memoryCache, IHttpContextAccessor httpContextAccessor)
+    public UserInfoService(
+        ILogger<UserInfoService> logger, 
+        IDownstreamApi downstreamApi, 
+        IMemoryCache memoryCache, 
+        IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _downstreamApi = downstreamApi;
