@@ -5,29 +5,17 @@ using System.Text.Json;
 
 namespace BlazorWebAppSymphogen.Services;
 
-public class UserInfoService : IUserInfoService
+public class UserInfoService(
+    ILogger<UserInfoService> logger,
+    IDownstreamApi downstreamApi,
+    IMemoryCache memoryCache,
+    IHttpContextAccessor httpContextAccessor) : IUserInfoService
 {
-    private readonly ILogger<UserInfoService> _logger;
-    private readonly IDownstreamApi _downstreamApi;
-    private readonly IMemoryCache _memoryCache;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(30);
-
-    public UserInfoService(
-        ILogger<UserInfoService> logger, 
-        IDownstreamApi downstreamApi, 
-        IMemoryCache memoryCache, 
-        IHttpContextAccessor httpContextAccessor)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _downstreamApi = downstreamApi;
-        _memoryCache = memoryCache;
-        _httpContextAccessor = httpContextAccessor;
-    }
 
     public async Task<string?> GetDisplayNameAsync()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var user = httpContextAccessor.HttpContext?.User;
         var userId = user?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
 
         if (string.IsNullOrEmpty(userId))
@@ -37,14 +25,14 @@ public class UserInfoService : IUserInfoService
 
         var cacheKey = $"DisplayName:{userId}";
 
-        if (_memoryCache.TryGetValue(cacheKey, out string? cachedDisplayName))
+        if (memoryCache.TryGetValue(cacheKey, out string? cachedDisplayName))
         {
             return cachedDisplayName;
         }
 
         try
         {
-            var response = await _downstreamApi.CallApiForUserAsync("GraphApi", options =>
+            var response = await downstreamApi.CallApiForUserAsync("GraphApi", options =>
             {
                 options.RelativePath = "me";
             });
@@ -58,7 +46,7 @@ public class UserInfoService : IUserInfoService
 
             if (!string.IsNullOrEmpty(displayName))
             {
-                _memoryCache.Set(cacheKey, displayName, _cacheDuration);
+                memoryCache.Set(cacheKey, displayName, _cacheDuration);
             }
 
             return displayName;
@@ -69,7 +57,7 @@ public class UserInfoService : IUserInfoService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve display name for user {UserId}", userId);
+            logger.LogError(ex, "Failed to retrieve display name for user {UserId}", userId);
             return null;
         }
     }
