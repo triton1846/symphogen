@@ -51,7 +51,7 @@ else
                           Clearable="true"
                           IconSize="Size.Medium"
                           Immediate="true"
-                          Placeholder="Search"></MudTextField>
+                          Placeholder="Search" />
         </ToolBarContent>
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
@@ -141,6 +141,8 @@ else
     private List<Models.Team> _allTeams = [];
     private List<Models.Team> _selectedTeams = [];
 
+    // TODO: Query arg for user id to edit
+
     protected override async Task OnInitializedAsync()
     {
         if (!UserPreferences.IsInitialized)
@@ -208,13 +210,6 @@ else
         if (user.Id?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
         return false;
-    }
-
-    private void OnTeamsSelected(Models.User user, IEnumerable<Models.Team> selectedTeams)
-    {
-        user.Teams = selectedTeams.ToList();
-        user.TeamIds = user.Teams.Select(t => t.Id).ToList();
-        Logger.LogInformation("Teams selected for User {User}: {Teams}", user.FullName, string.Join(", ", user.Teams.Select(t => t.Name)));
     }
 
     Func<Models.User, object>? SortByTeams = (Models.User x) => string.Join(", ", ((Models.User)(object)x).Teams.Select(t => t.Name).Order()); // For sorting teams in the table
