@@ -8,6 +8,14 @@ public interface ICosmosService
         MimerEnvironment mimerEnvironment, 
         Func<IQueryable<User>, IQueryable<User>>? filterExpression = null);
 
+    Task SaveUserAsync(
+        MimerEnvironment mimerEnvironment, 
+        User user);
+
+    Task DeleteUserAsync(
+        string userId, 
+        MimerEnvironment mimerEnvironment);
+
     Task<List<Team>> GetTeamsAsync(
         MimerEnvironment mimerEnvironment, 
         Func<IQueryable<Team>, IQueryable<Team>>? filterExpression = null);

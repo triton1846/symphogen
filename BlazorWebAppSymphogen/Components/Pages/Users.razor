@@ -262,6 +262,8 @@ else
                     Snackbar.Add($"User {user.FullName} added successfully!", Severity.Success);
                     Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
                 }
+                // Save changes to Cosmos DB
+                await CosmosService.SaveUserAsync(UserPreferences.MimerEnvironment, user);
             }
             else if (result.Data != null && result.Data is bool deleteUser && deleteUser && isEditMode)
             {
@@ -271,6 +273,7 @@ else
                 {
                     var deletedUser = _allUsers[index];
                     _allUsers.RemoveAt(index);
+                    await CosmosService.DeleteUserAsync(deletedUser.Id, UserPreferences.MimerEnvironment);
                     Snackbar.Add($"User {deletedUser.FullName} deleted successfully!", Severity.Success);
                     Logger.LogInformation("Deleted user: {UserName} ({UserId})", deletedUser.FullName, deletedUser.Id);
                 }

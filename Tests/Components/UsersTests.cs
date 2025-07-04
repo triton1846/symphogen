@@ -79,7 +79,7 @@ public class UsersTests : BaseTestContext
         });
 
         // Assert
-        // TODO: CosmosServiceMock.Verify(m => m.DeleteUserAsync(userToDelete.Id, MimerEnvironment.QA), Times.Once);
+        CosmosServiceMock.Verify(m => m.DeleteUserAsync(userToDelete.Id, MimerEnvironment.QA), Times.Once);
         Assert.NotNull(table.Instance.Items);
         Assert.NotEmpty(table.Instance.Items);
         Assert.DoesNotContain(userToDelete, table.Instance.Items);
@@ -104,7 +104,7 @@ public class UsersTests : BaseTestContext
         });
 
         // Assert
-        // TODO: CosmosServiceMock.Verify(m => m.SaveUserAsync(userToSave, MimerEnvironment.QA), Times.Once);
+        CosmosServiceMock.Verify(m => m.SaveUserAsync(MimerEnvironment.QA, userToSave), Times.Once);
         Assert.NotNull(table.Instance.Items);
         Assert.NotEmpty(table.Instance.Items);
         var updatedUser = table.Instance.Items.Single(i => i.Id == userToSave.Id);

@@ -47,6 +47,44 @@ public class TestDataService(
         return _users;
     }
 
+    public async Task SaveUserAsync(User user)
+    {
+        // await Task.Delay(userPreferences.SaveUserDelay); // TODO: Add to userPreferences if needed
+        await Task.CompletedTask; // Simulate async operation
+        if (user == null)
+        {
+            throw new ArgumentNullException(nameof(user), "User cannot be null.");
+        }
+        // Simulate saving the user by adding or updating in the list
+        var existingUser = _users.FirstOrDefault(u => u.Id == user.Id);
+        if (existingUser != null)
+        {
+            _users.Remove(existingUser);
+        }
+        _users.Add(user);
+        logger.LogInformation("User {UserId} saved successfully.", user.Id);
+    }
+
+    public async Task DeleteUserAsync(string userId)
+    {
+        //await Task.Delay(userPreferences.DeleteUserDelay); // TODO: Add to userPreferences if needed
+        await Task.CompletedTask; // Simulate async operation
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+        }
+        var user = _users.FirstOrDefault(u => u.Id == userId);
+        if (user != null)
+        {
+            _users.Remove(user);
+            logger.LogInformation("User {UserId} deleted successfully.", userId);
+        }
+        else
+        {
+            logger.LogWarning("User {UserId} not found for deletion.", userId);
+        }
+    }
+
     public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
     {
         await Task.Delay(userPreferences.FetchWorkflowConfigurationsDelay);
@@ -292,6 +330,8 @@ public class TestDataService(
 public interface ITestDataService
 {
     Task<IEnumerable<User>> GetUsersAsync();
+    Task SaveUserAsync(User user);
+    Task DeleteUserAsync(string userId);
     Task<IEnumerable<Team>> GetTeamsAsync();
     Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync();
     void CreateInvalidData();
