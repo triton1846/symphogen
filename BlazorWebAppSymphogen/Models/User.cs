@@ -3,7 +3,7 @@
 namespace BlazorWebAppSymphogen.Models;
 
 [Serializable]
-public class User : ICloneable
+public class User
 {
     public required string Id { get; set; }
 
@@ -35,30 +35,4 @@ public class User : ICloneable
 
     [JsonIgnore]
     public string? GroupKey => null;
-
-    public object Clone()
-    {
-        Teams.ForEach(team =>
-        {
-            team.Users.Clear();
-            team.SuperUsers.Clear();
-        });
-
-        return new User
-        {
-            Id = Id,
-            Email = Email,
-            FullName = FullName,
-            Department = Department,
-            Location = Location,
-            Favorites = [.. Favorites],
-            Initials = Initials,
-            JobTitle = JobTitle,
-            OfficePhoneNumber = OfficePhoneNumber,
-            TeamIds = [.. TeamIds],
-            Teams = [.. Teams.Select(t => (Team)t.Clone())],
-            ValidationTeams = ValidationTeams,
-            UserExists = UserExists
-        };
-    }
 }

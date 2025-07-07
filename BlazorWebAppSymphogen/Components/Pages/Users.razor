@@ -133,7 +133,7 @@ else
 }
 
 @code {
-    private List<BlazorWebAppSymphogen.Models.User>? _allUsers;
+    private List<BlazorWebAppSymphogen.Models.User> _allUsers = [];
     private string _searchString = string.Empty;
     private Models.User _selectedItem = default!;
     private List<string> _editEvents = new();
@@ -171,7 +171,7 @@ else
             StateHasChanged(); // Refresh the UI after initialization
         }
 
-        var userToEdit = _allUsers?.FirstOrDefault(u => u.Id == UserId);
+        var userToEdit = _allUsers.FirstOrDefault(u => u.Id == UserId);
         if (_canOpenEditor && userToEdit != null)
         {
             await OpenUserEditorDialogAsync(new MudBlazor.TableRowClickEventArgs<Models.User>(null!, null!, userToEdit));
@@ -225,88 +225,98 @@ else
 
     private async Task OpenUserEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.User>? args = null)
     {
+        if (!_canOpenEditor)
+            return;
+
         _canOpenEditor = false; // Prevent multiple dialogs from opening
-        User? userToEdit = args?.Item;
-        var isEditMode = userToEdit != null;
-        var parameters = new DialogParameters<UserEditorDialog>
-        {
-            { x => x.AllTeams, _allTeams },
-            { x => x.IsEditMode, isEditMode }
-        };
-        if (isEditMode)
-        {
-            parameters.Add(x => x.User, userToEdit);
-        }
 
-        var userBefore = isEditMode ? _allUsers?.Single(u => u.Id == userToEdit?.Id).Clone() : null;
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
-        var dialog = await DialogService.ShowAsync<UserEditorDialog>(null, parameters, options);
-        var result = await dialog.Result;
-
-        if (result?.Canceled == false && _allUsers != null)
+        try
         {
-            if (result.Data != null && result.Data is Models.User user)
+            User? userToEdit = args?.Item;
+            bool isEditMode = userToEdit != null;
+            
+            var parameters = new DialogParameters<UserEditorDialog>
             {
-                if (isEditMode)
-                {
-                    // Update existing user
-                    var index = _allUsers.FindIndex(u => u.Id == user.Id);
-                    if (index >= 0)
-                    {
-                        _allUsers[index] = user;
-                        _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
-                        Snackbar.Add($"User {user.FullName} updated successfully!", Severity.Success);
-                        Logger.LogInformation("Updated user: {UserName} ({UserId})", user.FullName, user.Id);
-                    }
-                    else
-                    {
-                        Snackbar.Add($"User {user.FullName} not found!", Severity.Error);
-                        Logger.LogWarning("User {UserName} ({UserId}) not found for update", user.FullName, user.Id);
-                    }
-                }
-                else
-                {
-                    // Add new user
-                    _allUsers.Add(user);
-                    _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
-                    Snackbar.Add($"User {user.FullName} added successfully!", Severity.Success);
-                    Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
-                }
-                // Save changes to Cosmos DB
-                await UserService.SaveAsync(UserPreferences.MimerEnvironment, user);
+                { x => x.AllTeams, _allTeams },
+                { x => x.IsEditMode, isEditMode },
+                { x => x.User, userToEdit }
+            };
+
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
+            var dialog = await DialogService.ShowAsync<UserEditorDialog>(null, parameters, options);
+            var result = await dialog.Result;
+
+            if (result?.Canceled == false && result.Data is Models.User user)
+            {
+                // Handle user creation or update
+                await HandleUserUpdate(user, isEditMode);
             }
-            else if (result.Data != null && result.Data is bool deleteUser && deleteUser && isEditMode)
+            else if (result?.Data is bool deleteUser && deleteUser && isEditMode && userToEdit != null)
             {
                 // Handle user deletion
-                var index = _allUsers.FindIndex(u => u.Id == args!.Item?.Id);
-                if (index >= 0)
-                {
-                    var deletedUser = _allUsers[index];
-                    _allUsers.RemoveAt(index);
-                    await UserService.DeleteAsync(UserPreferences.MimerEnvironment, deletedUser.Id);
-                    Snackbar.Add($"User {deletedUser.FullName} deleted successfully!", Severity.Success);
-                    Logger.LogInformation("Deleted user: {UserName} ({UserId})", deletedUser.FullName, deletedUser.Id);
-                }
-                else
-                {
-                    Snackbar.Add($"User {args!.Item?.FullName} not found for deletion!", Severity.Error);
-                    Logger.LogWarning("User {UserName} ({UserId}) not found for deletion", args.Item?.FullName, args.Item?.Id);
-                }
+                await HandleUserDeletion(userToEdit);
+            }
+            else if (result?.Canceled == true && userToEdit != null)
+            {
+                // User cancelled the dialog
+                Snackbar.Add($"Changes to user {userToEdit.FullName} were cancelled.", Severity.Info);
+                Logger.LogInformation("Changes to user {UserName} ({UserId}) were cancelled", userToEdit.FullName, userToEdit.Id);
+            }
+        }
+        finally
+        {
+            UserId = null; // Reset UserId to prevent reopening the editor on next render
+            _canOpenEditor = true; // Allow opening editor again
+        }
+    }
+
+    private async Task HandleUserUpdate(User user, bool isEditMode)
+    {
+        if (isEditMode)
+        {
+            // Update existing user
+            var index = _allUsers.FindIndex(u => u.Id == user.Id);
+            if (index >= 0)
+            {
+                _allUsers[index] = user;
+                _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+                Snackbar.Add($"User {user.FullName} updated successfully!", Severity.Success);
+                Logger.LogInformation("Updated user: {UserName} ({UserId})", user.FullName, user.Id);
+            }
+            else
+            {
+                Snackbar.Add($"User {user.FullName} not found!", Severity.Error);
+                Logger.LogWarning("User {UserName} ({UserId}) not found for update", user.FullName, user.Id);
+                return;
             }
         }
         else
         {
-            var index = _allUsers!.FindIndex(u => u.Id == args?.Item?.Id);
-            if (index >= 0 && userBefore != null)
-            {
-                // Reset to original values if dialog was canceled
-                var originalUser = (User)userBefore;
-                _allUsers[index] = originalUser;
-                Snackbar.Add($"Changes to user {originalUser.FullName} were canceled.", Severity.Info);
-                Logger.LogInformation("Changes to user {UserName} ({UserId}) were cancelled", originalUser.FullName, originalUser.Id);
-            }
+            // Add new user
+            _allUsers.Add(user);
+            _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
+            Snackbar.Add($"User {user.FullName} added successfully!", Severity.Success);
+            Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
         }
-        UserId = null; // Reset UserId to prevent reopening the editor on next render
-        _canOpenEditor = true; // Allow opening editor again
+
+        // Save changes
+        await UserService.SaveAsync(UserPreferences.MimerEnvironment, user);
+    }
+
+    private async Task HandleUserDeletion(User userToDelete)
+    {
+        var index = _allUsers.FindIndex(u => u.Id == userToDelete.Id);
+        if (index >= 0)
+        {
+            _allUsers.RemoveAt(index);
+            await UserService.DeleteAsync(UserPreferences.MimerEnvironment, userToDelete.Id);
+            Snackbar.Add($"User {userToDelete.FullName} deleted successfully!", Severity.Success);
+            Logger.LogInformation("Deleted user: {UserName} ({UserId})", userToDelete.FullName, userToDelete.Id);
+        }
+        else
+        {
+            Snackbar.Add($"User {userToDelete.FullName} not found for deletion!", Severity.Error);
+            Logger.LogWarning("User {UserName} ({UserId}) not found for deletion", userToDelete.FullName, userToDelete.Id);
+        }
     }
 }

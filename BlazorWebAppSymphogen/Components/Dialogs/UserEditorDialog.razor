@@ -6,63 +6,63 @@
         <MudText Typo="Typo.h6">@(IsEditMode ? "Edit" : "Add New") User</MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="_form" Model="User" Validation="_userValidator.ValidateValue" ValidationDelay="0">
+        <MudForm @ref="_form" Model="_user" Validation="_userValidator.ValidateValue" ValidationDelay="0">
             <MudGrid>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.FullName"
-                                  For="(() => User.FullName)"
+                    <MudTextField @bind-Value="_user.FullName"
+                                  For="(() => _user.FullName)"
                                   Immediate="true"
                                   Label="Full Name" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.Email"
-                                  For="@(() => User.Email)"
+                    <MudTextField @bind-Value="_user.Email"
+                                  For="@(() => _user.Email)"
                                   Immediate="true"
                                   Label="Email" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.Department"
-                                  For="@(() => User.Department)"
+                    <MudTextField @bind-Value="_user.Department"
+                                  For="@(() => _user.Department)"
                                   Immediate="true"
                                   Label="Department" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.Location"
-                                  For="@(() => User.Location)"
+                    <MudTextField @bind-Value="_user.Location"
+                                  For="@(() => _user.Location)"
                                   Immediate="true"
                                   Label="Location" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.JobTitle"
-                                  For="@(() => User.JobTitle)"
+                    <MudTextField @bind-Value="_user.JobTitle"
+                                  For="@(() => _user.JobTitle)"
                                   Immediate="true"
                                   Label="Job Title" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.OfficePhoneNumber"
-                                  For="@(() => User.OfficePhoneNumber)"
+                    <MudTextField @bind-Value="_user.OfficePhoneNumber"
+                                  For="@(() => _user.OfficePhoneNumber)"
                                   Immediate="true"
                                   Label="Office Phone Number" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="User.Initials"
-                                  For="@(() => User.Initials)"
+                    <MudTextField @bind-Value="_user.Initials"
+                                  For="@(() => _user.Initials)"
                                   Immediate="true"
                                   Label="Initials" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudSelect Clearable="true"
-                               For="@(() => User.ValidationTeams)"
+                               For="@(() => _user.ValidationTeams)"
                                Immediate="true"
                                Label="Teams"
                                MultiSelection="true"
-                               SelectedValues="User.Teams"
+                               SelectedValues="_user.Teams"
                                SelectedValuesChanged="OnUserTeamsSelected"
                                T="Models.Team"
                                ToStringFunc="@(user => user.Name)">
-                        @foreach (var team in _allTeams.Where(t => !User.TeamIds.Contains(t.Id)).Concat(User.Teams).OrderByDescending(t => User.Teams.Contains(t)).ThenBy(t => t.Name))
+                        @foreach (var team in _allTeams.Where(t => !_user.TeamIds.Contains(t.Id)).Concat(_user.Teams).OrderByDescending(t => _user.Teams.Contains(t)).ThenBy(t => t.Name))
                         {
-                            <MudSelectItem Disabled="@(!team.TeamExists && !User.Teams.Any(t => t.Id == team.Id))"
+                            <MudSelectItem Disabled="@(!team.TeamExists && !_user.Teams.Any(t => t.Id == team.Id))"
                                            T="Models.Team"
                                            Value="team"><MudText Color="@GetTeamNameColor(team)">@team.Name</MudText></MudSelectItem>
                         }
@@ -98,14 +98,15 @@
     public bool IsEditMode { get; set; } = false;
 
     [Parameter]
-    public Models.User User { get; set; } = new Models.User
-    {
-        Id = Guid.NewGuid().ToString()
-    };
+    public Models.User? User { get; set; }
 
     private MudForm? _form;
     private UserValidator _userValidator = new UserValidator();
     private List<Models.Team> _allTeams = [];
+    private User _user = new User
+    {
+        Id = Guid.NewGuid().ToString()
+    };
 
     protected override void OnInitialized()
     {
@@ -115,28 +116,29 @@
         }
         else if (IsEditMode && User != null)
         {
+            _user = User.DeepCopy();
             _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
 
-            // If User.Teams has unknown teams, remove and inform user using snackbar - if UserPreferences.RemoveInvalidDataAutomatically is true
-            var unknownTeams = User.Teams.Where(t => !t.TeamExists).ToList();
+            // If user has unknown teams, remove and inform user using snackbar - if UserPreferences.RemoveInvalidDataAutomatically is true
+            var unknownTeams = _user.Teams.Where(t => !t.TeamExists).ToList();
             if (UserPreferences.RemoveInvalidDataAutomatically && unknownTeams.Any())
             {
                 Snackbar.Add($"{unknownTeams.Count} unknown team(s) has been removed automatically", Severity.Warning);
-                User.Teams = User.Teams.Where(t => t.TeamExists).ToList();
+                _user.Teams = _user.Teams.Where(t => t.TeamExists).ToList();
             }
-            // If User.Teams has duplicate teams, remove duplicates and inform user using snackbar
-            var duplicateTeams = User.Teams.GroupBy(t => t.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
+            // If user has duplicate teams, remove duplicates and inform user using snackbar
+            var duplicateTeams = _user.Teams.GroupBy(t => t.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
             if (UserPreferences.RemoveInvalidDataAutomatically && duplicateTeams.Any())
             {
                 Snackbar.Add($"{duplicateTeams.Count} duplicate team(s) have been removed automatically", Severity.Warning);
-                User.Teams = User.Teams.DistinctBy(t => t.Id).ToList();
+                _user.Teams = _user.Teams.DistinctBy(t => t.Id).ToList();
             }
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (IsEditMode && User != null && _form != null)
+        if (IsEditMode && _user != null && _form != null)
         {
             await _form.Validate();
         }
@@ -146,13 +148,13 @@
     {
         ArgumentNullException.ThrowIfNull(_form);
 
-        User.Teams = selectedTeams.ToList();
-        User.TeamIds = User.Teams.Select(t => t.Id).ToList();
+        _user.Teams = selectedTeams.ToList();
+        _user.TeamIds = _user.Teams.Select(t => t.Id).ToList();
         await _form.Validate();
     }
 
     private void Cancel() => MudDialog?.Cancel();
-    private void Submit() => MudDialog?.Close(DialogResult.Ok(User));
+    private void Submit() => MudDialog?.Close(DialogResult.Ok(_user));
 
     private async Task SubmitUser()
     {
@@ -169,7 +171,7 @@
 
     private Color GetTeamNameColor(Models.Team team)
     {
-        if (!team.TeamExists || User.Teams.Count(t => t.Id == team.Id) > 1)
+        if (!team.TeamExists || _user.Teams.Count(t => t.Id == team.Id) > 1)
         {
             return Color.Error;
         }

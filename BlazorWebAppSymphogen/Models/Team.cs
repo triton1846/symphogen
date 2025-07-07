@@ -3,7 +3,7 @@
 namespace BlazorWebAppSymphogen.Models;
 
 [Serializable]
-public class Team : IEquatable<Team>, ICloneable
+public class Team
 {
     public required string Id { get; set; }
 
@@ -31,33 +31,4 @@ public class Team : IEquatable<Team>, ICloneable
     public Team? ValidationWorkflowConfigurations { get; set; }
 
     public bool TeamExists { get; set; } = true;
-
-    public object Clone()
-    {
-        Users.ForEach(user =>
-        {
-            user.Teams.Clear();
-        });
-
-        return new Team
-        {
-            Id = Id,
-            Name = Name,
-            UserIds = [.. UserIds],
-            Users = [.. Users.Select(u => (User)u.Clone())],
-            ValidationUsers = ValidationUsers,
-            SuperUserIds = [.. SuperUserIds],
-            SuperUsers = [.. SuperUsers.Select(u => (User)u.Clone())],
-            ValidationSuperUsers = ValidationSuperUsers,
-            WorkflowConfigurationIds = WorkflowConfigurationIds?.ToList(),
-            WorkflowConfigurations = [.. WorkflowConfigurations.Select(wc => (WorkflowConfiguration)wc.Clone())],
-            ValidationWorkflowConfigurations = ValidationWorkflowConfigurations,
-            TeamExists = TeamExists
-        };
-    }
-
-    public bool Equals(Team? other)
-    {
-        return Id == other?.Id;
-    }
 }
