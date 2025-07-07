@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using MudBlazor;
 using MudBlazor.Services;
 using Serilog;
 
@@ -41,7 +42,14 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 5000; // 5 seconds
+    config.SnackbarConfiguration.HideTransitionDuration = 500; // 0.5 seconds
+    config.SnackbarConfiguration.ShowTransitionDuration = 500; // 0.5 seconds
+});
 
 // Add controllers for Microsoft Identity authorization
 builder.Services.AddControllers()

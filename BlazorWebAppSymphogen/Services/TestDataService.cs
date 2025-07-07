@@ -1,8 +1,10 @@
 ﻿using BlazorWebAppSymphogen.Models;
 using BlazorWebAppSymphogen.Settings;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BlazorWebAppSymphogen.Services;
 
+[ExcludeFromCodeCoverage(Justification = "This is temporary test data service for development purposes only.")]
 public class TestDataService(
     ILogger<TestDataService> logger,
     IUserPreferences userPreferences) : ITestDataService
