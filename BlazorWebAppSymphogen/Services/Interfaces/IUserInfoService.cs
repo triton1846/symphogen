@@ -1,4 +1,4 @@
-﻿namespace BlazorWebAppSymphogen.Services;
+﻿namespace BlazorWebAppSymphogen.Services.Interfaces;
 
 public interface IUserInfoService
 {

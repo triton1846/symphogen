@@ -1,6 +1,7 @@
 using BlazorWebAppSymphogen.Auth;
 using BlazorWebAppSymphogen.Components;
 using BlazorWebAppSymphogen.Services;
+using BlazorWebAppSymphogen.Services.Interfaces;
 using BlazorWebAppSymphogen.Settings;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
@@ -53,28 +54,15 @@ builder.Services.AddScoped<ICosmosService>(sp =>
     var connectionStringQa = configuration.GetConnectionString("CosmosDb-qa") ?? throw new InvalidOperationException("Connection string 'CosmosDb-qa' not found in configuration.");
     return new CosmosService(
         sp.GetRequiredService<ILogger<CosmosService>>(),
-        sp.GetRequiredService<IUserPreferences>(),
-        connectionStringSb1,
-        connectionStringQa,
-        sp.GetRequiredService<ITestDataService>());
-});
-builder.Services.AddScoped<IUserService>(sp =>
-{
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var connectionStringSb1 = configuration.GetConnectionString("CosmosDb-sb1") ?? throw new InvalidOperationException("Connection string 'CosmosDb-sb1' not found in configuration.");
-    var connectionStringQa = configuration.GetConnectionString("CosmosDb-qa") ?? throw new InvalidOperationException("Connection string 'CosmosDb-qa' not found in configuration.");
-    return new UserService(
-        sp.GetRequiredService<ILogger<UserService>>(),
-        sp.GetRequiredService<IUserPreferences>(),
-        sp.GetRequiredService<ICosmosService>(),
-        sp.GetRequiredService<ITestDataService>(),
         connectionStringSb1,
         connectionStringQa);
 });
 builder.Services.AddScoped<IUserInfoService, UserInfoService>();
 builder.Services.AddScoped<IAuthorizationHandler, RequireDomainHandler>();
-
 builder.Services.AddScoped<IUserPreferences, UserPreferences>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IWorkflowConfigurationService, WorkflowConfigurationService>();
 builder.Services.AddScoped<ITestDataService, TestDataService>();
 
 // Logging

@@ -18,20 +18,6 @@ public class TestDataService(
     private bool _createdUnknownTeams = false;
     private bool _createdDuplicateTeams = false;
 
-    public async Task<IEnumerable<Team>> GetTeamsAsync()
-    {
-        await Task.Delay(userPreferences.FetchTeamsDelay);
-
-        if (_teams.Count != 0)
-        {
-            return _teams;
-        }
-
-        _teams = CreateRandomTeams();
-
-        return _teams;
-    }
-
     public async Task<IEnumerable<User>> GetUsersAsync()
     {
         await Task.Delay(userPreferences.FetchUsersDelay);
@@ -85,6 +71,58 @@ public class TestDataService(
         }
     }
 
+    public async Task<IEnumerable<Team>> GetTeamsAsync()
+    {
+        await Task.Delay(userPreferences.FetchTeamsDelay);
+
+        if (_teams.Count != 0)
+        {
+            return _teams;
+        }
+
+        _teams = CreateRandomTeams();
+
+        return _teams;
+    }
+
+    public async Task SaveTeamAsync(Team team)
+    {
+        // await Task.Delay(userPreferences.SaveTeamDelay); // TODO: Add to userPreferences if needed
+        await Task.CompletedTask; // Simulate async operation
+        if (team == null)
+        {
+            throw new ArgumentNullException(nameof(team), "Team cannot be null.");
+        }
+        // Simulate saving the team by adding or updating in the list
+        var existingTeam = _teams.FirstOrDefault(t => t.Id == team.Id);
+        if (existingTeam != null)
+        {
+            _teams.Remove(existingTeam);
+        }
+        _teams.Add(team);
+        logger.LogInformation("Team {TeamId} saved successfully.", team.Id);
+    }
+
+    public async Task DeleteTeamAsync(string teamId)
+    {
+        // await Task.Delay(userPreferences.DeleteTeamDelay); // TODO: Add to userPreferences if needed
+        await Task.CompletedTask; // Simulate async operation
+        if (string.IsNullOrEmpty(teamId))
+        {
+            throw new ArgumentException("Team ID cannot be null or empty.", nameof(teamId));
+        }
+        var team = _teams.FirstOrDefault(t => t.Id == teamId);
+        if (team != null)
+        {
+            _teams.Remove(team);
+            logger.LogInformation("Team {TeamId} deleted successfully.", teamId);
+        }
+        else
+        {
+            logger.LogWarning("Team {TeamId} not found for deletion.", teamId);
+        }
+    }
+
     public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
     {
         await Task.Delay(userPreferences.FetchWorkflowConfigurationsDelay);
@@ -97,6 +135,44 @@ public class TestDataService(
         _workflowConfigurations = await GetRandomWorkflowConfigurations();
 
         return _workflowConfigurations;
+    }
+
+    public async Task SaveWorkflowConfigurationAsync(WorkflowConfiguration workflowConfiguration)
+    {
+        // await Task.Delay(userPreferences.SaveWorkflowConfigurationDelay); // TODO: Add to userPreferences if needed
+        await Task.CompletedTask; // Simulate async operation
+        if (workflowConfiguration == null)
+        {
+            throw new ArgumentNullException(nameof(workflowConfiguration), "Workflow configuration cannot be null.");
+        }
+        // Simulate saving the workflow configuration by adding or updating in the list
+        var existingConfig = _workflowConfigurations.FirstOrDefault(wc => wc.Id == workflowConfiguration.Id);
+        if (existingConfig != null)
+        {
+            _workflowConfigurations.Remove(existingConfig);
+        }
+        _workflowConfigurations.Add(workflowConfiguration);
+        logger.LogInformation("Workflow configuration {WorkflowConfigurationId} saved successfully.", workflowConfiguration.Id);
+    }
+
+    public async Task DeleteWorkflowConfigurationAsync(string workflowConfigurationId)
+    {
+        // await Task.Delay(userPreferences.DeleteWorkflowConfigurationDelay); // TODO: Add to userPreferences if needed
+        await Task.CompletedTask; // Simulate async operation
+        if (string.IsNullOrEmpty(workflowConfigurationId))
+        {
+            throw new ArgumentException("Workflow configuration ID cannot be null or empty.", nameof(workflowConfigurationId));
+        }
+        var workflowConfiguration = _workflowConfigurations.FirstOrDefault(wc => wc.Id == workflowConfigurationId);
+        if (workflowConfiguration != null)
+        {
+            _workflowConfigurations.Remove(workflowConfiguration);
+            logger.LogInformation("Workflow configuration {WorkflowConfigurationId} deleted successfully.", workflowConfigurationId);
+        }
+        else
+        {
+            logger.LogWarning("Workflow configuration {WorkflowConfigurationId} not found for deletion.", workflowConfigurationId);
+        }
     }
 
     private List<User> GetRandomUsers()
@@ -332,7 +408,14 @@ public interface ITestDataService
     Task<IEnumerable<User>> GetUsersAsync();
     Task SaveUserAsync(User user);
     Task DeleteUserAsync(string userId);
+
     Task<IEnumerable<Team>> GetTeamsAsync();
+    Task SaveTeamAsync(Team team);
+    Task DeleteTeamAsync(string teamId);
+
     Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync();
+    Task SaveWorkflowConfigurationAsync(WorkflowConfiguration workflowConfiguration);
+    Task DeleteWorkflowConfigurationAsync(string workflowConfigurationId);
+
     void CreateInvalidData();
 }

@@ -1,5 +1,4 @@
-﻿using BlazorWebAppSymphogen.Models;
-using BlazorWebAppSymphogen.Settings;
+﻿using BlazorWebAppSymphogen.Services.Interfaces;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 
@@ -8,26 +7,16 @@ namespace BlazorWebAppSymphogen.Services;
 public class CosmosService : ICosmosService
 {
     private readonly ILogger<CosmosService> _logger;
-    private readonly IUserPreferences _userPreferences;
-    private readonly ITestDataService _testDataService;
 
     private readonly Dictionary<MimerEnvironment, string> _connectionStrings = [];
     private readonly Dictionary<MimerEnvironment, CosmosClient> _clients = [];
 
-    private readonly Dictionary<MimerEnvironment, List<Models.User>> _users = [];
-    private readonly Dictionary<MimerEnvironment, List<Team>> _teams = [];
-    private readonly Dictionary<MimerEnvironment, List<WorkflowConfiguration>> _workflowConfigurations = [];
-
     public CosmosService(
         ILogger<CosmosService> logger,
-        IUserPreferences userPreferences,
         string connectionStringSb1,
-        string connectionStringQa,
-        ITestDataService testDataService)
+        string connectionStringQa)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _userPreferences = userPreferences ?? throw new ArgumentNullException(nameof(userPreferences));
-        _testDataService = testDataService ?? throw new ArgumentNullException(nameof(testDataService));
+        _logger = logger;
 
         _connectionStrings.Add(MimerEnvironment.SB1, connectionStringSb1);
         _connectionStrings.Add(MimerEnvironment.QA, connectionStringQa);
@@ -44,53 +33,7 @@ public class CosmosService : ICosmosService
         }
     }
 
-    public async Task<List<Team>> GetTeamsAsync(
-        MimerEnvironment mimerEnvironment,
-        Func<IQueryable<Team>, IQueryable<Team>>? filterExpression = null)
-    {
-        if (_userPreferences.MimerEnvironment == MimerEnvironment.TestData)
-        {
-            _logger.LogDebug("Using test data for teams in {Environment}", mimerEnvironment);
-            var testDataTeams = await _testDataService.GetTeamsAsync();
-            return [.. testDataTeams];
-        }
-
-        if (_teams.TryGetValue(mimerEnvironment, out _) && _teams[mimerEnvironment].Count != 0)
-        {
-            _logger.LogDebug("Returning cached teams for {Environment}", mimerEnvironment);
-            return [.. _teams[mimerEnvironment]];
-        }
-
-        var teams = await GetItemsAsync<Team>(mimerEnvironment, "users", "teams", filterExpression);
-        _teams[mimerEnvironment] = teams;
-
-        return _teams[mimerEnvironment];
-    }
-
-    public async Task<List<WorkflowConfiguration>> GetWorkflowConfigurationsAsync(
-        MimerEnvironment mimerEnvironment,
-        Func<IQueryable<WorkflowConfiguration>, IQueryable<WorkflowConfiguration>>? filterExpression = null)
-    {
-        if (_userPreferences.MimerEnvironment == MimerEnvironment.TestData)
-        {
-            _logger.LogDebug("Using test data for workflow configurations in {Environment}", mimerEnvironment);
-            var testDataWorkflowConfigurations = await _testDataService.GetWorkflowConfigurationsAsync();
-            return [.. testDataWorkflowConfigurations];
-        }
-
-        if (_workflowConfigurations.TryGetValue(mimerEnvironment, out _) && _workflowConfigurations[mimerEnvironment].Count != 0)
-        {
-            _logger.LogDebug("Returning cached workflow configurations for {Environment}", mimerEnvironment);
-            return [.. _workflowConfigurations[mimerEnvironment]];
-        }
-
-        var workflowConfigurations = await GetItemsAsync<WorkflowConfiguration>(mimerEnvironment, "workflows", "workflowConfigurations", filterExpression);
-        _workflowConfigurations[mimerEnvironment] = workflowConfigurations;
-
-        return _workflowConfigurations[mimerEnvironment];
-    }
-
-    public async Task<List<T>> GetItemsAsync<T>(
+    public async Task<IEnumerable<T>> GetAsync<T>(
         MimerEnvironment mimerEnvironment,
         string databaseId,
         string containerId,

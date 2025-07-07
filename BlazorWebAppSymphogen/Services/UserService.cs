@@ -1,6 +1,5 @@
-﻿using BlazorWebAppSymphogen.Models;
+﻿using BlazorWebAppSymphogen.Services.Interfaces;
 using BlazorWebAppSymphogen.Settings;
-using Microsoft.Azure.Cosmos;
 
 namespace BlazorWebAppSymphogen.Services;
 
@@ -11,42 +10,21 @@ public class UserService : IUserService
     private readonly ICosmosService _cosmosService;
     private readonly ITestDataService _testDataService;
 
-    private readonly Dictionary<MimerEnvironment, string> _connectionStrings = [];
-    private readonly Dictionary<MimerEnvironment, CosmosClient> _clients = [];
-
     private readonly Dictionary<MimerEnvironment, List<Models.User>> _users = [];
-    private readonly Dictionary<MimerEnvironment, List<Team>> _teams = [];
-    private readonly Dictionary<MimerEnvironment, List<WorkflowConfiguration>> _workflowConfigurations = [];
 
     public UserService(
         ILogger<UserService> logger,
         IUserPreferences userPreferences,
         ICosmosService cosmosService,
-        ITestDataService testDataService,
-        string connectionStringSb1,
-        string connectionStringQa)
+        ITestDataService testDataService)
     {
         _logger = logger;
         _userPreferences = userPreferences;
         _cosmosService = cosmosService;
         _testDataService = testDataService;
+    }
 
-        _connectionStrings.Add(MimerEnvironment.SB1, connectionStringSb1);
-        _connectionStrings.Add(MimerEnvironment.QA, connectionStringQa);
-
-        var cosmosOptions = new CosmosClientOptions
-        {
-            ConnectionMode = ConnectionMode.Gateway,
-        };
-
-        foreach (var kvp in _connectionStrings)
-        {
-            _logger.LogDebug("Creating Cosmos client for {Environment}", kvp.Key);
-            _clients[kvp.Key] = new CosmosClient(kvp.Value, cosmosOptions);
-        }
-    }    
-
-    public async Task<List<Models.User>> GetUsersAsync(MimerEnvironment mimerEnvironment, Func<IQueryable<Models.User>, IQueryable<Models.User>>? filterExpression = null)
+    public async Task<IEnumerable<Models.User>> GetAsync(MimerEnvironment mimerEnvironment, Func<IQueryable<Models.User>, IQueryable<Models.User>>? filterExpression = null)
     {
         if (_userPreferences.MimerEnvironment == MimerEnvironment.TestData)
         {
@@ -61,17 +39,16 @@ public class UserService : IUserService
             return [.. _users[mimerEnvironment]];
         }
 
-        var users = await _cosmosService.GetItemsAsync<Models.User>(mimerEnvironment, "users", "users_search", filterExpression);
-        _users[mimerEnvironment] = users;
+        var users = await _cosmosService.GetAsync<Models.User>(mimerEnvironment, "users", "users_search", filterExpression);
+        _users[mimerEnvironment] = [.. users];
 
         return _users[mimerEnvironment];
     }
 
-    public async Task SaveUserAsync(MimerEnvironment mimerEnvironment, Models.User user)
+    public async Task SaveAsync(MimerEnvironment mimerEnvironment, Models.User user)
     {
         if (_userPreferences.MimerEnvironment == MimerEnvironment.TestData)
         {
-            _logger.LogDebug("Saving user in test data environment {Environment}", mimerEnvironment);
             await _testDataService.SaveUserAsync(user);
             return;
         }
@@ -110,11 +87,10 @@ public class UserService : IUserService
         }
     }
 
-    public async Task DeleteUserAsync(MimerEnvironment mimerEnvironment, string userId)
+    public async Task DeleteAsync(MimerEnvironment mimerEnvironment, string userId)
     {
         if (_userPreferences.MimerEnvironment == MimerEnvironment.TestData)
         {
-            _logger.LogDebug("Deleting user {UserId} in test data environment {Environment}", userId, mimerEnvironment);
             await _testDataService.DeleteUserAsync(userId);
             return;
         }

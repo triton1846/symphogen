@@ -1,12 +1,11 @@
 ﻿@page "/workflowconfigurations"
 @rendermode InteractiveServer
 @using System.Text.Json
-@using BlazorWebAppSymphogen.Settings
-@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 @inject IUserPreferences UserPreferences
+@inject IWorkflowConfigurationService WorkflowConfigurationService
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
@@ -124,7 +123,7 @@ else
 @code {
     private bool _isInitialized = false;
     private bool _isLoading = true;
-    private List<WorkflowConfiguration> _allWorkflowConfigurations = [];
+    private IEnumerable<Models.WorkflowConfiguration> _allWorkflowConfigurations = [];
     private string _searchString = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -139,7 +138,7 @@ else
     private async Task LoadWorkflowConfigurationsAsync()
     {
         Logger.LogInformation("Loading workflow configurations for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allWorkflowConfigurations = await CosmosService.GetWorkflowConfigurationsAsync(UserPreferences.MimerEnvironment);
+        _allWorkflowConfigurations = await WorkflowConfigurationService.GetAsync(UserPreferences.MimerEnvironment);
 
         // TODO: Handle unknown workflow configurations
     }

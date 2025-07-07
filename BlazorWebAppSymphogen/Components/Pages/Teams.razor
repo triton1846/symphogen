@@ -1,18 +1,16 @@
 ﻿@page "/teams"
 @rendermode InteractiveServer
 @using System.Text.Json
-@using BlazorWebAppSymphogen.Components.Dialogs
-@using BlazorWebAppSymphogen.Models
-@using BlazorWebAppSymphogen.Settings
 @using Microsoft.Identity.Abstractions
 @using Microsoft.Identity.Web
-@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
 @inject IDialogService DialogService
 @inject IDownstreamApi downstreamApi
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 @inject IUserPreferences UserPreferences
 @inject IUserService UserService
+@inject ITeamService TeamService
+@inject IWorkflowConfigurationService WorkflowConfigurationService
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
@@ -169,9 +167,9 @@ else
 @code {
     private bool _isInitialized = false;
     private bool _isLoading = true;
-    private List<BlazorWebAppSymphogen.Models.User> _allUsers = [];
-    private List<WorkflowConfiguration> _allWorkflowConfigurations = [];
-    private List<Models.Team> _allTeams = [];
+    private IEnumerable<Models.User> _allUsers = [];
+    private IEnumerable<Models.WorkflowConfiguration> _allWorkflowConfigurations = [];
+    private IEnumerable<Models.Team> _allTeams = [];
     private string _searchString = string.Empty;
     private int _maxUserDisplayCount = 5;
 
@@ -188,13 +186,13 @@ else
     private async Task LoadUsersAsync()
     {
         Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allUsers = await UserService.GetUsersAsync(UserPreferences.MimerEnvironment);
+        _allUsers = await UserService.GetAsync(UserPreferences.MimerEnvironment);
     }
 
     private async Task LoadTeamsAsync()
     {
         Logger.LogInformation("Loading teams for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allTeams = await CosmosService.GetTeamsAsync(UserPreferences.MimerEnvironment);
+        _allTeams = await TeamService.GetAsync(UserPreferences.MimerEnvironment);
 
         foreach (var team in _allTeams)
         {
@@ -235,7 +233,7 @@ else
     private async Task LoadWorkflowConfigurationsAsync()
     {
         Logger.LogInformation("Loading workflow configurations for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allWorkflowConfigurations = await CosmosService.GetWorkflowConfigurationsAsync(UserPreferences.MimerEnvironment);
+        _allWorkflowConfigurations = await WorkflowConfigurationService.GetAsync(UserPreferences.MimerEnvironment);
 
         // Handle unknown workflow configurations
     }

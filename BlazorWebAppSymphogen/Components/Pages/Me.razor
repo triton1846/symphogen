@@ -1,16 +1,15 @@
 ﻿@page "/me"
 @rendermode InteractiveServer
 @using System.Text.Json
-@using Microsoft.Identity.Web
 @using Microsoft.Identity.Abstractions
+@using Microsoft.Identity.Web
 @inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @inject ITokenAcquisition TokenAcquisition
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
 @inject IDownstreamApi downstreamApi
-@inject BlazorWebAppSymphogen.Services.IUserInfoService UserInfoService
-@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
+@inject IUserInfoService UserInfoService
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize]
 

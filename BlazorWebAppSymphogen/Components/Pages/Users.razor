@@ -1,15 +1,13 @@
 ﻿@page "/users"
 @rendermode InteractiveServer
 @using System.Text.Json
-@using BlazorWebAppSymphogen.Components.Dialogs
-@using BlazorWebAppSymphogen.Settings
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@inject BlazorWebAppSymphogen.Services.ICosmosService CosmosService
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 @inject IUserPreferences UserPreferences
 @inject IUserService UserService
+@inject ITeamService TeamService
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
@@ -173,7 +171,7 @@ else
     private async Task LoadUsersAsync()
     {
         Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allUsers = await UserService.GetUsersAsync(UserPreferences.MimerEnvironment);
+        _allUsers = [.. await UserService.GetAsync(UserPreferences.MimerEnvironment)];
         foreach (var user in _allUsers)
         {
             user.Teams.Clear();
@@ -193,7 +191,7 @@ else
     private async Task LoadTeamsAsync()
     {
         Logger.LogInformation("Loading teams for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allTeams = await CosmosService.GetTeamsAsync(UserPreferences.MimerEnvironment);
+        _allTeams = [.. await TeamService.GetAsync(UserPreferences.MimerEnvironment)];
     }
 
     private bool FilterFunc(Models.User user)
@@ -264,7 +262,7 @@ else
                     Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
                 }
                 // Save changes to Cosmos DB
-                await UserService.SaveUserAsync(UserPreferences.MimerEnvironment, user);
+                await UserService.SaveAsync(UserPreferences.MimerEnvironment, user);
             }
             else if (result.Data != null && result.Data is bool deleteUser && deleteUser && isEditMode)
             {
@@ -274,7 +272,7 @@ else
                 {
                     var deletedUser = _allUsers[index];
                     _allUsers.RemoveAt(index);
-                    await UserService.DeleteUserAsync(UserPreferences.MimerEnvironment, deletedUser.Id);
+                    await UserService.DeleteAsync(UserPreferences.MimerEnvironment, deletedUser.Id);
                     Snackbar.Add($"User {deletedUser.FullName} deleted successfully!", Severity.Success);
                     Logger.LogInformation("Deleted user: {UserName} ({UserId})", deletedUser.FullName, deletedUser.Id);
                 }

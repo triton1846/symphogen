@@ -1,18 +1,18 @@
 ﻿using BlazorWebAppSymphogen.Models;
 
-namespace BlazorWebAppSymphogen.Services;
+namespace BlazorWebAppSymphogen.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<List<User>> GetUsersAsync(
+    Task<IEnumerable<User>> GetAsync(
         MimerEnvironment mimerEnvironment,
         Func<IQueryable<User>, IQueryable<User>>? filterExpression = null);
 
-    Task SaveUserAsync(
+    Task SaveAsync(
         MimerEnvironment mimerEnvironment,
         User user);
 
-    Task DeleteUserAsync(
+    Task DeleteAsync(
         MimerEnvironment mimerEnvironment,
         string userId);
 }
