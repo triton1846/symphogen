@@ -1,4 +1,5 @@
 ﻿@page "/users"
+@page "/users/{UserId}"
 @rendermode InteractiveServer
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
@@ -139,11 +140,14 @@ else
     private bool _isLoading = false;
     private List<Models.Team> _allTeams = [];
     private List<Models.Team> _selectedTeams = [];
+    private bool _canOpenEditor = true;
 
-    // TODO: Query arg for user id to edit
+    [Parameter]
+    public string? UserId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        // Check if UserPreferences is initialized, can't initialize in OnInitializedAsync due to JavaScript interop not being available yet
         if (!UserPreferences.IsInitialized)
         {
             return;
@@ -165,6 +169,12 @@ else
             await LoadUsersAsync();
             _isLoading = false;
             StateHasChanged(); // Refresh the UI after initialization
+        }
+
+        var userToEdit = _allUsers?.FirstOrDefault(u => u.Id == UserId);
+        if (_canOpenEditor && userToEdit != null)
+        {
+            await OpenUserEditorDialogAsync(new MudBlazor.TableRowClickEventArgs<Models.User>(null!, null!, userToEdit));
         }
     }
 
@@ -215,6 +225,7 @@ else
 
     private async Task OpenUserEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.User>? args = null)
     {
+        _canOpenEditor = false; // Prevent multiple dialogs from opening
         User? userToEdit = args?.Item;
         var isEditMode = userToEdit != null;
         var parameters = new DialogParameters<UserEditorDialog>
@@ -292,8 +303,10 @@ else
                 var originalUser = (User)userBefore;
                 _allUsers[index] = originalUser;
                 Snackbar.Add($"Changes to user {originalUser.FullName} were canceled.", Severity.Info);
-                Logger.LogInformation("Changes to user {UserName} ({UserId}) were canceled", originalUser.FullName, originalUser.Id);
+                Logger.LogInformation("Changes to user {UserName} ({UserId}) were cancelled", originalUser.FullName, originalUser.Id);
             }
         }
+        UserId = null; // Reset UserId to prevent reopening the editor on next render
+        _canOpenEditor = true; // Allow opening editor again
     }
 }
