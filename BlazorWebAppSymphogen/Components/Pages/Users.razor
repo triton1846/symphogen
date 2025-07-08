@@ -191,7 +191,7 @@ else
         // Validate all users after loading
         foreach (var user in _allUsers)
         {
-            user.ValidationResult = IsValidUser(user);
+            ValidateUser(user);
         }
 
         _isLoading = false;
@@ -291,6 +291,7 @@ else
 
     private async Task HandleUserUpdate(User user, bool isEditMode)
     {
+        ValidateUser(user);
         if (isEditMode)
         {
             // Update existing user
@@ -339,9 +340,8 @@ else
         }
     }
 
-    private ValidationResult IsValidUser(Models.User user)
+    private void ValidateUser(Models.User user)
     {
-        var validationResult = _userValidator.Validate(user);
-        return validationResult;
+        user.ValidationResult = _userValidator.Validate(user);
     }
 }
