@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using FluentValidation.Results;
+using Newtonsoft.Json;
 
 namespace BlazorWebAppSymphogen.Models;
 
@@ -24,15 +25,29 @@ public class User
     [JsonProperty(PropertyName = "officephone")]
     public string? OfficePhoneNumber { get; set; }
 
+    [JsonIgnore]
+    public string? GroupKey => null;
+
     public IEnumerable<string> TeamIds { get; set; } = [];
 
-    public List<Team> Teams { get; set; } = [];
+    private List<Team> _teams = [];
+    public List<Team> Teams
+    {
+        get
+        {
+            return _teams;
+        }
+        set
+        {
+            _teams = value ?? [];
+            TeamIds = _teams.Select(t => t.Id);
+        }
+    }
 
     [JsonIgnore]// This property is used for validation purposes only and should not be serialized
     public Team? ValidationTeams { get; set; }
 
     public bool UserExists { get; set; } = true;
 
-    [JsonIgnore]
-    public string? GroupKey => null;
+    public ValidationResult? ValidationResult { get; set; }
 }

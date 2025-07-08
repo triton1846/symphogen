@@ -2,6 +2,7 @@
 @page "/users/{UserId}"
 @rendermode InteractiveServer
 @using System.Text.Json
+@using FluentValidation.Results
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
@@ -60,6 +61,7 @@ else
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Department ?? string.Empty)">Department</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Location ?? string.Empty)">Location</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="SortByTeams">Teams</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.ValidationResult?.IsValid == true)">Valid</MudTableSortLabel></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ID">
@@ -85,7 +87,7 @@ else
                             {
                                 <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")">
                                     <MudChip T="string" Color="Color.Error" Size="Size.Small">
-                                        <MudText Style="font-weight: bold; text-transform: uppercase;">@team.Name</MudText>
+                                        <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
                                     </MudChip>
                                 </MudTooltip>
                             }
@@ -110,6 +112,13 @@ else
                     <MudChip T="string" Size="Size.Small">@((context.Teams.Count())) team membership(s)</MudChip>
                 </MudTd>
             </MudHidden>
+            <MudTd DataLabel="Valid">
+                <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "User is valid")">
+                    <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Success)" Size="Size.Small">
+                        @(context.ValidationResult?.IsValid == false ? "Invalid" : "Valid")
+                    </MudChip>
+                </MudTooltip>
+            </MudTd>
         </RowTemplate>
         <FooterContent>
             <MudTFootRow>
@@ -141,6 +150,7 @@ else
     private List<Models.Team> _allTeams = [];
     private List<Models.Team> _selectedTeams = [];
     private bool _canOpenEditor = true;
+    private UserValidator _userValidator = new UserValidator();
 
     [Parameter]
     public string? UserId { get; set; }
@@ -153,21 +163,14 @@ else
             return;
         }
 
-        _isLoading = true;
-        await LoadTeamsAsync();
-        await LoadUsersAsync();
-        _isLoading = false;
+        await LoadDataAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!UserPreferences.IsInitialized)
         {
-            _isLoading = true;
-            await UserPreferences.InitializeAsync();
-            await LoadTeamsAsync();
-            await LoadUsersAsync();
-            _isLoading = false;
+            await LoadDataAsync();
             StateHasChanged(); // Refresh the UI after initialization
         }
 
@@ -176,6 +179,22 @@ else
         {
             await OpenUserEditorDialogAsync(new MudBlazor.TableRowClickEventArgs<Models.User>(null!, null!, userToEdit));
         }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        await UserPreferences.InitializeAsync();
+        await LoadTeamsAsync();
+        await LoadUsersAsync();
+
+        // Validate all users after loading
+        foreach (var user in _allUsers)
+        {
+            user.ValidationResult = IsValidUser(user);
+        }
+
+        _isLoading = false;
     }
 
     private async Task LoadUsersAsync()
@@ -234,7 +253,7 @@ else
         {
             User? userToEdit = args?.Item;
             bool isEditMode = userToEdit != null;
-            
+
             var parameters = new DialogParameters<UserEditorDialog>
             {
                 { x => x.AllTeams, _allTeams },
@@ -318,5 +337,11 @@ else
             Snackbar.Add($"User {userToDelete.FullName} not found for deletion!", Severity.Error);
             Logger.LogWarning("User {UserName} ({UserId}) not found for deletion", userToDelete.FullName, userToDelete.Id);
         }
+    }
+
+    private ValidationResult IsValidUser(Models.User user)
+    {
+        var validationResult = _userValidator.Validate(user);
+        return validationResult;
     }
 }

@@ -1,5 +1,6 @@
 ﻿@inject ISnackbar Snackbar
 @inject IUserPreferences UserPreferences
+@inject ILogger<UserEditorDialog> Logger
 
 <MudDialog>
     <TitleContent>
@@ -118,21 +119,7 @@
         {
             _user = User.DeepCopy();
             _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
-
-            // If user has unknown teams, remove and inform user using snackbar - if UserPreferences.RemoveInvalidDataAutomatically is true
-            var unknownTeams = _user.Teams.Where(t => !t.TeamExists).ToList();
-            if (UserPreferences.RemoveInvalidDataAutomatically && unknownTeams.Any())
-            {
-                Snackbar.Add($"{unknownTeams.Count} unknown team(s) has been removed automatically", Severity.Warning);
-                _user.Teams = _user.Teams.Where(t => t.TeamExists).ToList();
-            }
-            // If user has duplicate teams, remove duplicates and inform user using snackbar
-            var duplicateTeams = _user.Teams.GroupBy(t => t.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
-            if (UserPreferences.RemoveInvalidDataAutomatically && duplicateTeams.Any())
-            {
-                Snackbar.Add($"{duplicateTeams.Count} duplicate team(s) have been removed automatically", Severity.Warning);
-                _user.Teams = _user.Teams.DistinctBy(t => t.Id).ToList();
-            }
+            RemoveInvalidData();
         }
     }
 
@@ -177,5 +164,26 @@
         }
 
         return Color.Default;
+    }
+
+    private void RemoveInvalidData()
+    {
+        if (UserPreferences.RemoveInvalidDataAutomatically)
+        {
+            var unknownTeams = _user.Teams.Where(t => !t.TeamExists).ToList();
+            if (unknownTeams.Any())
+            {
+                Logger.LogWarning("{Count} unknown team(s) have been removed", unknownTeams.Count);
+                Snackbar.Add($"{unknownTeams.Count} unknown team(s) have been removed", Severity.Warning);
+                _user.Teams = _user.Teams.Where(t => t.TeamExists).ToList();
+            }
+            var duplicateTeams = _user.Teams.GroupBy(t => t.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
+            if (duplicateTeams.Any())
+            {
+                Logger.LogWarning("{Count} duplicate team(s) have been removed", duplicateTeams.Count);
+                Snackbar.Add($"{duplicateTeams.Count} duplicate team(s) have been removed", Severity.Warning);
+                _user.Teams = _user.Teams.DistinctBy(t => t.Id).ToList();
+            }
+        }
     }
 }
