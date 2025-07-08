@@ -46,6 +46,9 @@ public class UserPreferences(
     [StorageKey(StorageKeys.Testing.User.NumberOfUsers)]
     public int TestDataNumberOfUsers { get; set; } = 100;
 
+    [StorageKey(StorageKeys.Testing.Team.NumberOfTeams)]
+    public int TestDataNumberOfTeams { get; set; } = 10;
+
     [StorageKey(StorageKeys.Testing.User.Unknown.Users)]
     public bool TestDataCreateUnknownUsersAsTeamMembers { get; set; } = true;
 
@@ -120,9 +123,13 @@ public class UserPreferences(
             DeleteWorkflowConfigurationDelay = deleteWorkflowConfigurationDelayResult.Value;
 
         // Load test data settings
-        var testDataNumberOfUsersResult = await protectedLocalStorage.GetAsync<int>(StorageKeys.Testing.Team.NumberOfTeams);
+        var testDataNumberOfUsersResult = await protectedLocalStorage.GetAsync<int>(StorageKeys.Testing.User.NumberOfUsers);
         if (testDataNumberOfUsersResult.Success)
             TestDataNumberOfUsers = testDataNumberOfUsersResult.Value;
+
+        var testDataNumberOfTeamsResult = await protectedLocalStorage.GetAsync<int>(StorageKeys.Testing.Team.NumberOfTeams);
+        if (testDataNumberOfTeamsResult.Success)
+            TestDataNumberOfTeams = testDataNumberOfTeamsResult.Value;
 
         var testDataCreateUnknownUsersAsTeamMembersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.User.Unknown.Users);
         if (testDataCreateUnknownUsersAsTeamMembersResult.Success)

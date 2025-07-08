@@ -119,6 +119,14 @@ public interface IUserPreferences
     int TestDataNumberOfUsers { get; set; }
 
     /// <summary>
+    /// Specifies the number of teams to create for testing purposes.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    int TestDataNumberOfTeams { get; set; }
+
+    /// <summary>
     /// Creates unknown users as team members for testing purposes.
     /// </summary>
     /// <remarks>
