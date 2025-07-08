@@ -4,26 +4,72 @@ public static class StorageKeys
 {
     public const string MimerEnvironment = "app_mimerEnvironment";
     public const string RemoveInvalidDataAutomatically = "app_removeInvalidDataAutomatically";
-    public const string FetchUsersDelay = "app_fetchUsersDelay";
-    public const string FetchTeamsDelay = "app_fetchTeamsDelay";
-    public const string FetchWorkflowConfigurationsDelay = "app_fetchWorkflowConfigurationsDelay";
 
-    public static class TestData
+    public static class Testing
     {
-        public const string NumberOfUsers = "testData_numberOfUsers";
-        public const string CreateUnknownUsersAsTeamMembers = "testData_createUnknownUsersAsTeamMembers";
-        public const string CreateDuplicateTeamMembershipsForUsers = "testData_createDuplicateTeamMembershipsForUsers";
-        public const string CreateUnknownSuperUsersAsTeamMembers = "testData_createUnknownSuperUsersAsTeamMembers";
-        public const string CreateDuplicateTeamMembershipsForSuperUsers = "testData_createDuplicateTeamMembershipsForSuperUsers";
-        public const string CreateUnknownTeams = "testData_createUnknownTeams";
-        public const string CreateDuplicateTeams = "testData_createDuplicateTeams";
-        public const string CreateUnknownSuperUsers = "testData_createUnknownSuperUsers";
-        public const string CreateDuplicateSuperUsers = "testData_createDuplicateSuperUsers";
-        public const string CreateUnknownTeamsAsTeamMembers = "testData_createUnknownTeamsAsTeamMembers";
-        public const string CreateDuplicateTeamMembershipsForTeams = "testData_createDuplicateTeamMembershipsForTeams";
-        public const string CreateUnknownSuperTeams = "testData_createUnknownSuperTeams";
-        public const string CreateDuplicateSuperTeams = "testData_createDuplicateSuperTeams";
-        public const string CreateUnknownSuperTeamsAsTeamMembers = "testData_createUnknownSuperTeamsAsTeamMembers";
-        public const string CreateDuplicateSuperTeamsAsTeamMembers = "testData_createDuplicateSuperTeamsAsTeamMembers";
+        public static class User
+        {
+            public const string NumberOfUsers = "testing_user_numberOfUsers";
+            public static class Delay
+            {
+                public const string Get = "testing_user_delay_get";
+                public const string Save = "testing_user_delay_save";
+                public const string Delete = "testing_user_delay_delete";
+            }
+
+            public static class Duplicate
+            {
+                public const string Users = "testing_user_duplicate_users";
+                public const string SuperUsers = "testing_user_duplicate_superUsers";
+            }
+
+            public static class Unknown
+            {
+                public const string Users = "testing_user_unknown_users";
+                public const string SuperUsers = "testing_user_unknown_superUsers";
+            }
+        }
+
+        public static class Team
+        {
+            public const string NumberOfTeams = "testing_team_numberOfTeams";
+            public static class Delay
+            {
+                public const string Get = "testing_team_delay_get";
+                public const string Save = "testing_team_delay_save";
+                public const string Delete = "testing_team_delay_delete";
+            }
+
+            public static class Duplicate
+            {
+                public const string Teams = "testing_team_duplicate_teams";
+            }
+
+            public static class Unknown
+            {
+                public const string Teams = "testing_team_unknown_teams";
+            }
+        }
+
+        public static class WorkflowConfiguration
+        {
+            public const string NumberOfWorkflowConfigurations = "testing_workflowConfiguration_numberOfWorkflowConfigurations";
+            public static class Delay
+            {
+                public const string Get = "testing_workflowConfiguration_delay_get";
+                public const string Save = "testing_workflowConfiguration_delay_save";
+                public const string Delete = "testing_workflowConfiguration_delay_delete";
+            }
+
+            public static class Duplicate
+            {
+                public const string WorkflowConfigurations = "testing_workflowConfiguration_duplicate_workflowConfigurations";
+            }
+
+            public static class Unknown
+            {
+                public const string WorkflowConfigurations = "testing_workflowConfiguration_unknown_workflowConfigurations";
+            }
+        }
     }
 }

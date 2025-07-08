@@ -39,28 +39,76 @@ public interface IUserPreferences
     #region Test Data preferences
 
     /// <summary>
-    /// Delays for fetching users.
+    /// Delay for fetching users.
     /// </summary>
     /// <remarks>
     /// This property may be removed in the future as it is primarily used for testing purposes.
     /// </remarks>
-    TimeSpan FetchUsersDelay { get; set; }
+    TimeSpan GetUsersDelay { get; set; }
 
     /// <summary>
-    /// Delays for fetching teams.
+    /// Delay for saving users.
     /// </summary>
     /// <remarks>
     /// This property may be removed in the future as it is primarily used for testing purposes.
     /// </remarks>
-    TimeSpan FetchTeamsDelay { get; set; }
+    TimeSpan SaveUserDelay { get; set; }
 
     /// <summary>
-    ///
+    /// Delay for deleting users.
     /// </summary>
     /// <remarks>
     /// This property may be removed in the future as it is primarily used for testing purposes.
     /// </remarks>
-    TimeSpan FetchWorkflowConfigurationsDelay { get; set; }
+    TimeSpan DeleteUserDelay { get; set; }
+
+    /// <summary>
+    /// Delay for fetching teams.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    TimeSpan GetTeamsDelay { get; set; }
+
+    /// <summary>
+    /// Delay for fetching workflow configurations.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    TimeSpan SaveTeamDelay { get; set; }
+
+    /// <summary>
+    /// Delay for deleting teams.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    TimeSpan DeleteTeamDelay { get; set; }
+
+    /// <summary>
+    /// Delay for fetching workflow configurations.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    TimeSpan GetWorkflowConfigurationsDelay { get; set; }
+
+    /// <summary>
+    /// Delay for saving workflow configurations.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    TimeSpan SaveWorkflowConfigurationDelay { get; set; }
+
+    /// <summary>
+    /// Delay for deleting workflow configurations.
+    /// </summary>
+    /// <remarks>
+    /// This property may be removed in the future as it is primarily used for testing purposes.
+    /// </remarks>
+    TimeSpan DeleteWorkflowConfigurationDelay { get; set; }
 
     /// <summary>
     /// Specifies the number of users to create for testing purposes.

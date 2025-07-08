@@ -16,34 +16,52 @@ public class UserPreferences(
 
     #region Test Data preferences
 
-    [StorageKey(StorageKeys.FetchUsersDelay)]
-    public TimeSpan FetchUsersDelay { get; set; } = TimeSpan.Zero;
+    [StorageKey(StorageKeys.Testing.User.Delay.Get)]
+    public TimeSpan GetUsersDelay { get; set; } = TimeSpan.Zero;
 
-    [StorageKey(StorageKeys.FetchTeamsDelay)]
-    public TimeSpan FetchTeamsDelay { get; set; } = TimeSpan.Zero;
+    [StorageKey(StorageKeys.Testing.User.Delay.Save)]
+    public TimeSpan SaveUserDelay { get; set; } = TimeSpan.Zero;
 
-    [StorageKey(StorageKeys.FetchWorkflowConfigurationsDelay)]
-    public TimeSpan FetchWorkflowConfigurationsDelay { get; set; } = TimeSpan.Zero;
+    [StorageKey(StorageKeys.Testing.User.Delay.Delete)]
+    public TimeSpan DeleteUserDelay { get; set; } = TimeSpan.Zero;
 
-    [StorageKey(StorageKeys.TestData.NumberOfUsers)]
+    [StorageKey(StorageKeys.Testing.Team.Delay.Get)]
+    public TimeSpan GetTeamsDelay { get; set; } = TimeSpan.Zero;
+
+    [StorageKey(StorageKeys.Testing.Team.Delay.Save)]
+    public TimeSpan SaveTeamDelay { get; set; } = TimeSpan.Zero;
+
+    [StorageKey(StorageKeys.Testing.Team.Delay.Delete)]
+    public TimeSpan DeleteTeamDelay { get; set; } = TimeSpan.Zero;
+
+    [StorageKey(StorageKeys.Testing.WorkflowConfiguration.Delay.Get)]
+    public TimeSpan GetWorkflowConfigurationsDelay { get; set; } = TimeSpan.Zero;
+
+    [StorageKey(StorageKeys.Testing.WorkflowConfiguration.Delay.Save)]
+    public TimeSpan SaveWorkflowConfigurationDelay { get; set; } = TimeSpan.Zero;
+
+    [StorageKey(StorageKeys.Testing.WorkflowConfiguration.Delay.Delete)]
+    public TimeSpan DeleteWorkflowConfigurationDelay { get; set; } = TimeSpan.Zero;
+
+    [StorageKey(StorageKeys.Testing.User.NumberOfUsers)]
     public int TestDataNumberOfUsers { get; set; } = 100;
 
-    [StorageKey(StorageKeys.TestData.CreateUnknownUsersAsTeamMembers)]
+    [StorageKey(StorageKeys.Testing.User.Unknown.Users)]
     public bool TestDataCreateUnknownUsersAsTeamMembers { get; set; } = true;
 
-    [StorageKey(StorageKeys.TestData.CreateDuplicateTeamMembershipsForUsers)]
+    [StorageKey(StorageKeys.Testing.User.Duplicate.Users)]
     public bool TestDataCreateDuplicateTeamMembershipsForUsers { get; set; } = true;
 
-    [StorageKey(StorageKeys.TestData.CreateUnknownSuperUsersAsTeamMembers)]
+    [StorageKey(StorageKeys.Testing.User.Unknown.SuperUsers)]
     public bool TestDataCreateUnknownSuperUsersAsTeamMembers { get; set; } = true;
 
-    [StorageKey(StorageKeys.TestData.CreateDuplicateTeamMembershipsForSuperUsers)]
+    [StorageKey(StorageKeys.Testing.User.Duplicate.SuperUsers)]
     public bool TestDataCreateDuplicateTeamMembershipsForSuperUsers { get; set; } = true;
 
-    [StorageKey(StorageKeys.TestData.CreateUnknownTeams)]
+    [StorageKey(StorageKeys.Testing.Team.Unknown.Teams)]
     public bool TestDataCreateUnknownTeams { get; set; } = true;
 
-    [StorageKey(StorageKeys.TestData.CreateDuplicateTeams)]
+    [StorageKey(StorageKeys.Testing.Team.Duplicate.Teams)]
     public bool TestDataCreateDuplicateTeams { get; set; } = true;
 
     #endregion Test Data preferences
@@ -65,44 +83,68 @@ public class UserPreferences(
             RemoveInvalidDataAutomatically = removeInvalidDataResult.Value;
 
         // Load delay settings
-        var fetchUsersDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.FetchUsersDelay);
-        if (fetchUsersDelayResult.Success)
-            FetchUsersDelay = fetchUsersDelayResult.Value;
+        var getUsersDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.User.Delay.Get);
+        if (getUsersDelayResult.Success)
+            GetUsersDelay = getUsersDelayResult.Value;
 
-        var fetchTeamsDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.FetchTeamsDelay);
-        if (fetchTeamsDelayResult.Success)
-            FetchTeamsDelay = fetchTeamsDelayResult.Value;
+        var saveUserDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.User.Delay.Save);
+        if (saveUserDelayResult.Success)
+            SaveUserDelay = saveUserDelayResult.Value;
 
-        var fetchWorkflowConfigurationsDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.FetchWorkflowConfigurationsDelay);
-        if (fetchWorkflowConfigurationsDelayResult.Success)
-            FetchWorkflowConfigurationsDelay = fetchWorkflowConfigurationsDelayResult.Value;
+        var deleteUserDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.User.Delay.Delete);
+        if (deleteUserDelayResult.Success)
+            DeleteUserDelay = deleteUserDelayResult.Value;
+
+        var getTeamsDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.Team.Delay.Get);
+        if (getTeamsDelayResult.Success)
+            GetTeamsDelay = getTeamsDelayResult.Value;
+
+        var saveTeamsDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.Team.Delay.Save);
+        if (saveTeamsDelayResult.Success)
+            SaveTeamDelay = saveTeamsDelayResult.Value;
+
+        var deleteTeamsDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.Team.Delay.Delete);
+        if (deleteTeamsDelayResult.Success)
+            DeleteTeamDelay = deleteTeamsDelayResult.Value;
+
+        var getWorkflowConfigurationsDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.WorkflowConfiguration.Delay.Get);
+        if (getWorkflowConfigurationsDelayResult.Success)
+            GetWorkflowConfigurationsDelay = getWorkflowConfigurationsDelayResult.Value;
+
+        var saveWorkflowConfigurationDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.WorkflowConfiguration.Delay.Save);
+        if (saveWorkflowConfigurationDelayResult.Success)
+            SaveWorkflowConfigurationDelay = saveWorkflowConfigurationDelayResult.Value;
+
+        var deleteWorkflowConfigurationDelayResult = await protectedLocalStorage.GetAsync<TimeSpan>(StorageKeys.Testing.WorkflowConfiguration.Delay.Delete);
+        if (deleteWorkflowConfigurationDelayResult.Success)
+            DeleteWorkflowConfigurationDelay = deleteWorkflowConfigurationDelayResult.Value;
 
         // Load test data settings
-        var testDataNumberOfUsersResult = await protectedLocalStorage.GetAsync<int>(StorageKeys.TestData.NumberOfUsers);
+        var testDataNumberOfUsersResult = await protectedLocalStorage.GetAsync<int>(StorageKeys.Testing.Team.NumberOfTeams);
         if (testDataNumberOfUsersResult.Success)
             TestDataNumberOfUsers = testDataNumberOfUsersResult.Value;
 
-        var testDataCreateUnknownUsersAsTeamMembersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.TestData.CreateUnknownUsersAsTeamMembers);
+        var testDataCreateUnknownUsersAsTeamMembersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.User.Unknown.Users);
         if (testDataCreateUnknownUsersAsTeamMembersResult.Success)
             TestDataCreateUnknownUsersAsTeamMembers = testDataCreateUnknownUsersAsTeamMembersResult.Value;
 
-        var testDataCreateDuplicateTeamMembershipsForUsersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.TestData.CreateDuplicateTeamMembershipsForUsers);
+        var testDataCreateDuplicateTeamMembershipsForUsersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.User.Duplicate.Users);
         if (testDataCreateDuplicateTeamMembershipsForUsersResult.Success)
             TestDataCreateDuplicateTeamMembershipsForUsers = testDataCreateDuplicateTeamMembershipsForUsersResult.Value;
 
-        var testDataCreateUnknownSuperUsersAsTeamMembersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.TestData.CreateUnknownSuperUsersAsTeamMembers);
+        var testDataCreateUnknownSuperUsersAsTeamMembersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.User.Unknown.SuperUsers);
         if (testDataCreateUnknownSuperUsersAsTeamMembersResult.Success)
             TestDataCreateUnknownSuperUsersAsTeamMembers = testDataCreateUnknownSuperUsersAsTeamMembersResult.Value;
 
-        var testDataCreateDuplicateTeamMembershipsForSuperUsersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.TestData.CreateDuplicateTeamMembershipsForSuperUsers);
+        var testDataCreateDuplicateTeamMembershipsForSuperUsersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.User.Duplicate.SuperUsers);
         if (testDataCreateDuplicateTeamMembershipsForSuperUsersResult.Success)
             TestDataCreateDuplicateTeamMembershipsForSuperUsers = testDataCreateDuplicateTeamMembershipsForSuperUsersResult.Value;
 
-        var testDataCreateUnknownTeamsResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.TestData.CreateUnknownTeams);
+        var testDataCreateUnknownTeamsResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.Team.Unknown.Teams);
         if (testDataCreateUnknownTeamsResult.Success)
             TestDataCreateUnknownTeams = testDataCreateUnknownTeamsResult.Value;
 
-        var testDataCreateDuplicateTeamsResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.TestData.CreateDuplicateTeams);
+        var testDataCreateDuplicateTeamsResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.Team.Duplicate.Teams);
         if (testDataCreateDuplicateTeamsResult.Success)
             TestDataCreateDuplicateTeams = testDataCreateDuplicateTeamsResult.Value;
 

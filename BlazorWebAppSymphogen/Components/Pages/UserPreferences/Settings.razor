@@ -4,8 +4,6 @@
 
 <PageTitle>Settings</PageTitle>
 
-<MudText Typo="Typo.h3" Class="mb-4">Settings</MudText>
-
 @if (!UserPreferences.IsInitialized)
 {
     <MudOverlay DarkBackground>
@@ -16,6 +14,10 @@ else
 {
     <MudGrid>
 
+        <MudItem xs="12">
+            <MudText Typo="Typo.h3">General Settings</MudText>
+        </MudItem>
+
         <MudItem xs="12" sm="12" md="12" lg="9">
             <MudText Typo="Typo.body1" Class="mb-4">
                 Adjust the application settings to match your preferences.
@@ -25,10 +27,6 @@ else
         </MudItem>
 
         <MudItem xs="12" />
-
-        <MudItem xs="12">
-            <MudText Typo="Typo.h4">General Settings</MudText>
-        </MudItem>
 
         <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
             <MudCard Outlined="true">
@@ -81,7 +79,7 @@ else
         </MudItem>
 
         <MudItem xs="12">
-            <MudText Typo="Typo.h4">Settings for Test Data Usage</MudText>
+            <MudText Typo="Typo.h3">Settings for Test Data Usage</MudText>
         </MudItem>
 
         <MudItem xs="12" sm="12" md="8" lg="6">
@@ -90,33 +88,8 @@ else
             </MudAlert>
         </MudItem>
 
-        <MudItem xs="12" />
-
-        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
-            <SliderCard CurrentValue="UserPreferences.FetchUsersDelay"
-                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.FetchUsersDelay), val)"
-                        Description="Delay for fetching user data from the server."
-                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
-                        FormattedValue="@FormatTimeSpan(UserPreferences.FetchUsersDelay)"
-                        Title="Delay for fetching user data?" />
-        </MudItem>
-
-        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
-            <SliderCard CurrentValue="UserPreferences.FetchTeamsDelay"
-                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.FetchTeamsDelay), val)"
-                        Description="Delay for fetching team data from the server."
-                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
-                        FormattedValue="@FormatTimeSpan(UserPreferences.FetchTeamsDelay)"
-                        Title="Delay for fetching team data?" />
-        </MudItem>
-
-        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
-            <SliderCard CurrentValue="UserPreferences.FetchWorkflowConfigurationsDelay"
-                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.FetchWorkflowConfigurationsDelay), val)"
-                        Description="Delay for fetching workflow configuration data from the server."
-                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
-                        FormattedValue="@FormatTimeSpan(UserPreferences.FetchWorkflowConfigurationsDelay)"
-                        Title="Delay for fetching workflow configuration data?" />
+        <MudItem xs="12">
+            <MudText Typo="Typo.h4">User Test Data Settings</MudText>
         </MudItem>
 
         <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
@@ -152,6 +125,33 @@ else
                     </MudSlider>
                 </MudCardActions>
             </MudCard>
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.GetUsersDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.GetUsersDelay), val)"
+                        Description="Delay for fetching user data from the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.GetUsersDelay)"
+                        Title="Delay for fetching user data?" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.SaveUserDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.SaveUserDelay), val)"
+                        Description="Delay for saving user data to the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.SaveUserDelay)"
+                        Title="Delay for saving user data?" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.DeleteUserDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.DeleteUserDelay), val)"
+                        Description="Delay for deleting user data on the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.DeleteUserDelay)"
+                        Title="Delay for deleting user data?" />
         </MudItem>
 
         <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
@@ -198,6 +198,37 @@ else
                          ValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers), val)" />
         </MudItem>
 
+        <MudItem xs="12">
+            <MudText Typo="Typo.h4">Team Test Data Settings</MudText>
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.GetTeamsDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.GetTeamsDelay), val)"
+                        Description="Delay for fetching team data from the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.GetTeamsDelay)"
+                        Title="Delay for fetching team data?" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.SaveTeamDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.SaveTeamDelay), val)"
+                        Description="Delay for saving team data to the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.SaveTeamDelay)"
+                        Title="Delay for saving team data?" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.DeleteTeamDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.DeleteTeamDelay), val)"
+                        Description="Delay for deleting team data on the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.DeleteTeamDelay)"
+                        Title="Delay for deleting team data?" />
+        </MudItem>
+
         <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
             <BooleanCard Description="This enables the creation of unknown teams when using test data."
                          Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
@@ -218,6 +249,37 @@ else
                          Title="Create duplicate teams?"
                          Value="UserPreferences.TestDataCreateDuplicateTeams"
                          ValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.TestDataCreateDuplicateTeams), val)" />
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.h4">Workflow Configuration Test Data Settings</MudText>
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.GetWorkflowConfigurationsDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.GetWorkflowConfigurationsDelay), val)"
+                        Description="Delay for fetching workflow configuration data from the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.GetWorkflowConfigurationsDelay)"
+                        Title="Delay for fetching workflow configuration data?" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.SaveWorkflowConfigurationDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.SaveWorkflowConfigurationDelay), val)"
+                        Description="Delay for saving workflow configuration data to the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.SaveWorkflowConfigurationDelay)"
+                        Title="Delay for saving workflow configuration data?" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <SliderCard CurrentValue="UserPreferences.DeleteWorkflowConfigurationDelay"
+                        CurrentValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.DeleteWorkflowConfigurationDelay), val)"
+                        Description="Delay for deleting workflow configuration data on the server."
+                        Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                        FormattedValue="@FormatTimeSpan(UserPreferences.DeleteWorkflowConfigurationDelay)"
+                        Title="Delay for deleting workflow configuration data?" />
         </MudItem>
 
     </MudGrid>

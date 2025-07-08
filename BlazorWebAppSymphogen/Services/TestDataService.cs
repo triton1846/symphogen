@@ -22,7 +22,7 @@ public class TestDataService(
 
     public async Task<IEnumerable<User>> GetUsersAsync()
     {
-        await Task.Delay(userPreferences.FetchUsersDelay);
+        await Task.Delay(userPreferences.GetUsersDelay);
 
         if (_users.Count != 0)
         {
@@ -37,8 +37,8 @@ public class TestDataService(
 
     public async Task SaveUserAsync(User user)
     {
-        // await Task.Delay(userPreferences.SaveUserDelay); // TODO: Add to userPreferences if needed
-        await Task.CompletedTask; // Simulate async operation
+        await Task.Delay(userPreferences.SaveUserDelay);
+
         if (user == null)
         {
             throw new ArgumentNullException(nameof(user), "User cannot be null.");
@@ -75,7 +75,7 @@ public class TestDataService(
 
     public async Task<IEnumerable<Team>> GetTeamsAsync()
     {
-        await Task.Delay(userPreferences.FetchTeamsDelay);
+        await Task.Delay(userPreferences.GetTeamsDelay);
 
         if (_teams.Count != 0)
         {
@@ -89,8 +89,8 @@ public class TestDataService(
 
     public async Task SaveTeamAsync(Team team)
     {
-        // await Task.Delay(userPreferences.SaveTeamDelay); // TODO: Add to userPreferences if needed
-        await Task.CompletedTask; // Simulate async operation
+        await Task.Delay(userPreferences.SaveTeamDelay);
+
         if (team == null)
         {
             throw new ArgumentNullException(nameof(team), "Team cannot be null.");
@@ -107,8 +107,8 @@ public class TestDataService(
 
     public async Task DeleteTeamAsync(string teamId)
     {
-        // await Task.Delay(userPreferences.DeleteTeamDelay); // TODO: Add to userPreferences if needed
-        await Task.CompletedTask; // Simulate async operation
+        await Task.Delay(userPreferences.DeleteTeamDelay);
+
         if (string.IsNullOrEmpty(teamId))
         {
             throw new ArgumentException("Team ID cannot be null or empty.", nameof(teamId));
@@ -127,7 +127,7 @@ public class TestDataService(
 
     public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
     {
-        await Task.Delay(userPreferences.FetchWorkflowConfigurationsDelay);
+        await Task.Delay(userPreferences.GetWorkflowConfigurationsDelay);
 
         if (_workflowConfigurations.Count != 0)
         {
@@ -141,8 +141,8 @@ public class TestDataService(
 
     public async Task SaveWorkflowConfigurationAsync(WorkflowConfiguration workflowConfiguration)
     {
-        // await Task.Delay(userPreferences.SaveWorkflowConfigurationDelay); // TODO: Add to userPreferences if needed
-        await Task.CompletedTask; // Simulate async operation
+        await Task.Delay(userPreferences.SaveWorkflowConfigurationDelay);
+
         if (workflowConfiguration == null)
         {
             throw new ArgumentNullException(nameof(workflowConfiguration), "Workflow configuration cannot be null.");
@@ -159,8 +159,8 @@ public class TestDataService(
 
     public async Task DeleteWorkflowConfigurationAsync(string workflowConfigurationId)
     {
-        // await Task.Delay(userPreferences.DeleteWorkflowConfigurationDelay); // TODO: Add to userPreferences if needed
-        await Task.CompletedTask; // Simulate async operation
+        await Task.Delay(userPreferences.DeleteWorkflowConfigurationDelay);
+
         if (string.IsNullOrEmpty(workflowConfigurationId))
         {
             throw new ArgumentException("Workflow configuration ID cannot be null or empty.", nameof(workflowConfigurationId));
