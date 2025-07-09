@@ -1,21 +1,21 @@
 ﻿@page "/users"
 @page "/users/{UserId}"
 @rendermode InteractiveServer
-@using System.Text.Json
 @using FluentValidation.Results
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.Text.Json
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
+@inject ILogger<Users> Logger
 @inject ISnackbar Snackbar
+@inject ITeamService TeamService
 @inject IUserPreferences UserPreferences
 @inject IUserService UserService
-@inject ITeamService TeamService
-@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
 @attribute [Authorize]
 
 @if (!UserPreferences.IsInitialized || _isLoading)
 {
-    <MudOverlay Visible="true" DarkBackground>
+    <MudOverlay Visible="true" DarkBackground="true">
         <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
     </MudOverlay>
 }
@@ -24,6 +24,7 @@ else
     <MudText Typo="Typo.h3">Users</MudText>
     <MudTable @bind-SelectedItem="_selectedItem"
               AllowUnsorted="false"
+              CustomFooter="true"
               Dense="true"
               Filter="new Func<Models.User, bool>(FilterFunc)"
               Hover="true"
@@ -36,9 +37,9 @@ else
         <ToolBarContent>
             <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
                 <MudTooltip Text="Add new user">
-                    <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                   aria-label="add-user"
+                    <MudIconButton aria-label="add-user"
                                    Color="Color.Success"
+                                   Icon="@Icons.Material.Filled.Add"
                                    OnClick="async _ => await OpenUserEditorDialogAsync()" />
                 </MudTooltip>
             </MudHidden>
@@ -122,11 +123,11 @@ else
         </RowTemplate>
         <FooterContent>
             <MudTFootRow>
-                <MudTd>
+                <MudTd colspan="7">
                     <MudTooltip Text="Add new user">
-                        <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                       aria-label="add-user"
+                        <MudIconButton aria-label="add-user"
                                        Color="Color.Success"
+                                       Icon="@Icons.Material.Filled.Add"
                                        OnClick="async _ => await OpenUserEditorDialogAsync()" />
                     </MudTooltip>
                 </MudTd>
@@ -136,7 +137,11 @@ else
             <MudTablePager />
         </PagerContent>
         <EditButtonContent Context="button">
-            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
+            <MudIconButton Class="pa-0"
+                           Disabled="@button.ButtonDisabled"
+                           Icon="@Icons.Material.Outlined.Edit"
+                           OnClick="@button.ButtonAction"
+                           Size="@Size.Small" />
         </EditButtonContent>
     </MudTable>
 }
