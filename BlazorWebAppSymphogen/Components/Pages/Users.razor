@@ -11,6 +11,7 @@
 @inject ITeamService TeamService
 @inject IUserPreferences UserPreferences
 @inject IUserService UserService
+@inject NavigationManager NavigationManager
 @attribute [Authorize]
 
 @if (!UserPreferences.IsInitialized || _isLoading)
@@ -30,14 +31,15 @@ else
               Hover="true"
               Items="_allUsers"
               Loading="_isLoading"
-              OnRowClick="async model => await OpenUserEditorDialogAsync(model)"
+              LoadingProgressColor="Color.Info"
               ReadOnly="_isLoading"
               SortLabel="Sort By"
               T="Models.User">
         <ToolBarContent>
             <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
-                <MudTooltip Text="Add new user">
+                <MudTooltip Text="Add new user" ShowOnFocus="false">
                     <MudIconButton aria-label="add-user"
+                    Class="ml-n3"
                                    Color="Color.Success"
                                    Icon="@Icons.Material.Filled.Add"
                                    OnClick="async _ => await OpenUserEditorDialogAsync()" />
@@ -56,15 +58,33 @@ else
                           Placeholder="Search" />
         </ToolBarContent>
         <HeaderContent>
+            <MudTh>
+                <MudTooltip Text="Add new user" ShowOnFocus="false">
+                    <MudIconButton aria-label="add-user" Class="ml-n3"
+                                   Color="Color.Success"
+                                   Icon="@Icons.Material.Filled.Add"
+                                   OnClick="async _ => await OpenUserEditorDialogAsync()"
+                                   Size="Size.Medium" />
+                </MudTooltip>
+            </MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.User, object>(x => x.FullName ?? string.Empty)">Full Name</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Email ?? string.Empty)">Email</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Department ?? string.Empty)">Department</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Location ?? string.Empty)">Location</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="SortByTeams">Teams</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.ValidationResult?.IsValid == true)">Valid</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.ValidationResult?.IsValid == true)">Validity</MudTableSortLabel></MudTh>
         </HeaderContent>
         <RowTemplate>
+            <MudTd>
+                <MudTooltip Text="Edit user" ShowOnFocus="false">
+                    <MudIconButton aria-label="edit-user"
+                                   Color="Color.Success"
+                                   Icon="@Icons.Material.Outlined.Edit"
+                                   OnClick="async _ => await OpenUserEditorDialogAsync(context)"
+                                   Size="@Size.Small" />
+                </MudTooltip>
+            </MudTd>
             <MudTd DataLabel="ID">
                 <IdCopyButton Id="@context.Id" TooltipText="@context.Id" />
             </MudTd>
@@ -81,14 +101,14 @@ else
                             @if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) == 1)
                             {
                                 <MudTooltip Text="@team.Id">
-                                    <MudChip T="string" Color="Color.Default" Size="Size.Small">@team.Name</MudChip>
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" OnClick="() => NavigateToTeam(team.Id)">@team.Name</MudChip>
                                 </MudTooltip>
                             }
                             else if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) > 1)
                             {
                                 <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")">
                                     <MudChip T="string" Color="Color.Error" Size="Size.Small">
-                                        <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
+                                        <MudChip T="string" Color="Color.Error" Size="Size.Small" OnClick="() => NavigateToTeam(team.Id)">@team.Name</MudChip>
                                     </MudChip>
                                 </MudTooltip>
                             }
@@ -121,28 +141,9 @@ else
                 </MudTooltip>
             </MudTd>
         </RowTemplate>
-        <FooterContent>
-            <MudTFootRow>
-                <MudTd colspan="7">
-                    <MudTooltip Text="Add new user">
-                        <MudIconButton aria-label="add-user"
-                                       Color="Color.Success"
-                                       Icon="@Icons.Material.Filled.Add"
-                                       OnClick="async _ => await OpenUserEditorDialogAsync()" />
-                    </MudTooltip>
-                </MudTd>
-            </MudTFootRow>
-        </FooterContent>
         <PagerContent>
             <MudTablePager />
         </PagerContent>
-        <EditButtonContent Context="button">
-            <MudIconButton Class="pa-0"
-                           Disabled="@button.ButtonDisabled"
-                           Icon="@Icons.Material.Outlined.Edit"
-                           OnClick="@button.ButtonAction"
-                           Size="@Size.Small" />
-        </EditButtonContent>
     </MudTable>
 }
 
@@ -182,7 +183,7 @@ else
         var userToEdit = _allUsers.FirstOrDefault(u => u.Id == UserId);
         if (_canOpenEditor && userToEdit != null)
         {
-            await OpenUserEditorDialogAsync(new MudBlazor.TableRowClickEventArgs<Models.User>(null!, null!, userToEdit));
+            await OpenUserEditorDialogAsync(userToEdit);
         }
     }
 
@@ -247,7 +248,7 @@ else
 
     Func<Models.User, object>? SortByTeams = (Models.User x) => string.Join(", ", ((Models.User)(object)x).Teams.Select(t => t.Name).Order()); // For sorting teams in the table
 
-    private async Task OpenUserEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.User>? args = null)
+    private async Task OpenUserEditorDialogAsync(User? userToEdit = null)
     {
         if (!_canOpenEditor)
             return;
@@ -256,7 +257,7 @@ else
 
         try
         {
-            User? userToEdit = args?.Item;
+            // User? userToEdit = args?.Item;
             bool isEditMode = userToEdit != null;
 
             var parameters = new DialogParameters<UserEditorDialog>
@@ -348,5 +349,11 @@ else
     private void ValidateUser(Models.User user)
     {
         user.ValidationResult = _userValidator.Validate(user);
+    }
+
+    private void NavigateToTeam(string teamId)
+    {
+        _canOpenEditor = false; // Prevent opening editor while navigating
+        NavigationManager.NavigateTo($"/teams/{teamId}");
     }
 }

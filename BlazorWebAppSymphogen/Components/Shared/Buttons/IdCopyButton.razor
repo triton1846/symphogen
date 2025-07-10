@@ -3,6 +3,7 @@
 <MudTooltip Text="@TooltipText" Disabled="@(!ShowTooltip)">
     <MudIconButton Icon="@(_copiedIconIds.Contains(Id) ? Icons.Material.TwoTone.ContentCopy : Icons.Material.Filled.ContentCopy)"
                    Color="@ButtonColor"
+                   Size="Size.Small"
                    OnClick="async () => await CopyId(Id)" />
 </MudTooltip>
 
