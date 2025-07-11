@@ -50,9 +50,7 @@ else
                           Placeholder="Search"></MudTextField>
         </ToolBarContent>
         <HeaderContent>
-            <MudTh>
-                <MudTableSortLabel SortBy="new Func<WorkflowConfiguration, object>(x => x.Id)">ID</MudTableSortLabel>
-            </MudTh>
+            <MudTh>ID</MudTh>
             <MudTh>
                 <MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<WorkflowConfiguration, object>(x => x.Name ?? string.Empty)">Name</MudTableSortLabel>
             </MudTh>
