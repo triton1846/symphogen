@@ -224,7 +224,7 @@ public class BaseTestContext : TestContext
         SetupLocalStorage();
         SetupUserPreferences();
 
-        var teamIds = Fixture.CreateMany<Guid>(15).ToList();// TODO: Use different IDs for environments?
+        var teamIds = Fixture.CreateMany<Guid>(15).ToList();
         var random = new Random();
 
         DefaultData.UsersSB1 = [.. Fixture.CreateMany<BlazorWebAppSymphogen.Models.User>(20)

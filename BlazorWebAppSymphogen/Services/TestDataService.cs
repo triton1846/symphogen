@@ -236,7 +236,7 @@ public class TestDataService : ITestDataService
             team.SuperUserIds = [.. team.UserIds.OrderBy(_ => random.Next()).Take(random.Next(1, team.UserIds.Count() + 1))];
 
             // Assign teams to users
-            foreach (var userId in team.UserIds)//TODO: invalid data would be super user not in team.UserIds
+            foreach (var userId in team.UserIds)
             {
                 var user = _users.FirstOrDefault(u => u.Id == userId);
                 if (user != null)
@@ -277,7 +277,7 @@ public class TestDataService : ITestDataService
         foreach (var team in _teams)
         {
             var teamWorkflowConfigurations = _workflowConfigurations.OrderBy(wc => random.Next()).Take(random.Next(0, Math.Min(5, _workflowConfigurations.Count))).ToList();
-            team.WorkflowConfigurationIds = [.. teamWorkflowConfigurations.Select(wc => wc.Id)]; // TODO: Is this valid? Should configs only be one single team?
+            team.WorkflowConfigurationIds = [.. teamWorkflowConfigurations.Select(wc => wc.Id)];
         }
         // Make sure at least one team has no workflow configurations
         if (_teams.Count > 0 && _teams.Any(t => !t.WorkflowConfigurationIds.Any()))

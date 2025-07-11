@@ -292,8 +292,6 @@ else
     {
         Logger.LogInformation("Loading workflow configurations for environment: {Environment}", UserPreferences.MimerEnvironment);
         _allWorkflowConfigurations = [.. await WorkflowConfigurationService.GetAsync(UserPreferences.MimerEnvironment)];
-
-        // TODO: Handle unknown workflow configurations
     }
 
     private bool FilterFunc(Models.Team team)
