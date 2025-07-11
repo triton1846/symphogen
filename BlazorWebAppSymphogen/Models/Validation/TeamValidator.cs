@@ -50,8 +50,8 @@ public class TeamValidator : BaseValidator<Team>
                     .All(group => group.Count() == 1);
             }).WithMessage("'Super Users' cannot include duplicates.");
 
-        RuleFor(team => team) // TODO: Find a way to display this error in the UI
-            .Must(team =>
+        RuleFor(team => team.SuperUsers)
+            .Must((team, superUsers) =>
             {
                 // All super users must also be users
                 if (team.SuperUsers == null || team.SuperUsers.Count == 0)
