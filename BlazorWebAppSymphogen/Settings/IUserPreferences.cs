@@ -61,6 +61,8 @@ public interface ITestDataTeams
     bool Teams_Unknown_SuperUser { get; set; }
     bool Teams_Duplicate_User { get; set; }
     bool Teams_Duplicate_SuperUser { get; set; }
+    bool Teams_Duplicate_WorkflowConfigurations { get; set; }
+    bool Teams_Unknown_WorkflowConfigurations { get; set; }
 }
 
 public interface ITestDataWorkflowConfigurations

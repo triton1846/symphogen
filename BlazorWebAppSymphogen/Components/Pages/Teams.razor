@@ -72,7 +72,7 @@ else
             <MudTh>Users</MudTh>
             <MudTh>Super Users</MudTh>
             <MudTh>Workflow Configurations</MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.ValidationResult?.IsValid == true)">Valid</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.Team, object>(x => x.ValidationResult?.IsValid == true)">Valid</MudTableSortLabel></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd>
@@ -139,7 +139,7 @@ else
             </MudTd>
             <MudTd DataLabel="Valid">
                 <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "Team is valid")" ShowOnFocus="false">
-                    <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Success)" Size="Size.Small">
+                    <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Default)" Size="Size.Small">
                         @(context.ValidationResult?.IsValid == false ? "Invalid" : "Valid")
                     </MudChip>
                 </MudTooltip>
@@ -334,6 +334,26 @@ else
     {
         Logger.LogInformation("Loading workflow configurations for environment: {Environment}", UserPreferences.MimerEnvironment);
         _allWorkflowConfigurations = [.. await WorkflowConfigurationService.GetAsync(UserPreferences.MimerEnvironment)];
+
+        foreach (var team in _allTeams)
+        {
+            team.WorkflowConfigurations.Clear();
+            foreach (var workflowConfigurationId in team.WorkflowConfigurationIds)
+            {
+                var workflowConfiguration = _allWorkflowConfigurations.FirstOrDefault(wc => wc.Id == workflowConfigurationId);
+                var unknownWorkflowConfiguration = new Models.WorkflowConfiguration
+                {
+                    Id = workflowConfigurationId,
+                    Name = "Unknown Workflow Configuration",
+                    WorkflowConfigurationExists = false
+                };
+                team.WorkflowConfigurations.Add(workflowConfiguration ?? unknownWorkflowConfiguration);
+                if (!_allWorkflowConfigurations.Any(wc => wc.Id == workflowConfigurationId))
+                {
+                    _allWorkflowConfigurations.Add(unknownWorkflowConfiguration);
+                }
+            }
+        }
     }
 
     private bool FilterFunc(Models.Team team)
@@ -379,6 +399,7 @@ else
             var parameters = new DialogParameters<TeamEditorDialog>
             {
                 { x => x.AllUsers, _allUsers },
+                { x => x.AllWorkflowConfigurations, _allWorkflowConfigurations },
                 { x => x.IsEditMode, isEditMode },
                 { x => x.Team, teamToEdit }
             };

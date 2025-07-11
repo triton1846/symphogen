@@ -265,6 +265,17 @@ else
         </MudItem>
 
         <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <BooleanCard Description="This enables the creation of unknown workflow configurations for teams when using test data."
+                         Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                         DisabledText="No unknown workflow configurations"
+                         EnabledText="Create unknown workflow configurations"
+                         Icon="@Icons.Material.Filled.Settings"
+                         Title="Create unknown workflow configurations for teams?"
+                         Value="UserPreferences.Teams_Unknown_WorkflowConfigurations"
+                         ValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.Teams_Unknown_WorkflowConfigurations), val)" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
             <BooleanCard Description="This enables the creation of duplicate team memberships for users when using test data."
                          Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
                          DisabledText="No duplicates"
@@ -284,6 +295,17 @@ else
                          Title="Create duplicate team memberships for super users?"
                          Value="UserPreferences.Teams_Duplicate_SuperUser"
                          ValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.Teams_Duplicate_SuperUser), val)" />
+        </MudItem>
+
+        <MudItem xs="_cardXs" sm="_cardSm" md="_cardMd" lg="_cardLg">
+            <BooleanCard Description="This enables the creation of duplicate workflow configurations in teams when using test data."
+                         Disabled="@(UserPreferences.MimerEnvironment != MimerEnvironment.TestData)"
+                         DisabledText="No duplicate workflow configurations"
+                         EnabledText="Create duplicate workflow configurations"
+                         Icon="@Icons.Material.Filled.ContentCopy"
+                         Title="Create duplicate workflow configurations in teams?"
+                         Value="UserPreferences.Teams_Duplicate_WorkflowConfigurations"
+                         ValueChanged="async val => await UserPreferences.SetAsync(nameof(UserPreferences.Teams_Duplicate_WorkflowConfigurations), val)" />
         </MudItem>
 
         <MudItem xs="12">

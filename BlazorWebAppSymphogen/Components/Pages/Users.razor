@@ -114,7 +114,11 @@ else
                             {
                                 <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")" ShowOnFocus="false">
                                     <MudChip T="string" Color="Color.Error" Size="Size.Small">
-                                        <MudChip T="string" Color="Color.Error" Size="Size.Small" OnClick="() => NavigateToTeam(team.Id)">@team.Name</MudChip>
+                                        <MudChip CloseIcon="@Icons.Material.Filled.OpenInNew"
+                                                 Color="Color.Error"
+                                                 OnClose="() => NavigateToTeam(team.Id)"
+                                                 Size="Size.Small"
+                                                 T="string">@team.Name</MudChip>
                                     </MudChip>
                                 </MudTooltip>
                             }
@@ -129,7 +133,7 @@ else
                     else
                     {
                         <MudTooltip Text="@($"{context.FullName} is not a member of any team")" ShowOnFocus="false">
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">No Teams</MudChip>
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small">No Teams</MudChip>
                         </MudTooltip>
                     }
                 </MudTd>
@@ -141,7 +145,7 @@ else
             </MudHidden>
             <MudTd DataLabel="Valid">
                 <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "User is valid")" ShowOnFocus="false">
-                    <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Success)" Size="Size.Small">
+                    <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Default)" Size="Size.Small">
                         @(context.ValidationResult?.IsValid == false ? "Invalid" : "Valid")
                     </MudChip>
                 </MudTooltip>

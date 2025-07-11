@@ -55,7 +55,7 @@
                                ToStringFunc="@(user => user.FullName)">
                         @foreach (var user in _users.Where(u => !_team.Users.Contains(u)).Concat(_team.Users).OrderByDescending(u => _team.Users.Contains(u)).ThenBy(u => u.FullName))
                         {
-                            <MudSelectItem Disabled="@(!user.UserExists && !_team.Users.Any(t => t.Id == user.Id))"
+                            <MudSelectItem Disabled="@(!user.UserExists && !_team.Users.Any(u => u.Id == user.Id))"
                                            T="Models.User"
                                            Value="@user">
                                 @if (user.UserExists)
@@ -72,14 +72,28 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudSelect Clearable="true"
+                               For="@(() => _team.ValidationWorkflowConfigurations)"
                                Immediate="true"
                                Label="Workflow Configurations"
                                MultiSelection="true"
-                               SelectedValues="_team.WorkflowConfigurationIds"
-                               T="string">
-                        @foreach (var id in _team.WorkflowConfigurationIds ?? [])
+                               SelectedValues="_team.WorkflowConfigurations"
+                               SelectedValuesChanged="OnWorkflowConfigurationsSelected"
+                               T="Models.WorkflowConfiguration"
+                               ToStringFunc="@(workflowConfiguration => workflowConfiguration.Name)">
+                        @foreach (var workflowConfiguration in _workflowConfigurations.Where(w => !_team.WorkflowConfigurations.Contains(w)).Concat(_team.WorkflowConfigurations).OrderByDescending(w => _team.WorkflowConfigurations.Contains(w)).ThenBy(w => w.Name))
                         {
-                            <MudSelectItem T="string">@id</MudSelectItem>
+                            <MudSelectItem Disabled="@(!workflowConfiguration.WorkflowConfigurationExists && !_team.WorkflowConfigurations.Any(w => w.Id == workflowConfiguration.Id))"
+                                           T="Models.WorkflowConfiguration"
+                                           Value="@workflowConfiguration">
+                                @if (workflowConfiguration.WorkflowConfigurationExists)
+                                {
+                                    @workflowConfiguration.Name
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Error">@workflowConfiguration.Name</MudText>
+                                }
+                            </MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -110,6 +124,9 @@
     public List<Models.User> AllUsers { get; set; } = [];
 
     [Parameter]
+    public List<Models.WorkflowConfiguration> AllWorkflowConfigurations { get; set; } = [];
+
+    [Parameter]
     public bool IsEditMode { get; set; } = false;
 
     [Parameter]
@@ -119,6 +136,7 @@
     private TeamValidator _teamValidator = new TeamValidator();
     private IEnumerable<Models.User> _users = [];
     private IEnumerable<Models.User> _superUsers = [];
+    private IEnumerable<Models.WorkflowConfiguration> _workflowConfigurations = [];
     private Models.Team _team = new Models.Team
     {
         Id = Guid.NewGuid().ToString(),
@@ -152,14 +170,15 @@
         else if (IsEditMode && Team != null)
         {
             _team = Team with { };
-            _users = AllUsers.Where(u => (u.UserExists || _team.Users.Any(t => t.Id == u.Id)) && u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
-            _superUsers = AllUsers.Where(u => u.UserExists || _team.SuperUsers.Any(t => t.Id == u.Id) && u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
+            _users = AllUsers.Where(u => u.UserExists).DistinctBy(w => w.Id);
+            _superUsers = AllUsers.Where(u => u.UserExists).DistinctBy(w => w.Id);
+            _workflowConfigurations = AllWorkflowConfigurations.Where(w => w.WorkflowConfigurationExists).DistinctBy(w => w.Id);
             RemoveInvalidData();
         }
         else
         {
-            _users = AllUsers.Where(u => u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
-            _superUsers = AllUsers.Where(u => u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
+            _users = AllUsers.Where(u => u.UserExists);
+            _superUsers = AllUsers.Where(u => u.UserExists);
         }
     }
 
@@ -186,14 +205,17 @@
 
     private void OnSuperUsersSelected(IEnumerable<Models.User> selectedUsers)
     {
-        _team.SuperUserIds = selectedUsers.Select(u => u.Id).ToList();
         _team.SuperUsers = selectedUsers.ToList();
     }
 
     private void OnUsersSelected(IEnumerable<Models.User> selectedUsers)
     {
-        _team.UserIds = selectedUsers.Select(u => u.Id).ToList();
         _team.Users = selectedUsers.ToList();
+    }
+
+    private void OnWorkflowConfigurationsSelected(IEnumerable<Models.WorkflowConfiguration> selectedWorkflowConfigurations)
+    {
+        _team.WorkflowConfigurations = selectedWorkflowConfigurations.ToList();
     }
 
     private void RemoveInvalidData()

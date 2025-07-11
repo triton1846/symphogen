@@ -50,7 +50,7 @@ public record Team : DTOs.TeamDTO
         }
     }
 
-    public Team? ValidationWorkflowConfigurations { get; set; }
+    public WorkflowConfiguration? ValidationWorkflowConfigurations { get; set; }
 
     public ValidationResult? ValidationResult { get; set; }
 

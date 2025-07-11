@@ -210,6 +210,23 @@ public class TestDataService : ITestDataService
             team.SuperUserIds = team.SuperUserIds.Append(superUserId);
             team.SuperUserIds = team.SuperUserIds.Append(superUserId);
         }
+
+        if (_userPreferences.Teams_Unknown_WorkflowConfigurations)
+        {
+            var team = _teams.OrderBy(t => t.Name).Skip(4).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(team, "No team found to create an unknown workflow configuration.");
+            team.WorkflowConfigurationIds = team.WorkflowConfigurationIds.Append(Guid.NewGuid().ToString());
+        }
+
+        if (_userPreferences.Teams_Duplicate_WorkflowConfigurations)
+        {
+            var team = _teams.OrderBy(t => t.Name).Skip(5).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(team, "No team found to create a duplicate workflow configuration.");
+            var workflowConfigurationId = _workflowConfigurations.OrderBy(wc => new Random().Next()).First().Id;
+            team.WorkflowConfigurationIds = team.WorkflowConfigurationIds.Append(workflowConfigurationId);
+            team.WorkflowConfigurationIds = team.WorkflowConfigurationIds.Append(workflowConfigurationId);
+            team.WorkflowConfigurationIds = team.WorkflowConfigurationIds.Append(workflowConfigurationId);
+        }
     }
 
     private void CreateData()

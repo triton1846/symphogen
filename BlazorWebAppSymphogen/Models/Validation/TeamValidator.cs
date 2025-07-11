@@ -59,5 +59,25 @@ public class TeamValidator : BaseValidator<Team>
 
                 return team.SuperUsers.All(superUser => team.Users.Any(user => user.Id == superUser.Id));
             }).WithMessage("'Super Users' must also be included in 'Users'.");
+
+        RuleFor(team => team.WorkflowConfigurations)
+            .Must(workflowConfigurations =>
+            {
+                if (workflowConfigurations == null || workflowConfigurations.Count == 0)
+                    return true; // Allow empty workflow configurations
+
+                // Check if all workflow configurations exist
+                return workflowConfigurations.All(wc => wc.WorkflowConfigurationExists);
+            }).WithMessage("'Workflow Configurations' cannot include configurations that do not exist.")
+            .Must(workflowConfigurations =>
+            {
+                if (workflowConfigurations == null || workflowConfigurations.Count == 0)
+                    return true; // Allow empty workflow configurations
+                
+                // Check for duplicate workflow configurations
+                return workflowConfigurations
+                    .GroupBy(wc => wc.Id)
+                    .All(group => group.Count() == 1);
+            }).WithMessage("'Workflow Configurations' cannot include duplicates.");
     }
 }

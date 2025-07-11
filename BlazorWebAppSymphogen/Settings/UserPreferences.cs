@@ -62,6 +62,12 @@ public class UserPreferences(
     [StorageKey(StorageKeys.Testing.Team.Duplicate.SuperUsers)]
     public bool Teams_Duplicate_SuperUser { get; set; }
 
+    [StorageKey(StorageKeys.Testing.Team.Duplicate.WorkflowConfigurations)]
+    public bool Teams_Duplicate_WorkflowConfigurations { get; set; }
+
+    [StorageKey(StorageKeys.Testing.Team.Unknown.WorkflowConfigurations)]
+    public bool Teams_Unknown_WorkflowConfigurations { get; set; }
+
 
 
     [StorageKey(StorageKeys.Testing.WorkflowConfiguration.NumberOfWorkflowConfigurations)]
@@ -181,6 +187,14 @@ public class UserPreferences(
         var duplicateSuperUsersResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.Team.Duplicate.SuperUsers);
         if (duplicateSuperUsersResult.Success)
             Teams_Duplicate_SuperUser = duplicateSuperUsersResult.Value;
+
+        var duplicateWorkflowConfigurationsResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.Team.Duplicate.WorkflowConfigurations);
+        if (duplicateWorkflowConfigurationsResult.Success)
+            Teams_Duplicate_WorkflowConfigurations = duplicateWorkflowConfigurationsResult.Value;
+
+        var unknownWorkflowConfigurationsResult = await protectedLocalStorage.GetAsync<bool>(StorageKeys.Testing.Team.Unknown.WorkflowConfigurations);
+        if (unknownWorkflowConfigurationsResult.Success)
+            Teams_Unknown_WorkflowConfigurations = unknownWorkflowConfigurationsResult.Value;
 
         // Workflow configurations settings
         var getWorkflowConfigurationsResult = await protectedLocalStorage.GetAsync<int>(StorageKeys.Testing.WorkflowConfiguration.NumberOfWorkflowConfigurations);

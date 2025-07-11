@@ -14,52 +14,52 @@ public class UserPreferencesTests : BaseTestContext
                 TimeSpan.MinValue, TimeSpan.MinValue, TimeSpan.MinValue,
                 TimeSpan.MinValue, TimeSpan.MinValue, TimeSpan.MinValue,
                 TimeSpan.MinValue, TimeSpan.MinValue, TimeSpan.MinValue,
-                42, 24, 9, true, true, true, true, true, true],
+                42, 24, 9, true, true, true, true, true, true, true, true],
             [MimerEnvironment.QA, true,
                 TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-2), TimeSpan.FromMilliseconds(-3),
                 TimeSpan.FromMilliseconds(-4), TimeSpan.FromMilliseconds(-5), TimeSpan.FromMilliseconds(-6),
                 TimeSpan.FromMilliseconds(-7), TimeSpan.FromMilliseconds(-8), TimeSpan.FromMilliseconds(-9),
-                -42, -24, -9, true, true, true, true, true, true],
+                -42, -24, -9, true, true, true, true, true, true, true, true],
             [MimerEnvironment.QA, true,
                 TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
                 TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
                 TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
-                0, 0, 0, true, true, true, true, true, true],
+                0, 0, 0, true, true, true, true, true, true, true, true],
             [MimerEnvironment.QA, false,
                 TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(2), TimeSpan.FromMilliseconds(3),
                 TimeSpan.FromMilliseconds(4), TimeSpan.FromMilliseconds(5), TimeSpan.FromMilliseconds(6),
                 TimeSpan.FromMilliseconds(7), TimeSpan.FromMilliseconds(8), TimeSpan.FromMilliseconds(9),
-                42, 24, 9, false, false, false, false, false, false],
+                42, 24, 9, false, false, false, false, false, false, false, false],
             [MimerEnvironment.QA, true,
                 TimeSpan.MaxValue, TimeSpan.MaxValue, TimeSpan.MaxValue,
                 TimeSpan.MaxValue, TimeSpan.MaxValue, TimeSpan.MaxValue,
                 TimeSpan.MaxValue, TimeSpan.MaxValue, TimeSpan.MaxValue,
-                42, 24, 9, true, true, true, true, true, true],
+                42, 24, 9, true, true, true, true, true, true, true, true],
             [MimerEnvironment.SB1, true, 
                 TimeSpan.MinValue, TimeSpan.MinValue, TimeSpan.MinValue, 
                 TimeSpan.MinValue, TimeSpan.MinValue, TimeSpan.MinValue,
                 TimeSpan.MinValue, TimeSpan.MinValue, TimeSpan.MinValue,
-                42, 24, 9, true, true, true, true, true, true],
+                42, 24, 9, true, true, true, true, true, true, true, true],
             [MimerEnvironment.SB1, true, 
                 TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-2), TimeSpan.FromMilliseconds(-3), 
                 TimeSpan.FromMilliseconds(-4), TimeSpan.FromMilliseconds(-5), TimeSpan.FromMilliseconds(-6),
                 TimeSpan.FromMilliseconds(-7), TimeSpan.FromMilliseconds(-8), TimeSpan.FromMilliseconds(-9),
-                -42, -24, -9, true, true, true, true, true, true],
+                -42, -24, -9, true, true, true, true, true, true, true, true],
             [MimerEnvironment.SB1, true, 
                 TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 
                 TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
                 TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
-                0, 0, 0, true, true, true, true, true, true],
+                0, 0, 0, true, true, true, true, true, true, true, true],
             [MimerEnvironment.SB1, false, 
                 TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(2), TimeSpan.FromMilliseconds(3), 
                 TimeSpan.FromMilliseconds(4), TimeSpan.FromMilliseconds(5), TimeSpan.FromMilliseconds(6),
                 TimeSpan.FromMilliseconds(7), TimeSpan.FromMilliseconds(8), TimeSpan.FromMilliseconds(9),
-                42, 24, 9, false, false, false, false, false, false],
+                42, 24, 9, false, false, false, false, false, false, false, false],
             [MimerEnvironment.SB1, true, 
                 TimeSpan.MaxValue, TimeSpan.MaxValue, TimeSpan.MaxValue, 
                 TimeSpan.MaxValue, TimeSpan.MaxValue, TimeSpan.MaxValue,
                 TimeSpan.MaxValue, TimeSpan.MaxValue, TimeSpan.MaxValue,
-                42, 24, 9, true, true, true, true, true, true],
+                42, 24, 9, true, true, true, true, true, true, true, true],
         ];
 
         public IEnumerator<object[]> GetEnumerator() => _data.GetEnumerator();
@@ -88,7 +88,9 @@ public class UserPreferencesTests : BaseTestContext
         bool team_unknown_user,
         bool team_unknown_superUser,
         bool team_duplicate_user,
-        bool team_duplicate_superUser)
+        bool team_duplicate_superUser,
+        bool team_duplicate_workflowConfiguration,
+        bool team_unknown_workflowConfiguration)
     {
         // Arrange
         SetStorageValue(StorageKeys.MimerEnvironment, mimerEnvironment);
@@ -109,6 +111,8 @@ public class UserPreferencesTests : BaseTestContext
         SetStorageValue(StorageKeys.Testing.Team.Unknown.SuperUsers, team_unknown_superUser);
         SetStorageValue(StorageKeys.Testing.Team.Duplicate.Users, team_duplicate_user);
         SetStorageValue(StorageKeys.Testing.Team.Duplicate.SuperUsers, team_duplicate_superUser);
+        SetStorageValue(StorageKeys.Testing.Team.Duplicate.WorkflowConfigurations, team_duplicate_workflowConfiguration);
+        SetStorageValue(StorageKeys.Testing.Team.Unknown.WorkflowConfigurations, team_unknown_workflowConfiguration);
 
         SetStorageValue(StorageKeys.Testing.WorkflowConfiguration.NumberOfWorkflowConfigurations, workflowConfiguration_numberOf);
         SetStorageValue(StorageKeys.Testing.WorkflowConfiguration.Delay.Get, workflowConfiguration_delay_get);
@@ -124,12 +128,14 @@ public class UserPreferencesTests : BaseTestContext
         Assert.True(sut.IsInitialized, "");
         Assert.Equal(mimerEnvironment, sut.MimerEnvironment);
         Assert.Equal(removeInvalidDataAutomatically, sut.RemoveInvalidDataAutomatically);
+        
         Assert.Equal(user_numberOf, sut.Users_NumberOf);
         Assert.Equal(user_delay_get, sut.Users_Delay_Get);
         Assert.Equal(user_delay_save, sut.Users_Delay_Save);
         Assert.Equal(user_delay_delete, sut.Users_Delay_Delete);
         Assert.Equal(user_duplicate_teamMemberships, sut.Users_Duplicate_TeamMembership);
         Assert.Equal(user_unknown_teamMemberships, sut.Users_Unknown_TeamMembership);
+        
         Assert.Equal(team_numberOf, sut.Teams_NumberOf);
         Assert.Equal(team_delay_get, sut.Teams_Delay_Get);
         Assert.Equal(team_delay_save, sut.Teams_Delay_Save);
@@ -138,6 +144,9 @@ public class UserPreferencesTests : BaseTestContext
         Assert.Equal(team_unknown_superUser, sut.Teams_Unknown_SuperUser);
         Assert.Equal(team_duplicate_user, sut.Teams_Duplicate_User);
         Assert.Equal(team_duplicate_superUser, sut.Teams_Duplicate_SuperUser);
+        Assert.Equal(team_duplicate_workflowConfiguration, sut.Teams_Duplicate_WorkflowConfigurations);
+        Assert.Equal(team_unknown_workflowConfiguration, sut.Teams_Unknown_WorkflowConfigurations);
+
         Assert.Equal(workflowConfiguration_numberOf, sut.WorkflowConfigurations_NumberOf);
         Assert.Equal(workflowConfiguration_delay_get, sut.WorkflowConfigurations_Delay_Get);
         Assert.Equal(workflowConfiguration_delay_save, sut.WorkflowConfigurations_Delay_Save);
