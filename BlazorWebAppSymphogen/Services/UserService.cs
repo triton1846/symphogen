@@ -52,6 +52,14 @@ public class UserService : IUserService
             await _testDataService.SaveUserAsync(user);
             return;
         }
+
+        //Models.DTOs.UserDTO d2 = user; // This ensures that only the properties defined in UserDTO are serialized, not the entire User object
+        // For now using SimpleAPI
+        //var httpClient = new HttpClient();
+        //httpClient.BaseAddress = new Uri("https://localhost:7133/");
+        //httpClient.DefaultRequestHeaders.Add("X-API-KEY", "1234");
+        //var response = await httpClient.PostAsJsonAsync("weatherforecast/?key=1234", d2);
+
         //var cosmosClient = _clients[mimerEnvironment] ?? throw new ArgumentException($"Cosmos client for {mimerEnvironment} not found.");
         //var container = cosmosClient.GetContainer("users", "users_search");
         //try

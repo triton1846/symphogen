@@ -49,5 +49,15 @@ public class TeamValidator : BaseValidator<Team>
                     .GroupBy(superUser => superUser.Id)
                     .All(group => group.Count() == 1);
             }).WithMessage("'Super Users' cannot include duplicates.");
+
+        RuleFor(team => team) // TODO: Find a way to display this error in the UI
+            .Must(team =>
+            {
+                // All super users must also be users
+                if (team.SuperUsers == null || team.SuperUsers.Count == 0)
+                    return true; // Allow empty super users
+
+                return team.SuperUsers.All(superUser => team.Users.Any(user => user.Id == superUser.Id));
+            }).WithMessage("'Super Users' must also be included in 'Users'.");
     }
 }

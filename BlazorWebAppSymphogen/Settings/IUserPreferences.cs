@@ -1,6 +1,6 @@
 ﻿namespace BlazorWebAppSymphogen.Settings;
 
-public interface IUserPreferences
+public interface IUserPreferences : ITestDataPreferences
 {
     /// <summary>
     /// Returns if the state is fully loaded from local storage.
@@ -35,144 +35,38 @@ public interface IUserPreferences
     /// If true, invalid data will be removed automatically when editing data.
     /// </summary>
     bool RemoveInvalidDataAutomatically { get; set; }
+}
 
-    #region Test Data preferences
+public interface ITestDataPreferences : ITestDataUsers, ITestDataTeams, ITestDataWorkflowConfigurations
+{
+}
 
-    /// <summary>
-    /// Delay for fetching users.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan GetUsersDelay { get; set; }
+public interface ITestDataUsers
+{
+    int Users_NumberOf { get; set; }
+    TimeSpan Users_Delay_Get { get; set; }
+    TimeSpan Users_Delay_Save { get; set; }
+    TimeSpan Users_Delay_Delete { get; set; }
+    bool Users_Unknown_TeamMembership { get; set; }
+    bool Users_Duplicate_TeamMembership { get; set; }
+}
 
-    /// <summary>
-    /// Delay for saving users.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan SaveUserDelay { get; set; }
+public interface ITestDataTeams
+{
+    int Teams_NumberOf { get; set; }
+    TimeSpan Teams_Delay_Get { get; set; }
+    TimeSpan Teams_Delay_Save { get; set; }
+    TimeSpan Teams_Delay_Delete { get; set; }
+    bool Teams_Unknown_User { get; set; }
+    bool Teams_Unknown_SuperUser { get; set; }
+    bool Teams_Duplicate_User { get; set; }
+    bool Teams_Duplicate_SuperUser { get; set; }
+}
 
-    /// <summary>
-    /// Delay for deleting users.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan DeleteUserDelay { get; set; }
-
-    /// <summary>
-    /// Delay for fetching teams.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan GetTeamsDelay { get; set; }
-
-    /// <summary>
-    /// Delay for fetching workflow configurations.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan SaveTeamDelay { get; set; }
-
-    /// <summary>
-    /// Delay for deleting teams.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan DeleteTeamDelay { get; set; }
-
-    /// <summary>
-    /// Delay for fetching workflow configurations.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan GetWorkflowConfigurationsDelay { get; set; }
-
-    /// <summary>
-    /// Delay for saving workflow configurations.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan SaveWorkflowConfigurationDelay { get; set; }
-
-    /// <summary>
-    /// Delay for deleting workflow configurations.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    TimeSpan DeleteWorkflowConfigurationDelay { get; set; }
-
-    /// <summary>
-    /// Specifies the number of users to create for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    int TestDataNumberOfUsers { get; set; }
-
-    /// <summary>
-    /// Specifies the number of teams to create for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    int TestDataNumberOfTeams { get; set; }
-
-    /// <summary>
-    /// Creates unknown users as team members for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    bool TestDataCreateUnknownUsersAsTeamMembers { get; set; }
-
-    /// <summary>
-    /// Creates duplicate team memberships for users for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    bool TestDataCreateDuplicateTeamMembershipsForUsers { get; set; }
-
-    /// <summary>
-    /// Creates unknown super users as team members for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    bool TestDataCreateUnknownSuperUsersAsTeamMembers { get; set; }
-
-    /// <summary>
-    /// Creates duplicate team memberships for super users for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    bool TestDataCreateDuplicateTeamMembershipsForSuperUsers { get; set; }
-
-    /// <summary>
-    /// Creates unknown teams for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    bool TestDataCreateUnknownTeams { get; set; }
-
-    /// <summary>
-    /// Creates duplicate teams for testing purposes.
-    /// </summary>
-    /// <remarks>
-    /// This property may be removed in the future as it is primarily used for testing purposes.
-    /// </remarks>
-    bool TestDataCreateDuplicateTeams { get; set; }
-
-    #endregion Test Data preferences
+public interface ITestDataWorkflowConfigurations
+{
+    int WorkflowConfigurations_NumberOf { get; set; }
+    TimeSpan WorkflowConfigurations_Delay_Get { get; set; }
+    TimeSpan WorkflowConfigurations_Delay_Save { get; set; }
+    TimeSpan WorkflowConfigurations_Delay_Delete { get; set; }
 }

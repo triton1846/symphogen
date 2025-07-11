@@ -1,17 +1,9 @@
 ﻿using FluentValidation.Results;
-using Newtonsoft.Json;
 
 namespace BlazorWebAppSymphogen.Models;
 
-[Serializable]
-public class Team // TODO: Consider DTO classes for interaction with the API. This class has UI related properties...
+public record Team : DTOs.TeamDTO
 {
-    public required string Id { get; set; }
-
-    public string? Name { get; set; }
-
-    public IEnumerable<string> UserIds { get; set; } = [];
-
     private List<User> _users = [];
     public List<User> Users
     {
@@ -26,10 +18,7 @@ public class Team // TODO: Consider DTO classes for interaction with the API. Th
         }
     }
 
-    [JsonIgnore]// This property is used for validation purposes only and should not be serialized
     public User? ValidationUsers { get; set; }
-
-    public IEnumerable<string> SuperUserIds { get; set; } = [];
 
     private List<User> _superUsers = [];
     public List<User> SuperUsers
@@ -45,10 +34,7 @@ public class Team // TODO: Consider DTO classes for interaction with the API. Th
         }
     }
 
-    [JsonIgnore]// This property is used for validation purposes only and should not be serialized
     public User? ValidationSuperUsers { get; set; }
-
-    public IEnumerable<string>? WorkflowConfigurationIds { get; set; }
 
     private List<WorkflowConfiguration> _workflowConfigurations = [];
     public List<WorkflowConfiguration> WorkflowConfigurations
@@ -64,7 +50,6 @@ public class Team // TODO: Consider DTO classes for interaction with the API. Th
         }
     }
 
-    [JsonIgnore]// This property is used for validation purposes only and should not be serialized
     public Team? ValidationWorkflowConfigurations { get; set; }
 
     public ValidationResult? ValidationResult { get; set; }

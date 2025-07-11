@@ -2,7 +2,6 @@
 @page "/users/{UserId}"
 @rendermode InteractiveServer
 @using FluentValidation.Results
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.Text.Json
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
@@ -13,6 +12,8 @@
 @inject IUserService UserService
 @inject NavigationManager NavigationManager
 @attribute [Authorize]
+
+<PageTitle>@_pageTitle</PageTitle>
 
 @if (!UserPreferences.IsInitialized || _isLoading)
 {
@@ -39,7 +40,7 @@ else
             <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
                 <MudTooltip Text="Add new user" ShowOnFocus="false">
                     <MudIconButton aria-label="add-user"
-                    Class="ml-n3"
+                                   Class="ml-n3"
                                    Color="Color.Success"
                                    Icon="@Icons.Material.Filled.Add"
                                    OnClick="async _ => await OpenUserEditorDialogAsync()" />
@@ -82,7 +83,8 @@ else
                                    Color="Color.Success"
                                    Icon="@Icons.Material.Outlined.Edit"
                                    OnClick="async _ => await OpenUserEditorDialogAsync(context)"
-                                   Size="@Size.Small" />
+                                   Size="@Size.Small"
+                                   Tag="context" />
                 </MudTooltip>
             </MudTd>
             <MudTd DataLabel="ID">
@@ -100,13 +102,13 @@ else
                         {
                             @if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) == 1)
                             {
-                                <MudTooltip Text="@team.Id">
+                                <MudTooltip Text="@team.Id" ShowOnFocus="false">
                                     <MudChip T="string" Color="Color.Default" Size="Size.Small" OnClick="() => NavigateToTeam(team.Id)">@team.Name</MudChip>
                                 </MudTooltip>
                             }
                             else if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) > 1)
                             {
-                                <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")">
+                                <MudTooltip Text="@($"Team '{team.Name}' is listed more than once!")" ShowOnFocus="false">
                                     <MudChip T="string" Color="Color.Error" Size="Size.Small">
                                         <MudChip T="string" Color="Color.Error" Size="Size.Small" OnClick="() => NavigateToTeam(team.Id)">@team.Name</MudChip>
                                     </MudChip>
@@ -114,7 +116,7 @@ else
                             }
                             else
                             {
-                                <MudTooltip Text="@($"Team with id {context.Id} doesn't exists!")">
+                                <MudTooltip Text="@($"Team with id {context.Id} doesn't exists!")" ShowOnFocus="false">
                                     <MudChip T="string" Color="Color.Error" Size="Size.Small">@team.Name</MudChip>
                                 </MudTooltip>
                             }
@@ -122,7 +124,7 @@ else
                     }
                     else
                     {
-                        <MudTooltip Text="@($"{context.FullName} is not a member of any team")">
+                        <MudTooltip Text="@($"{context.FullName} is not a member of any team")" ShowOnFocus="false">
                             <MudChip T="string" Color="Color.Warning" Size="Size.Small">No Teams</MudChip>
                         </MudTooltip>
                     }
@@ -134,7 +136,7 @@ else
                 </MudTd>
             </MudHidden>
             <MudTd DataLabel="Valid">
-                <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "User is valid")">
+                <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "User is valid")" ShowOnFocus="false">
                     <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Success)" Size="Size.Small">
                         @(context.ValidationResult?.IsValid == false ? "Invalid" : "Valid")
                     </MudChip>
@@ -157,6 +159,7 @@ else
     private List<Models.Team> _selectedTeams = [];
     private bool _canOpenEditor = true;
     private UserValidator _userValidator = new UserValidator();
+    private string _pageTitle = "Users";
 
     [Parameter]
     public string? UserId { get; set; }
@@ -257,8 +260,8 @@ else
 
         try
         {
-            // User? userToEdit = args?.Item;
-            bool isEditMode = userToEdit != null;
+            var isEditMode = userToEdit != null;
+            _pageTitle = isEditMode ? $"Users: {userToEdit?.FullName}" : "Add New User";
 
             var parameters = new DialogParameters<UserEditorDialog>
             {
@@ -273,17 +276,14 @@ else
 
             if (result?.Canceled == false && result.Data is Models.User user)
             {
-                // Handle user creation or update
                 await HandleUserUpdate(user, isEditMode);
             }
             else if (result?.Data is bool deleteUser && deleteUser && isEditMode && userToEdit != null)
             {
-                // Handle user deletion
                 await HandleUserDeletion(userToEdit);
             }
             else if (result?.Canceled == true && userToEdit != null)
             {
-                // User cancelled the dialog
                 Snackbar.Add($"Changes to user {userToEdit.FullName} were cancelled.", Severity.Info);
                 Logger.LogInformation("Changes to user {UserName} ({UserId}) were cancelled", userToEdit.FullName, userToEdit.Id);
             }
@@ -292,58 +292,45 @@ else
         {
             UserId = null; // Reset UserId to prevent reopening the editor on next render
             _canOpenEditor = true; // Allow opening editor again
+            _pageTitle = "Users"; // Reset page title
         }
     }
 
     private async Task HandleUserUpdate(User user, bool isEditMode)
     {
+        // Save changes
+        await UserService.SaveAsync(UserPreferences.MimerEnvironment, user);
         ValidateUser(user);
+
         if (isEditMode)
         {
-            // Update existing user
             var index = _allUsers.FindIndex(u => u.Id == user.Id);
             if (index >= 0)
             {
                 _allUsers[index] = user;
-                _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
                 Snackbar.Add($"User {user.FullName} updated successfully!", Severity.Success);
                 Logger.LogInformation("Updated user: {UserName} ({UserId})", user.FullName, user.Id);
             }
             else
             {
-                Snackbar.Add($"User {user.FullName} not found!", Severity.Error);
+                Snackbar.Add($"User {user.FullName} not found for update!", Severity.Error);
                 Logger.LogWarning("User {UserName} ({UserId}) not found for update", user.FullName, user.Id);
-                return;
             }
         }
         else
         {
-            // Add new user
             _allUsers.Add(user);
-            _allUsers = _allUsers.OrderBy(u => u.FullName ?? string.Empty).ToList();
             Snackbar.Add($"User {user.FullName} added successfully!", Severity.Success);
             Logger.LogInformation("Added new user: {UserName} ({UserId})", user.FullName, user.Id);
         }
-
-        // Save changes
-        await UserService.SaveAsync(UserPreferences.MimerEnvironment, user);
     }
 
     private async Task HandleUserDeletion(User userToDelete)
     {
-        var index = _allUsers.FindIndex(u => u.Id == userToDelete.Id);
-        if (index >= 0)
-        {
-            _allUsers.RemoveAt(index);
-            await UserService.DeleteAsync(UserPreferences.MimerEnvironment, userToDelete.Id);
-            Snackbar.Add($"User {userToDelete.FullName} deleted successfully!", Severity.Success);
-            Logger.LogInformation("Deleted user: {UserName} ({UserId})", userToDelete.FullName, userToDelete.Id);
-        }
-        else
-        {
-            Snackbar.Add($"User {userToDelete.FullName} not found for deletion!", Severity.Error);
-            Logger.LogWarning("User {UserName} ({UserId}) not found for deletion", userToDelete.FullName, userToDelete.Id);
-        }
+        await UserService.DeleteAsync(UserPreferences.MimerEnvironment, userToDelete.Id);
+        _allUsers.Remove(userToDelete);
+        Snackbar.Add($"User {userToDelete.FullName} deleted successfully!", Severity.Success);
+        Logger.LogInformation("Deleted user: {UserName} ({UserId})", userToDelete.FullName, userToDelete.Id);
     }
 
     private void ValidateUser(Models.User user)

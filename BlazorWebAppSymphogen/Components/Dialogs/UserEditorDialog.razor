@@ -1,6 +1,7 @@
-﻿@inject ISnackbar Snackbar
-@inject IUserPreferences UserPreferences
+﻿@inject IDialogService DialogService
 @inject ILogger<UserEditorDialog> Logger
+@inject ISnackbar Snackbar
+@inject IUserPreferences UserPreferences
 
 <MudDialog>
     <TitleContent>
@@ -76,7 +77,7 @@
         <MudButton OnClick="Cancel">Cancel</MudButton>
         @if (IsEditMode)
         {
-            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => MudDialog?.Close(DialogResult.Ok(true))">
+            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="Delete">
                 Delete
             </MudButton>
         }
@@ -117,7 +118,7 @@
         }
         else if (IsEditMode && User != null)
         {
-            _user = User.DeepCopy();
+            _user = User with { }; // Using C# 9.0 record copy syntax
             _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
             RemoveInvalidData();
         }
@@ -142,6 +143,19 @@
 
     private void Cancel() => MudDialog?.Cancel();
     private void Submit() => MudDialog?.Close(DialogResult.Ok(_user));
+    private async Task Delete()
+    {
+        var confirmResult = await DialogService.ShowMessageBox(
+            "Confirm Deletion",
+            "Are you sure you want to delete the user?",
+            yesText: "Delete",
+            noText: "Cancel");
+
+        if (confirmResult == true)
+        {
+            MudDialog?.Close(DialogResult.Ok(true));
+        }
+    }
 
     private async Task SubmitUser()
     {

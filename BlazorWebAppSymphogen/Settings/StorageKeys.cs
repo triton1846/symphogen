@@ -19,14 +19,12 @@ public static class StorageKeys
 
             public static class Duplicate
             {
-                public const string Users = "testing_user_duplicate_users";
-                public const string SuperUsers = "testing_user_duplicate_superUsers";
+                public const string TeamMemberships = "testing_user_duplicate_teamMemberships";
             }
 
             public static class Unknown
             {
-                public const string Users = "testing_user_unknown_users";
-                public const string SuperUsers = "testing_user_unknown_superUsers";
+                public const string TeamMemberships = "testing_user_unknown_teamMemberships";
             }
         }
 
@@ -42,12 +40,14 @@ public static class StorageKeys
 
             public static class Duplicate
             {
-                public const string Teams = "testing_team_duplicate_teams";
+                public const string Users = "testing_team_duplicate_user";
+                public const string SuperUsers = "testing_team_duplicate_superUsers";
             }
 
             public static class Unknown
             {
-                public const string Teams = "testing_team_unknown_teams";
+                public const string Users = "testing_team_unknown_user";
+                public const string SuperUsers = "testing_team_unknown_superUsers";
             }
         }
 
@@ -63,12 +63,10 @@ public static class StorageKeys
 
             public static class Duplicate
             {
-                public const string WorkflowConfigurations = "testing_workflowConfiguration_duplicate_workflowConfigurations";
             }
 
             public static class Unknown
             {
-                public const string WorkflowConfigurations = "testing_workflowConfiguration_unknown_workflowConfigurations";
             }
         }
     }

@@ -5,39 +5,35 @@ using System.Diagnostics.CodeAnalysis;
 namespace BlazorWebAppSymphogen.Services;
 
 [ExcludeFromCodeCoverage(Justification = "This is temporary test data service for development purposes only.")]
-public class TestDataService(
-    ILogger<TestDataService> logger,
-    IUserPreferences userPreferences) : ITestDataService
+public class TestDataService : ITestDataService
 {
-    private List<User> _users = [];
-    private List<Team> _teams = [];
-    private List<string> _teamIds = [];
-    private List<WorkflowConfiguration> _workflowConfigurations = [];
-    private bool _createdUnknownUsersAsTeamMembers = false;
-    private bool _createdUnknownSuperUsersAsTeamMembers = false;
-    private bool _createdDuplicateUsersAsTeamMembers = false;
-    private bool _createdDuplicateSuperUsersAsTeamMembers = false;
-    private bool _createdUnknownTeams = false;
-    private bool _createdDuplicateTeams = false;
+    private readonly ILogger<TestDataService> _logger;
+    private readonly IUserPreferences _userPreferences;
+
+    private readonly List<User> _users = [];
+    private readonly List<Team> _teams = [];
+    private readonly List<WorkflowConfiguration> _workflowConfigurations = [];
+    private bool _dataCreated = false;
+
+    public TestDataService(
+        ILogger<TestDataService> logger,
+        IUserPreferences userPreferences)
+    {
+        _logger = logger;
+        _userPreferences = userPreferences;
+
+        CreateData();
+    }
 
     public async Task<IEnumerable<User>> GetUsersAsync()
     {
-        await Task.Delay(userPreferences.GetUsersDelay);
-
-        if (_users.Count != 0)
-        {
-            return _users;
-        }
-
-        _users = GetRandomUsers();
-        CreateInvalidData();
-
+        await Task.Delay(_userPreferences.Users_Delay_Get);
         return _users;
     }
 
     public async Task SaveUserAsync(User user)
     {
-        await Task.Delay(userPreferences.SaveUserDelay);
+        await Task.Delay(_userPreferences.Users_Delay_Save);
 
         if (user == null)
         {
@@ -50,13 +46,13 @@ public class TestDataService(
             _users.Remove(existingUser);
         }
         _users.Add(user);
-        logger.LogInformation("User {UserId} saved successfully.", user.Id);
+        _logger.LogInformation("User {UserId} saved successfully.", user.Id);
     }
 
     public async Task DeleteUserAsync(string userId)
     {
-        //await Task.Delay(userPreferences.DeleteUserDelay); // TODO: Add to userPreferences if needed
-        await Task.CompletedTask; // Simulate async operation
+        await Task.Delay(_userPreferences.Users_Delay_Delete);
+
         if (string.IsNullOrEmpty(userId))
         {
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
@@ -65,31 +61,23 @@ public class TestDataService(
         if (user != null)
         {
             _users.Remove(user);
-            logger.LogInformation("User {UserId} deleted successfully.", userId);
+            _logger.LogInformation("User {UserId} deleted successfully.", userId);
         }
         else
         {
-            logger.LogWarning("User {UserId} not found for deletion.", userId);
+            _logger.LogWarning("User {UserId} not found for deletion.", userId);
         }
     }
 
     public async Task<IEnumerable<Team>> GetTeamsAsync()
     {
-        await Task.Delay(userPreferences.GetTeamsDelay);
-
-        if (_teams.Count != 0)
-        {
-            return _teams;
-        }
-
-        _teams = CreateRandomTeams();
-
+        await Task.Delay(_userPreferences.Teams_Delay_Get);
         return _teams;
     }
 
     public async Task SaveTeamAsync(Team team)
     {
-        await Task.Delay(userPreferences.SaveTeamDelay);
+        await Task.Delay(_userPreferences.Teams_Delay_Save);
 
         if (team == null)
         {
@@ -102,12 +90,12 @@ public class TestDataService(
             _teams.Remove(existingTeam);
         }
         _teams.Add(team);
-        logger.LogInformation("Team {TeamId} saved successfully.", team.Id);
+        _logger.LogInformation("Team {TeamId} saved successfully.", team.Id);
     }
 
     public async Task DeleteTeamAsync(string teamId)
     {
-        await Task.Delay(userPreferences.DeleteTeamDelay);
+        await Task.Delay(_userPreferences.Teams_Delay_Delete);
 
         if (string.IsNullOrEmpty(teamId))
         {
@@ -117,31 +105,23 @@ public class TestDataService(
         if (team != null)
         {
             _teams.Remove(team);
-            logger.LogInformation("Team {TeamId} deleted successfully.", teamId);
+            _logger.LogInformation("Team {TeamId} deleted successfully.", teamId);
         }
         else
         {
-            logger.LogWarning("Team {TeamId} not found for deletion.", teamId);
+            _logger.LogWarning("Team {TeamId} not found for deletion.", teamId);
         }
     }
 
     public async Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync()
     {
-        await Task.Delay(userPreferences.GetWorkflowConfigurationsDelay);
-
-        if (_workflowConfigurations.Count != 0)
-        {
-            return _workflowConfigurations;
-        }
-
-        _workflowConfigurations = await GetRandomWorkflowConfigurations();
-
+        await Task.Delay(_userPreferences.WorkflowConfigurations_Delay_Get);
         return _workflowConfigurations;
     }
 
     public async Task SaveWorkflowConfigurationAsync(WorkflowConfiguration workflowConfiguration)
     {
-        await Task.Delay(userPreferences.SaveWorkflowConfigurationDelay);
+        await Task.Delay(_userPreferences.WorkflowConfigurations_Delay_Save);
 
         if (workflowConfiguration == null)
         {
@@ -154,12 +134,12 @@ public class TestDataService(
             _workflowConfigurations.Remove(existingConfig);
         }
         _workflowConfigurations.Add(workflowConfiguration);
-        logger.LogInformation("Workflow configuration {WorkflowConfigurationId} saved successfully.", workflowConfiguration.Id);
+        _logger.LogInformation("Workflow configuration {WorkflowConfigurationId} saved successfully.", workflowConfiguration.Id);
     }
 
     public async Task DeleteWorkflowConfigurationAsync(string workflowConfigurationId)
     {
-        await Task.Delay(userPreferences.DeleteWorkflowConfigurationDelay);
+        await Task.Delay(_userPreferences.WorkflowConfigurations_Delay_Delete);
 
         if (string.IsNullOrEmpty(workflowConfigurationId))
         {
@@ -169,239 +149,239 @@ public class TestDataService(
         if (workflowConfiguration != null)
         {
             _workflowConfigurations.Remove(workflowConfiguration);
-            logger.LogInformation("Workflow configuration {WorkflowConfigurationId} deleted successfully.", workflowConfigurationId);
+            _logger.LogInformation("Workflow configuration {WorkflowConfigurationId} deleted successfully.", workflowConfigurationId);
         }
         else
         {
-            logger.LogWarning("Workflow configuration {WorkflowConfigurationId} not found for deletion.", workflowConfigurationId);
+            _logger.LogWarning("Workflow configuration {WorkflowConfigurationId} not found for deletion.", workflowConfigurationId);
         }
     }
 
-    private List<User> GetRandomUsers()
+    private void CreateInvalidData()
     {
-        if (_users.Count > 0)
+        if (_userPreferences.Users_Unknown_TeamMembership)
         {
-            return _users;
+            var user = _users.OrderBy(u => u.FullName).Skip(0).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(user, "No user found to create an unknown team membership.");
+            user.TeamIds = user.TeamIds.Append(Guid.NewGuid().ToString());
+        }
+
+        if (_userPreferences.Users_Duplicate_TeamMembership)
+        {
+            var user = _users.OrderBy(u => u.FullName).Skip(1).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(user, "No user found to create a duplicate team membership.");
+            var teamId = _teams.OrderBy(t => new Random().Next()).First().Id;
+            user.TeamIds = user.TeamIds.Append(teamId);
+            user.TeamIds = user.TeamIds.Append(teamId);
+            user.TeamIds = user.TeamIds.Append(teamId);
+        }
+
+        // Side effect: user created not in user list. This is fine as it triggers data validation error
+        if (_userPreferences.Teams_Unknown_User)
+        {
+            var team = _teams.OrderBy(t => t.Name).Skip(0).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(team, "No team found to create an unknown user membership.");
+            team.UserIds = team.UserIds.Append(Guid.NewGuid().ToString());
+        }
+
+        // Side effect: super user created not in team list for user. This is fine as it triggers data validation error
+        if (_userPreferences.Teams_Unknown_SuperUser)
+        {
+            var team = _teams.OrderBy(t => t.Name).Skip(1).First();
+            team.SuperUserIds = team.SuperUserIds.Append(Guid.NewGuid().ToString());
+        }
+
+        if (_userPreferences.Teams_Duplicate_User)
+        {
+            var team = _teams.OrderBy(t => t.Name).Skip(2).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(team, "No team found to create a duplicate user membership.");
+            var userId = _users.OrderBy(u => new Random().Next()).First().Id;
+            team.UserIds = team.UserIds.Append(userId);
+            team.UserIds = team.UserIds.Append(userId);
+            team.UserIds = team.UserIds.Append(userId);
+        }
+
+        if (_userPreferences.Teams_Duplicate_SuperUser)
+        {
+            var team = _teams.OrderBy(t => t.Name).Skip(3).FirstOrDefault();
+            ArgumentNullException.ThrowIfNull(team, "No team found to create a duplicate super user membership.");
+            var superUserId = _users.OrderBy(u => new Random().Next()).First().Id;
+            team.SuperUserIds = team.SuperUserIds.Append(superUserId);
+            team.SuperUserIds = team.SuperUserIds.Append(superUserId);
+            team.SuperUserIds = team.SuperUserIds.Append(superUserId);
+        }
+    }
+
+    private void CreateData()
+    {
+        if (_dataCreated)
+        {
+            _logger.LogInformation("Test data already created. Skipping data creation.");
+            return;
         }
 
         var random = new Random();
-        var randomUsers = new List<User>();
 
-        for (int i = 0; i < userPreferences.TestDataNumberOfUsers; i++)
+        // Create basic data
+        CreateTeams();
+        CreateUsers();
+        CreateWorkflowConfigurations();
+
+        // Make users and teams fit together
+        foreach (var team in _teams)
         {
-            // Use Bogus to generate random user data
-            var user = new Bogus.Faker<User>()
-            .RuleFor(u => u.Id, f => Guid.NewGuid().ToString())
-            .RuleFor(u => u.FullName, f => f.Name.FullName())
-            .RuleFor(u => u.Email, f => f.Internet.Email())
-            .RuleFor(u => u.Department, f => f.Commerce.Department())
-            .RuleFor(u => u.Location, f => f.Address.City())
-            .RuleFor(u => u.Favorites, f => f.Make(3, () => f.Commerce.ProductName()))
-            .RuleFor(u => u.Initials, f => $"{f.Name.FirstName()[0]}{f.Name.LastName()[0]}")
-            .RuleFor(u => u.JobTitle, f => f.Name.JobTitle())
-            .RuleFor(u => u.OfficePhoneNumber, f => f.Phone.PhoneNumber())
-            .RuleFor(u => u.TeamIds, f =>
-            {
-                return [.. GetTeamIds().OrderBy(_ => random.Next()).Take(random.Next(1, 8))];
-            }).Generate();
+            var teamUsers = _users.OrderBy(u => random.Next()).Take(random.Next(1, Math.Min(5, _users.Count))).ToList();
+            team.UserIds = [.. teamUsers.Select(u => u.Id)];
+            // Assign super users. Use team.UserIds to ensure that super users are also team members
+            team.SuperUserIds = [.. team.UserIds.OrderBy(_ => random.Next()).Take(random.Next(1, team.UserIds.Count() + 1))];
 
-            randomUsers.Add(user);
+            // Assign teams to users
+            foreach (var userId in team.UserIds)//TODO: invalid data would be super user not in team.UserIds
+            {
+                var user = _users.FirstOrDefault(u => u.Id == userId);
+                if (user != null)
+                {
+                    user.TeamIds = user.TeamIds.Append(team.Id);
+                }
+            }
+        }
+        // Ensure that at least one team has no users
+        if (_teams.Count > 0 && _teams.Any(t => !t.UserIds.Any()))
+        {
+            var teamWithoutUsers = _teams.FirstOrDefault(t => !t.UserIds.Any());
+            if (teamWithoutUsers != null)
+            {
+                foreach (var user in _users.Where(u => u.TeamIds.Contains(teamWithoutUsers.Id)))
+                {
+                    user.TeamIds = [.. user.TeamIds.Where(tid => tid != teamWithoutUsers.Id)];
+                }
+                teamWithoutUsers.UserIds = [];
+                teamWithoutUsers.SuperUserIds = [];
+            }
+        }
+        // Ensure that at least one user has no teams
+        if (_users.Count > 0 && _users.Any(u => !u.TeamIds.Any()))
+        {
+            var userWithoutTeams = _users.FirstOrDefault(u => !u.TeamIds.Any());
+            if (userWithoutTeams != null)
+            {
+                foreach (var team in _teams.Where(t => t.UserIds.Contains(userWithoutTeams.Id)))
+                {
+                    team.UserIds = [.. team.UserIds.Where(uid => uid != userWithoutTeams.Id)];
+                }
+                userWithoutTeams.TeamIds = [];
+            }
         }
 
-        logger.LogInformation("Generated {Count} random users.", randomUsers.Count);
+        // Assign workflow configurations to teams
+        foreach (var team in _teams)
+        {
+            var teamWorkflowConfigurations = _workflowConfigurations.OrderBy(wc => random.Next()).Take(random.Next(0, Math.Min(5, _workflowConfigurations.Count))).ToList();
+            team.WorkflowConfigurationIds = [.. teamWorkflowConfigurations.Select(wc => wc.Id)]; // TODO: Is this valid? Should configs only be one single team?
+        }
+        // Make sure at least one team has no workflow configurations
+        if (_teams.Count > 0 && _teams.Any(t => !t.WorkflowConfigurationIds.Any()))
+        {
+            var teamWithoutConfigs = _teams.FirstOrDefault(t => !t.WorkflowConfigurationIds.Any());
+            if (teamWithoutConfigs != null)
+            {
+                teamWithoutConfigs.WorkflowConfigurationIds = [];
+            }
+        }
 
-        return randomUsers;
+        // Create invalid data
+        CreateInvalidData();
+
+        _dataCreated = true;
     }
 
-    public void CreateInvalidData()
+    private void CreateTeams()
     {
-        // OK
-        if (userPreferences.TestDataCreateUnknownUsersAsTeamMembers && !_createdUnknownUsersAsTeamMembers)
-        {
-            var numberOfUnknownUsers = new Random().Next(1, 4);
-            for (int i = 0; i < numberOfUnknownUsers; i++)
-            {
-                var user = _users.OrderBy(u => u.FullName).Skip(i).FirstOrDefault(u => u.TeamIds != null);
-                ArgumentNullException.ThrowIfNull(user, "No user with a team ID found to add the unknown user to.");
-                user.TeamIds = user.TeamIds!.Append(Guid.NewGuid().ToString());
-            }
-            _createdUnknownUsersAsTeamMembers = true;
-        }
-
-        // OK
-        if (userPreferences.TestDataCreateDuplicateTeamMembershipsForUsers && !_createdDuplicateUsersAsTeamMembers)
-        {
-            var user = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds?.Count() > 1);
-            ArgumentNullException.ThrowIfNull(user, "No user with multiple team IDs found to create a duplicate membership.");
-            ArgumentNullException.ThrowIfNull(user.TeamIds, "User's TeamIds cannot be null.");
-            user.TeamIds = user.TeamIds.Append(user.TeamIds.First());
-            user.TeamIds = user.TeamIds.Append(user.TeamIds.First());
-            user.TeamIds = user.TeamIds.Append(user.TeamIds.First());
-            _createdDuplicateUsersAsTeamMembers = true;
-        }
-
-        // Needs testing
-        if (userPreferences.TestDataCreateUnknownSuperUsersAsTeamMembers && !_createdUnknownSuperUsersAsTeamMembers)
-        {
-            var numberOfUnknownSuperUsers = new Random().Next(1, 4);
-            for (int i = 0; i < numberOfUnknownSuperUsers; i++)
-            {
-                var superUser = _users.OrderBy(u => u.FullName).Skip(i).FirstOrDefault(u => u.TeamIds != null);
-                ArgumentNullException.ThrowIfNull(superUser, "No user with a team ID found to add the unknown super user to.");
-                superUser.TeamIds = superUser.TeamIds!.Append(Guid.NewGuid().ToString());
-            }
-            _createdUnknownSuperUsersAsTeamMembers = true;
-        }
-
-        // Needs testing
-        if (userPreferences.TestDataCreateDuplicateTeamMembershipsForSuperUsers && !_createdDuplicateSuperUsersAsTeamMembers)
-        {
-            var superUser = _users.OrderBy(u => u.FullName).FirstOrDefault(u => u.TeamIds?.Count() > 1);
-            ArgumentNullException.ThrowIfNull(superUser, "No user with multiple team IDs found to create a duplicate super user membership.");
-            ArgumentNullException.ThrowIfNull(superUser.TeamIds, "User's TeamIds cannot be null.");
-            superUser.TeamIds = superUser.TeamIds.Append(superUser.TeamIds.First());
-            superUser.TeamIds = superUser.TeamIds.Append(superUser.TeamIds.First());
-            superUser.TeamIds = superUser.TeamIds.Append(superUser.TeamIds.First());
-            _createdDuplicateSuperUsersAsTeamMembers = true;
-        }
-
-        // Needs testing
-        if (userPreferences.TestDataCreateUnknownTeams && !_createdUnknownTeams)
-        {
-            var unknownTeam = new Team
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = "Unknown Team",
-                UserIds = [],
-                SuperUserIds = [],
-                WorkflowConfigurationIds = []
-            };
-            _teams.Add(unknownTeam);
-            _createdUnknownTeams = true;
-        }
-
-        // Needs testing
-        if (userPreferences.TestDataCreateDuplicateTeams && !_createdDuplicateTeams)
-        {
-            var duplicateTeam = _teams.OrderBy(t => t.Name).FirstOrDefault();
-            ArgumentNullException.ThrowIfNull(duplicateTeam, "No team found to create a duplicate.");
-            _teams.Add(duplicateTeam);
-            _createdDuplicateTeams = true;
-        }
-    }
-
-    private List<Team> CreateRandomTeams()
-    {
-        var users = GetRandomUsers(); // Generate some random users to assign to teams
-
-        var random = new Random();
-        var randomTeams = new List<Team>();
-        foreach (var teamId in GetTeamIds())
+        var numberOfTeams = Math.Max(5, _userPreferences.Teams_NumberOf);
+        for (int i = 0; i < numberOfTeams; i++)
         {
             var team = new Bogus.Faker<Team>()
-                .RuleFor(t => t.Id, f => teamId)
+                .RuleFor(t => t.Id, f => Guid.NewGuid().ToString())
                 .RuleFor(t => t.Name, f => f.Commerce.Department())
-                .RuleFor(t => t.UserIds, f =>
-                {
-                    return [.. users
-                        .Where(u => u.TeamIds?.Contains(teamId) == true)
-                        .Select(u => u.Id)];
-                })
-                .RuleFor(t => t.WorkflowConfigurationIds, f =>
-                {
-                    return [.. f.Make(random.Next(0, 4), () => Guid.NewGuid().ToString()).Distinct()];
-                })
+                .RuleFor(t => t.UserIds, f => [])
+                .RuleFor(t => t.WorkflowConfigurationIds, f => [])
                 .Generate();
 
             // Ensure that names are unique
-            while (randomTeams.Any(t => t.Name == team.Name))
+            while (_teams.Any(t => t.Name == team.Name))
             {
                 team.Name = new Bogus.Faker().Commerce.Department();
             }
-
-            if (team.UserIds.Any())
-            {
-                team.SuperUserIds = [.. team.UserIds.OrderBy(_ => random.Next()).Take(random.Next(1, team.UserIds.Count()))];
-            }
-
-            randomTeams.Add(team);
+            _teams.Add(team);
         }
-
-        logger.LogInformation("Generated {Count} random teams.", randomTeams.Count);
-
-        return randomTeams;
     }
 
-    private List<string> GetTeamIds()
+    private void CreateUsers()
     {
-        if (_teamIds.Count == 0 && _teams.Count > 0)
+        var numberOfUsers = Math.Max(10, _userPreferences.Users_NumberOf);
+        for (int i = 0; i < numberOfUsers; i++)
         {
-            _teamIds = [.. _teams.Select(t => t.Id).Distinct()];
-        }
-        else if (_teamIds.Count == 0)
-        {
-            // If no teams are available, generate a default set of team IDs
-            var numberOfTeamIds = Math.Max(10, userPreferences.TestDataNumberOfUsers / 10); // Default to 10% of users
-            _teamIds = [.. Enumerable.Range(1, numberOfTeamIds).Select(i => Guid.NewGuid().ToString())];
-        }
+            var user = new Bogus.Faker<User>()
+                .RuleFor(u => u.Id, f => Guid.NewGuid().ToString())
+                .RuleFor(u => u.FullName, f => f.Name.FullName())
+                .RuleFor(u => u.Email, f => f.Internet.Email())
+                .RuleFor(u => u.Department, f => f.Commerce.Department())
+                .RuleFor(u => u.Location, f => f.Address.City())
+                .RuleFor(u => u.Favorites, f => f.Make(3, () => f.Commerce.ProductName()))
+                .RuleFor(u => u.Initials, f => $"{f.Name.FirstName()[0]}{f.Name.LastName()[0]}")
+                .RuleFor(u => u.JobTitle, f => f.Name.JobTitle())
+                .RuleFor(u => u.OfficePhoneNumber, f => f.Phone.PhoneNumber())
+                .RuleFor(u => u.TeamIds, f => []).Generate();
 
-        return _teamIds;
+            _users.Add(user);
+        }
     }
 
-    private async Task<List<WorkflowConfiguration>> GetRandomWorkflowConfigurations()
+    private void CreateWorkflowConfigurations()
     {
-        var teams = await GetTeamsAsync(); // Base workflow configurations on teams
-
+        var random = new Random();
+        var numberOfWorkflowConfigurations = Math.Max(15, _userPreferences.WorkflowConfigurations_NumberOf);
         var studyTypeKeys = new[] { "labbook", "external development", "N/A", "gmp_batch_no" };
         var studyTypeInputTypes = new[] { "text", "number", "date", "select" };
         var parameterIdentifier = new[] {
-                            "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id",
-                            "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id",
-                            "single_cell_id", "stability_id", "testing_id", "transfection_id" };
+                                "batch_id", "bioreactor_id", "drug_product_id", "id", "mimer_id", "ngs_sample_id",
+                                "plasmid_prep_id", "plate_well_id", "purification_id", "sample_id", "seed_train_id",
+                                "single_cell_id", "stability_id", "testing_id", "transfection_id" };
 
-        var random = new Random();
-        var randomWorkflowConfigurations = new List<WorkflowConfiguration>();
-        foreach (var team in teams)
+        for (int i = 0; i < numberOfWorkflowConfigurations; i++)
         {
-            foreach (var workflowConfigurationId in team.WorkflowConfigurationIds ?? [])
-            {
-                var workflowConfiguration = new Bogus.Faker<WorkflowConfiguration>()
-                    .RuleFor(t => t.Id, f => workflowConfigurationId)
-                    .RuleFor(t => t.Name, f => f.Commerce.ProductName())
-                    .RuleFor(t => t.Department, f => f.Commerce.Department())
-                    .RuleFor(t => t.StudyTypes, f =>
-                    {
-                        return [.. f.Make(random.Next(0, 5), () => new StudyType
-                        {
-                            Key = f.PickRandom(studyTypeKeys),
-                            InputType = f.PickRandom(studyTypeInputTypes)
-                        })];
-                    })
-                    .RuleFor(t => t.ParameterIdentifier, f =>
-                    {
-                        return f.PickRandom(parameterIdentifier);
-                    })
-                    .RuleFor(t => t.ParameterRowCount, f => random.Next(1, 1000))
-                    .RuleFor(t => t.DatasourceConfigurationIds, f =>
-                    {
-                        return [.. f.Make(random.Next(0, 10), () => Guid.NewGuid().ToString()).Distinct()];
-                    })
-                    .RuleFor(t => t.IsActive, f => f.Random.Bool())
-                    .Generate();
-
-                // Ensure that names are unique
-                while (randomWorkflowConfigurations.Any(wc => wc.Name == workflowConfiguration.Name))
+            var workflowConfiguration = new Bogus.Faker<WorkflowConfiguration>()
+                .RuleFor(t => t.Id, f => Guid.NewGuid().ToString())
+                .RuleFor(t => t.Name, f => f.Commerce.ProductName())
+                .RuleFor(t => t.Department, f => f.Commerce.Department())
+                .RuleFor(t => t.StudyTypes, f =>
                 {
-                    workflowConfiguration.Name = new Bogus.Faker().Commerce.ProductName();
-                }
+                    return [.. f.Make(random.Next(0, 5), () => new StudyType
+                    {
+                        Key = f.PickRandom(studyTypeKeys),
+                        InputType = f.PickRandom(studyTypeInputTypes)
+                    })];
+                })
+                .RuleFor(t => t.ParameterIdentifier, f =>
+                {
+                    return f.PickRandom(parameterIdentifier);
+                })
+                .RuleFor(t => t.ParameterRowCount, f => random.Next(1, 1000))
+                .RuleFor(t => t.DatasourceConfigurationIds, f =>
+                {
+                    return [.. f.Make(random.Next(0, 10), () => Guid.NewGuid().ToString()).Distinct()];
+                })
+                .RuleFor(t => t.IsActive, f => f.Random.Bool())
+                .Generate();
 
-                randomWorkflowConfigurations.Add(workflowConfiguration);
+            // Ensure that names are unique
+            while (_workflowConfigurations.Any(wc => wc.Name == workflowConfiguration.Name))
+            {
+                workflowConfiguration.Name = new Bogus.Faker().Commerce.ProductName();
             }
 
-            logger.LogInformation("Generated {Count} random workflow configurations.", randomWorkflowConfigurations.Count);
+            _workflowConfigurations.Add(workflowConfiguration);
         }
-
-        return randomWorkflowConfigurations;
     }
 }
 
@@ -418,6 +398,4 @@ public interface ITestDataService
     Task<IEnumerable<WorkflowConfiguration>> GetWorkflowConfigurationsAsync();
     Task SaveWorkflowConfigurationAsync(WorkflowConfiguration workflowConfiguration);
     Task DeleteWorkflowConfigurationAsync(string workflowConfigurationId);
-
-    void CreateInvalidData();
 }

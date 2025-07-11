@@ -38,12 +38,14 @@ public class UsersTests : BaseTestContext
 
         // Act
         // Fake user manipulation so we can verify that the cancelled dialog triggers a reset of the selected user
-        var originalUser = DefaultData.UsersQA.First();
+        var originalUser = DefaultData.UsersQA.OrderBy(u => u.FullName).First();
         var changedUser = Fixture.Create<User>();
         changedUser.Id = originalUser.Id; // Ensure we are updating an existing user
         await cut.InvokeAsync(() =>
         {
-            table.Instance.OnRowClick.InvokeAsync(new TableRowClickEventArgs<User>(null!, null!, changedUser));
+            var mudIconButtons = cut.FindComponents<MudIconButton>();
+            var mudIconButton = mudIconButtons.Single(m => (m.Instance.Tag as User)?.Id == originalUser.Id);
+            mudIconButton.Instance.OnClick.InvokeAsync();
         });
 
         // Assert parameters.Get<User>("")
@@ -70,12 +72,14 @@ public class UsersTests : BaseTestContext
         var cut = RenderComponent<Users>();
         var tables = cut.FindComponents<MudTable<User>>();
         var table = Assert.Single(tables);
-        var userToDelete = DefaultData.UsersQA.First();
+        var userToDelete = DefaultData.UsersQA.OrderBy(u => u.FullName).First();
 
         // Act
         await cut.InvokeAsync(() =>
         {
-            table.Instance.OnRowClick.InvokeAsync(new TableRowClickEventArgs<User>(null!, null!, userToDelete));
+            var mudIconButtons = cut.FindComponents<MudIconButton>();
+            var mudIconButton = mudIconButtons.Single(m => (m.Instance.Tag as User)?.Id == userToDelete.Id);
+            mudIconButton.Instance.OnClick.InvokeAsync();
         });
 
         // Assert
@@ -93,14 +97,16 @@ public class UsersTests : BaseTestContext
         var cut = RenderComponent<Users>();
         var tables = cut.FindComponents<MudTable<User>>();
         var table = Assert.Single(tables);
-        var userToSave = DefaultData.UsersQA.First();
+        var userToSave = DefaultData.UsersQA.OrderBy(u => u.FullName).First();
         userToSave.FullName = $"Updated User Name {Guid.NewGuid()}"; // Simulate a change to the user
         DialogReferenceMock.Setup(m => m.Result).ReturnsAsync(DialogResult.Ok(userToSave));
 
         // Act
         await cut.InvokeAsync(() =>
         {
-            table.Instance.OnRowClick.InvokeAsync(new TableRowClickEventArgs<User>(null!, null!, userToSave));
+            var mudIconButtons = cut.FindComponents<MudIconButton>();
+            var mudIconButton = mudIconButtons.Single(m => (m.Instance.Tag as User)?.Id == userToSave.Id);
+            mudIconButton.Instance.OnClick.InvokeAsync();
         });
 
         // Assert

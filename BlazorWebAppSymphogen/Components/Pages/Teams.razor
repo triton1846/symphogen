@@ -1,24 +1,24 @@
 ﻿@page "/teams"
+@page "/teams/{TeamId}"
 @rendermode InteractiveServer
+@using FluentValidation.Results
 @using System.Text.Json
-@using Microsoft.Identity.Abstractions
-@using Microsoft.Identity.Web
 @inject IDialogService DialogService
-@inject IDownstreamApi downstreamApi
 @inject IJSRuntime JSRuntime
+@inject ILogger<Teams> Logger
 @inject ISnackbar Snackbar
+@inject ITeamService TeamService
 @inject IUserPreferences UserPreferences
 @inject IUserService UserService
-@inject ITeamService TeamService
 @inject IWorkflowConfigurationService WorkflowConfigurationService
-@inject Microsoft.Extensions.Logging.ILogger<Users> Logger
+@inject NavigationManager NavigationManager
 @attribute [Authorize]
 
-<PageTitle>Teams</PageTitle>
+<PageTitle>@_pageTitle</PageTitle>
 
-@if (!_isInitialized)
+@if (!UserPreferences.IsInitialized || _isLoading)
 {
-    <MudOverlay @bind-Visible="_isLoading" DarkBackground>
+    <MudOverlay @bind-Visible="_isLoading" DarkBackground="true">
         <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
     </MudOverlay>
 }
@@ -26,21 +26,22 @@ else
 {
     <MudText Typo="Typo.h3">Teams</MudText>
     <MudTable AllowUnsorted="false"
+              CustomFooter="true"
               Dense="true"
               Filter="new Func<Models.Team, bool>(FilterFunc)"
               Hover="true"
               Items="_allTeams"
               Loading="_isLoading"
+              LoadingProgressColor="Color.Info"
               ReadOnly="_isLoading"
-              T="Team"
-              OnRowClick="async model => await OpenTeamEditorDialogAsync(model)"
-              SortLabel="Sort By">
+              SortLabel="Sort By"
+              T="Team">
         <ToolBarContent>
             <MudHidden Breakpoint="Breakpoint.SmAndUp" Invert="false">
-                <MudTooltip Text="Add new user">
-                    <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                   aria-label="add-team"
+                <MudTooltip Text="Add new user" ShowOnFocus="false">
+                    <MudIconButton aria-label="add-team"
                                    Color="Color.Success"
+                                   Icon="@Icons.Material.Filled.Add"
                                    OnClick="async _ => await OpenTeamEditorDialogAsync()" />
                 </MudTooltip>
             </MudHidden>
@@ -57,7 +58,16 @@ else
                           Placeholder="Search"></MudTextField>
         </ToolBarContent>
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<Models.Team, object>(x => x.Id)">ID</MudTableSortLabel></MudTh>
+            <MudTh>
+                <MudTooltip Text="Add new team" ShowOnFocus="false">
+                    <MudIconButton aria-label="add-team" Class="ml-n3"
+                                   Color="Color.Success"
+                                   Icon="@Icons.Material.Filled.Add"
+                                   OnClick="async _ => await OpenTeamEditorDialogAsync()"
+                                   Size="Size.Medium" />
+                </MudTooltip>
+            </MudTh>
+            <MudTh>ID</MudTh>
             <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.Team, object>(x => x.Name ?? string.Empty)">Team Name</MudTableSortLabel></MudTh>
             <MudTh>Users</MudTh>
             <MudTh>Super Users</MudTh>
@@ -65,6 +75,16 @@ else
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.ValidationResult?.IsValid == true)">Valid</MudTableSortLabel></MudTh>
         </HeaderContent>
         <RowTemplate>
+            <MudTd>
+                <MudTooltip Text="Edit team" ShowOnFocus="false">
+                    <MudIconButton aria-label="edit-team"
+                                   Color="Color.Success"
+                                   Icon="@Icons.Material.Outlined.Edit"
+                                   OnClick="async _ => await OpenTeamEditorDialogAsync(context)"
+                                   Size="@Size.Small"
+                                   Tag="context" />
+                </MudTooltip>
+            </MudTd>
             <MudTd DataLabel="ID">
                 <IdCopyButton Id="@context.Id" TooltipText="@context.Id" />
             </MudTd>
@@ -73,7 +93,10 @@ else
                 <MudStack Spacing="0" StretchItems="StretchItems.None">
                     @if (context.UserIds != null && context.UserIds.Any())
                     {
-                        <MudChip T="string" Size="Size.Small" OnClick="_ => ShowUsers(context)">@context.UserIds.Count() user(s)</MudChip>
+                        <MudChip Color="@(context.ShowUsers? Color.Info: Color.Default)"
+                                 OnClick="_ => ShowUsers(context)"
+                                 Size="Size.Small"
+                                 T="string">@context.UserIds.Count() user(s)</MudChip>
                     }
                     else
                     {
@@ -85,7 +108,10 @@ else
                 <MudStack Spacing="0" StretchItems="StretchItems.None">
                     @if (context.SuperUserIds != null && context.SuperUserIds.Any())
                     {
-                        <MudChip T="string" Size="Size.Small" OnClick="_ => ShowSuperUsers(context)">@context.SuperUserIds.Count() super user(s)</MudChip>
+                        <MudChip Color="@(context.ShowSuperUsers? Color.Info: Color.Default)"
+                                 OnClick="_ => ShowSuperUsers(context)"
+                                 Size="Size.Small"
+                                 T="string">@context.SuperUserIds.Count() super user(s)</MudChip>
                     }
                     else
                     {
@@ -97,7 +123,7 @@ else
                 workflow configurations goes here...
             </MudTd>
             <MudTd DataLabel="Valid">
-                <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "Team is valid")">
+                <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "Team is valid")" ShowOnFocus="false">
                     <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Success)" Size="Size.Small">
                         @(context.ValidationResult?.IsValid == false ? "Invalid" : "Valid")
                     </MudChip>
@@ -108,86 +134,106 @@ else
             @if (context.ShowUsers)
             {
                 <MudTr>
-                    <MudTd ColSpan="6">
-                        <MudStack Spacing="0">
-                            <MudText Typo="Typo.subtitle1">Users in team @context.Name:</MudText>
-                            @if (context.Users.Any())
-                            {
-                                <MudList T="string">
-                                    @foreach (var user in context.Users.OrderBy(u => u.FullName))
-                                    {
-                                        <MudListItem>
-                                            <MudText>@user.FullName (@user.Email)</MudText>
-                                        </MudListItem>
-                                    }
-                                </MudList>
-                            }
-                            else
-                            {
-                                <MudText>No users assigned to this team.</MudText>
-                            }
-                        </MudStack>
+                    <MudTd colspan="6">
+                        <MudTable Context="contextUser"
+                                  Dense="true"
+                                  Hover="true"
+                                  Items="@context.Users"
+                                  OnRowClick="row => NavigateToUser(row.Item?.Id ?? string.Empty)"
+                                  T="User">
+                            <ToolBarContent>
+                                <MudText Typo="Typo.h6">Users in @context.Name</MudText>
+                            </ToolBarContent>
+                            <HeaderContent>
+                                <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.User, object>(x => x.FullName ?? string.Empty)">Full Name</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Email ?? string.Empty)">Email</MudTableSortLabel></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Full Name">@contextUser.FullName</MudTd>
+                                <MudTd DataLabel="Email">@contextUser.Email</MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager />
+                            </PagerContent>
+                        </MudTable>
                     </MudTd>
                 </MudTr>
             }
             @if (context.ShowSuperUsers)
             {
                 <MudTr>
-                    <MudTd ColSpan="5">
-                        <MudStack Spacing="2">
-                            <MudText Typo="Typo.subtitle1">Super Users in team @context.Name:</MudText>
-                            @if (context.SuperUsers.Any())
-                            {
-                                <MudList T="string">
-                                    @foreach (var superUser in context.SuperUsers.OrderBy(u => u.FullName))
-                                    {
-                                        <MudListItem>
-                                            <MudText>@superUser.FullName (@superUser.Email)</MudText>
-                                        </MudListItem>
-                                    }
-                                </MudList>
-                            }
-                            else
-                            {
-                                <MudText>No super users assigned to this team.</MudText>
-                            }
-                        </MudStack>
+                    <MudTd colspan="6">
+                        <MudTable Context="contextSuperUser"
+                                  Dense="true"
+                                  Hover="true"
+                                  Items="@context.SuperUsers"
+                                  OnRowClick="row => NavigateToUser(row.Item?.Id ?? string.Empty)"
+                                  T="User">
+                            <ToolBarContent>
+                                <MudText Typo="Typo.h6">Super Users in @context.Name</MudText>
+                            </ToolBarContent>
+                            <HeaderContent>
+                                <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.User, object>(x => x.FullName ?? string.Empty)">Full Name</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Email ?? string.Empty)">Email</MudTableSortLabel></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Full Name">@contextSuperUser.FullName</MudTd>
+                                <MudTd DataLabel="Email">@contextSuperUser.Email</MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager />
+                            </PagerContent>
+                        </MudTable>
                     </MudTd>
                 </MudTr>
             }
         </ChildRowContent>
-        <FooterContent>
-            <MudTFootRow>
-                <MudTd>
-                    <MudTooltip Text="Add new team">
-                        <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                       aria-label="add-team"
-                                       Color="Color.Success"
-                                       OnClick="async _ => await OpenTeamEditorDialogAsync()" />
-                    </MudTooltip>
-                </MudTd>
-            </MudTFootRow>
-        </FooterContent>
         <PagerContent>
             <MudTablePager />
         </PagerContent>
-        <EditButtonContent Context="button">
-            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" />
-        </EditButtonContent>
     </MudTable>
 }
 
 @code {
-    private bool _isInitialized = false;
     private bool _isLoading = true;
-    private IEnumerable<Models.User> _allUsers = [];
-    private IEnumerable<Models.WorkflowConfiguration> _allWorkflowConfigurations = [];
-    private IEnumerable<Models.Team> _allTeams = [];
+    private List<Models.User> _allUsers = [];
+    private List<Models.WorkflowConfiguration> _allWorkflowConfigurations = [];
+    private List<Models.Team> _allTeams = [];
     private string _searchString = string.Empty;
     private bool _canOpenEditor = true;
     private TeamValidator _teamValidator = new TeamValidator();
+    private string _pageTitle = "Teams";
+
+    [Parameter]
+    public string? TeamId { get; set; }
 
     protected override async Task OnInitializedAsync()
+    {
+        // Check if UserPreferences is initialized, can't initialize in OnInitializedAsync due to JavaScript interop not being available yet
+        if (!UserPreferences.IsInitialized)
+        {
+            return;
+        }
+
+        await LoadDataAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!UserPreferences.IsInitialized)
+        {
+            await LoadDataAsync();
+            StateHasChanged(); // Refresh the UI after initialization
+        }
+
+        var teamToEdit = _allTeams.FirstOrDefault(u => u.Id == TeamId);
+        if (_canOpenEditor && teamToEdit != null)
+        {
+            await OpenTeamEditorDialogAsync(teamToEdit);
+        }
+    }
+
+    private async Task LoadDataAsync()
     {
         _isLoading = true;
         await LoadUsersAsync();
@@ -197,55 +243,46 @@ else
         // Validate all teams after loading
         foreach (var team in _allTeams)
         {
-            ValidateUser(team);
+            ValidateTeam(team);
         }
 
         _isLoading = false;
-        _isInitialized = true;
     }
 
     private async Task LoadUsersAsync()
     {
         Logger.LogInformation("Loading users for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allUsers = await UserService.GetAsync(UserPreferences.MimerEnvironment);
+        _allUsers = [.. await UserService.GetAsync(UserPreferences.MimerEnvironment)];
     }
 
     private async Task LoadTeamsAsync()
     {
         Logger.LogInformation("Loading teams for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allTeams = await TeamService.GetAsync(UserPreferences.MimerEnvironment);
+        _allTeams = [.. await TeamService.GetAsync(UserPreferences.MimerEnvironment)];
 
         foreach (var team in _allTeams)
         {
             team.Users.Clear();
-            team.Users.AddRange(_allUsers.Where(u => team.UserIds.Contains(u.Id)).ToList());
-            // Handle unknown users
             foreach (var userId in team.UserIds)
             {
-                if (team.UserIds.Any(u => u == userId) && !team.Users.Any(u => u.Id == userId))
+                var user = _allUsers.FirstOrDefault(t => t.Id == userId);
+                var unknownUser = new Models.User { Id = userId, FullName = "Unknown User", UserExists = false };
+                team.Users.Add(user ?? unknownUser);
+                if (!_allUsers.Any(t => t.Id == userId))
                 {
-                    team.Users.Add(new Models.User
-                    {
-                        Id = userId,
-                        FullName = "Unknown User",
-                        UserExists = false
-                    });
+                    _allUsers.Add(unknownUser);
                 }
             }
 
             team.SuperUsers.Clear();
-            team.SuperUsers.AddRange(_allUsers.Where(u => team.SuperUserIds.Contains(u.Id)).ToList());
-            // Handle unknown super users
             foreach (var superUserId in team.SuperUserIds)
             {
-                if (team.SuperUserIds.Any(u => u == superUserId) && !team.SuperUsers.Any(u => u.Id == superUserId))
+                var superUser = _allUsers.FirstOrDefault(t => t.Id == superUserId);
+                var unknownSuperUser = new Models.User { Id = superUserId, FullName = "Unknown Super User", UserExists = false };
+                team.SuperUsers.Add(superUser ?? unknownSuperUser);
+                if (!_allUsers.Any(t => t.Id == superUserId))
                 {
-                    team.SuperUsers.Add(new Models.User
-                    {
-                        Id = superUserId,
-                        FullName = "Unknown Super User",
-                        UserExists = false
-                    });
+                    _allUsers.Add(unknownSuperUser);
                 }
             }
         }
@@ -254,7 +291,7 @@ else
     private async Task LoadWorkflowConfigurationsAsync()
     {
         Logger.LogInformation("Loading workflow configurations for environment: {Environment}", UserPreferences.MimerEnvironment);
-        _allWorkflowConfigurations = await WorkflowConfigurationService.GetAsync(UserPreferences.MimerEnvironment);
+        _allWorkflowConfigurations = [.. await WorkflowConfigurationService.GetAsync(UserPreferences.MimerEnvironment)];
 
         // TODO: Handle unknown workflow configurations
     }
@@ -287,41 +324,88 @@ else
         return false;
     }
 
-    private async Task OpenTeamEditorDialogAsync(MudBlazor.TableRowClickEventArgs<Models.Team>? args = null)
+    private async Task OpenTeamEditorDialogAsync(Team? teamToEdit = null)
     {
         if (!_canOpenEditor)
-        {
-            _canOpenEditor = true;
             return;
-        }
 
-        var users = _allUsers;
-        if (args?.Item?.Users.Any(u => u.UserExists == false) == true)
-        {
-            // If the team has unknown users, add them to the list to make it possible to unselect them
-            users = _allUsers.Concat(args.Item.Users.Where(u => !u.UserExists)).ToList();
-        }
-        if (args?.Item?.SuperUsers.Any(u => u.UserExists == false) == true)
-        {
-            // If the team has unknown super users, add them to the list to make it possible to unselect them
-            users = users.Concat(args.Item.SuperUsers.Where(u => !u.UserExists)).ToList();
-        }
+        _canOpenEditor = false; // Prevent multiple dialogs from opening
 
-        var parameters = new DialogParameters<TeamEditorDialog>
+        try
         {
-            { x => x.Users, users }
-        };
+            var isEditMode = teamToEdit != null;
+            _pageTitle = isEditMode ? $"Teams: {teamToEdit?.Name}" : "Add New Team";
 
-        var isEditMode = args != null;
+            var parameters = new DialogParameters<TeamEditorDialog>
+            {
+                { x => x.AllUsers, _allUsers },
+                { x => x.IsEditMode, isEditMode },
+                { x => x.Team, teamToEdit }
+            };
+
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
+            var dialog = await DialogService.ShowAsync<TeamEditorDialog>(null, parameters, options);
+            var result = await dialog.Result;
+
+            if (result?.Canceled == false && result.Data is Models.Team team)
+            {
+                await HandleTeamUpdate(team, isEditMode);
+            }
+            else if (result?.Data is bool deleteTeam && deleteTeam && isEditMode && teamToEdit != null)
+            {
+                await HandleTeamDeletion(teamToEdit);
+            }
+            else if (result?.Canceled == true && teamToEdit != null)
+            {
+                Snackbar.Add($"Changes to team {teamToEdit.Name} were cancelled.", Severity.Info);
+                Logger.LogInformation("Changes to team {Name} ({TeamId}) were cancelled", teamToEdit.Name, teamToEdit.Id);
+            }
+        }
+        finally
+        {
+            TeamId = null; // Reset UserId to prevent reopening the editor on next render
+            _canOpenEditor = true; // Allow opening editor again
+            _pageTitle = "Teams"; // Reset page title after dialog closes
+        }
+    }
+
+    private async Task HandleTeamUpdate(Models.Team team, bool isEditMode)
+    {
+        await TeamService.SaveAsync(UserPreferences.MimerEnvironment, team);
+        ValidateTeam(team);
+
         if (isEditMode)
         {
-            parameters.Add(x => x.IsEditMode, true);
-            parameters.Add(x => x.Team, args!.Item);
+            var index = _allTeams.FindIndex(u => u.Id == team.Id);
+            if (index >= 0)
+            {
+                _allTeams[index] = team;
+                _allTeams = _allTeams.OrderBy(u => u.Name ?? string.Empty).ToList();
+                Snackbar.Add($"Team {team.Name} updated successfully!", Severity.Success);
+                Logger.LogInformation("Updated team: {Name} ({TeamId})", team.Name, team.Id);
+            }
+            else
+            {
+                Snackbar.Add($"Team {team.Name} not found for update!", Severity.Error);
+                Logger.LogWarning("Team {Name} ({TeamId}) not found for update", team.Name, team.Id);
+                return;
+            }
         }
+        else
+        {
+            _allTeams.Add(team);
+            _allTeams = _allTeams.OrderBy(u => u.Name ?? string.Empty).ToList();
+            Snackbar.Add($"Team {team.Name} added successfully!", Severity.Success);
+            Logger.LogInformation("Added new team: {Name} ({TeamId})", team.Name, team.Id);
+        }
+    }
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, BackdropClick = false };
-        var dialog = await DialogService.ShowAsync<TeamEditorDialog>(null, parameters, options);
-        var result = await dialog.Result;
+    private async Task HandleTeamDeletion(Models.Team teamToDelete)
+    {
+        await TeamService.DeleteAsync(UserPreferences.MimerEnvironment, teamToDelete.Id);
+        _allTeams.Remove(teamToDelete);
+        Snackbar.Add($"Team {teamToDelete.Name} deleted successfully!", Severity.Success);
+        Logger.LogInformation("Deleted team: {Name} ({TeamId})", teamToDelete.Name, teamToDelete.Id);
     }
 
     private void ShowUsers(Team team)
@@ -329,6 +413,7 @@ else
         _canOpenEditor = false;
         team.ShowUsers = !team.ShowUsers;
         team.ShowSuperUsers = false; // Hide super users when showing users
+        _pageTitle = "Teams"; // Reset page title when showing teams
     }
 
     private void ShowSuperUsers(Team team)
@@ -338,8 +423,19 @@ else
         team.ShowUsers = false; // Hide users when showing super users
     }
 
-    private void ValidateUser(Models.Team team)
+    private void ValidateTeam(Models.Team team)
     {
         team.ValidationResult = _teamValidator.Validate(team);
+    }
+
+    private void NavigateToUser(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        _canOpenEditor = false; // Prevent opening editor while navigating
+        NavigationManager.NavigateTo($"/users/{userId}");
     }
 }

@@ -1,6 +1,7 @@
-﻿@inject ISnackbar Snackbar
-@inject IUserPreferences UserPreferences
+﻿@inject IDialogService DialogService
 @inject ILogger<TeamEditorDialog> Logger
+@inject ISnackbar Snackbar
+@inject IUserPreferences UserPreferences
 
 <MudDialog>
     <TitleContent>
@@ -25,7 +26,7 @@
                                SelectedValuesChanged="OnSuperUsersSelected"
                                T="Models.User"
                                ToStringFunc="@(user => user.FullName)">
-                        @foreach (var user in _superUsers.OrderByDescending(u => _team.SuperUsers.Contains(u)).ThenBy(u => u.FullName))
+                        @foreach (var user in _superUsers.Where(u => !_team.SuperUsers.Contains(u)).Concat(_team.SuperUsers).OrderByDescending(u => _team.SuperUsers.Contains(u)).ThenBy(u => u.FullName))
                         {
                             <MudSelectItem Disabled="@(!user.UserExists && !_team.SuperUsers.Any(t => t.Id == user.Id))"
                                            T="Models.User"
@@ -52,7 +53,7 @@
                                SelectedValuesChanged="OnUsersSelected"
                                T="Models.User"
                                ToStringFunc="@(user => user.FullName)">
-                        @foreach (var user in _users.OrderByDescending(u => _team.Users.Contains(u)).ThenBy(u => u.FullName))
+                        @foreach (var user in _users.Where(u => !_team.Users.Contains(u)).Concat(_team.Users).OrderByDescending(u => _team.Users.Contains(u)).ThenBy(u => u.FullName))
                         {
                             <MudSelectItem Disabled="@(!user.UserExists && !_team.Users.Any(t => t.Id == user.Id))"
                                            T="Models.User"
@@ -89,7 +90,7 @@
         <MudButton OnClick="Cancel">Cancel</MudButton>
         @if (IsEditMode)
         {
-            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => MudDialog?.Close(DialogResult.Ok(true))">
+            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="Delete">
                 Delete
             </MudButton>
         }
@@ -106,7 +107,7 @@
     private IMudDialogInstance? MudDialog { get; set; }
 
     [Parameter]
-    public List<Models.User> Users { get; set; } = [];
+    public List<Models.User> AllUsers { get; set; } = [];
 
     [Parameter]
     public bool IsEditMode { get; set; } = false;
@@ -128,6 +129,19 @@
 
     private void Cancel() => MudDialog?.Cancel();
     private void Submit() => MudDialog?.Close(DialogResult.Ok(_team));
+    private async Task Delete()
+    {
+        var confirmResult = await DialogService.ShowMessageBox(
+            "Confirm Deletion",
+            "Are you sure you want to delete the team?",
+            yesText: "Delete",
+            noText: "Cancel");
+
+        if (confirmResult == true)
+        {
+            MudDialog?.Close(DialogResult.Ok(true));
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -137,28 +151,15 @@
         }
         else if (IsEditMode && Team != null)
         {
-            _team = Team.DeepCopy();
-            _users = Users.Where(u => (u.UserExists || _team.Users.Any(t => t.Id == u.Id)) && u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
-            _superUsers = Users.Where(u => u.UserExists || _team.SuperUsers.Any(t => t.Id == u.Id) && u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
-
+            _team = Team with { };
+            _users = AllUsers.Where(u => (u.UserExists || _team.Users.Any(t => t.Id == u.Id)) && u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
+            _superUsers = AllUsers.Where(u => u.UserExists || _team.SuperUsers.Any(t => t.Id == u.Id) && u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
             RemoveInvalidData();
-
-            // // Handle duplicates for display purposes
-            // var remainingDuplicateSuperUsers = _team.SuperUsers.GroupBy(u => u.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
-            // foreach (var duplicateSuperUser in remainingDuplicateSuperUsers.Skip(1))
-            // {
-            //     _superUsers = _superUsers.Append(duplicateSuperUser).ToList();
-            // }
-            // var remainingDuplicateUsers = _team.Users.GroupBy(u => u.Id).Where(g => g.Count() > 1).SelectMany(g => g).ToList();
-            // foreach (var duplicateUser in remainingDuplicateUsers.Skip(1))
-            // {
-            //     _users = _users.Append(duplicateUser).ToList();
-            // }
         }
         else
         {
-            _users = Users.Where(u => u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
-            _superUsers = Users.Where(u => u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
+            _users = AllUsers.Where(u => u.FullName?.Equals("Unknown Super User", StringComparison.OrdinalIgnoreCase) == false);
+            _superUsers = AllUsers.Where(u => u.FullName?.Equals("Unknown User", StringComparison.OrdinalIgnoreCase) == false);
         }
     }
 
@@ -256,7 +257,7 @@
                 Logger.LogWarning("{Count} duplicate workflow configuration(s) have been removed", duplicateWorkflowConfigurations.Count);
                 Snackbar.Add($"{duplicateWorkflowConfigurations.Count} duplicate workflow configuration(s) have been removed", Severity.Warning);
                 _team.WorkflowConfigurations = _team.WorkflowConfigurations?.DistinctBy(w => w.Id).ToList() ?? [];
-                _team.WorkflowConfigurationIds = _team.WorkflowConfigurations?.Select(w => w.Id);
+                _team.WorkflowConfigurationIds = _team.WorkflowConfigurations.Select(w => w.Id);
             }
         }
     }
