@@ -91,10 +91,11 @@ else
             <MudTd DataLabel="Team Name">@context.Name</MudTd>
             <MudTd DataLabel="Users">
                 <MudStack Spacing="0" StretchItems="StretchItems.None">
-                    @if (context.UserIds != null && context.UserIds.Any())
+                    @if (context.UserIds.Any())
                     {
-                        <MudChip Color="@(context.ShowUsers? Color.Info: Color.Default)"
-                                 OnClick="_ => ShowUsers(context)"
+                        <MudChip CloseIcon="@(context.ShowUsers? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown)"
+                                 Color="@(context.ShowUsers? Color.Info: Color.Default)"
+                                 OnClose="_ => ShowUsers(context)"
                                  Size="Size.Small"
                                  T="string">@context.UserIds.Count() user(s)</MudChip>
                     }
@@ -106,10 +107,11 @@ else
             </MudTd>
             <MudTd DataLabel="Super Users">
                 <MudStack Spacing="0" StretchItems="StretchItems.None">
-                    @if (context.SuperUserIds != null && context.SuperUserIds.Any())
+                    @if (context.SuperUserIds.Any())
                     {
-                        <MudChip Color="@(context.ShowSuperUsers? Color.Info: Color.Default)"
-                                 OnClick="_ => ShowSuperUsers(context)"
+                        <MudChip CloseIcon="@(context.ShowSuperUsers? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown)"
+                                 Color="@(context.ShowSuperUsers? Color.Info: Color.Default)"
+                                 OnClose="_ => ShowSuperUsers(context)"
                                  Size="Size.Small"
                                  T="string">@context.SuperUserIds.Count() super user(s)</MudChip>
                     }
@@ -120,7 +122,20 @@ else
                 </MudStack>
             </MudTd>
             <MudTd DataLabel="Workflow Configurations">
-                workflow configurations goes here...
+                <MudStack Spacing="0" StretchItems="StretchItems.None">
+                    @if (context.WorkflowConfigurationIds.Any())
+                    {
+                        <MudChip CloseIcon="@(context.ShowWorkflowConfigurations? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown)"
+                                 Color="@(context.ShowWorkflowConfigurations? Color.Info: Color.Default)"
+                                 OnClose="_ => ShowWorkflowConfigurations(context)"
+                                 Size="Size.Small"
+                                 T="string">@context.WorkflowConfigurationIds.Count() workflow configuration(s)</MudChip>
+                    }
+                    else
+                    {
+                        <MudText>No workflow configurations assigned</MudText>
+                    }
+                </MudStack>
             </MudTd>
             <MudTd DataLabel="Valid">
                 <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "Team is valid")" ShowOnFocus="false">
@@ -134,7 +149,7 @@ else
             @if (context.ShowUsers)
             {
                 <MudTr>
-                    <MudTd colspan="6">
+                    <MudTd colspan="7">
                         <MudTable Context="contextUser"
                                   Dense="true"
                                   Hover="true"
@@ -162,7 +177,7 @@ else
             @if (context.ShowSuperUsers)
             {
                 <MudTr>
-                    <MudTd colspan="6">
+                    <MudTd colspan="7">
                         <MudTable Context="contextSuperUser"
                                   Dense="true"
                                   Hover="true"
@@ -179,6 +194,33 @@ else
                             <RowTemplate>
                                 <MudTd DataLabel="Full Name">@contextSuperUser.FullName</MudTd>
                                 <MudTd DataLabel="Email">@contextSuperUser.Email</MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager />
+                            </PagerContent>
+                        </MudTable>
+                    </MudTd>
+                </MudTr>
+            }
+            @if (context.ShowWorkflowConfigurations)
+            {
+                <MudTr>
+                    <MudTd colspan="7">
+                        <MudTable Context="contextWorkflowConfiguration"
+                                  Dense="true"
+                                  Hover="true"
+                                  Items="@context.WorkflowConfigurations"
+                                  T="WorkflowConfiguration">
+                            <ToolBarContent>
+                                <MudText Typo="Typo.h6">Workflow Configurations in @context.Name</MudText>
+                            </ToolBarContent>
+                            <HeaderContent>
+                                <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Models.WorkflowConfiguration, object>(x => x.Name ?? string.Empty)">Name</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<Models.WorkflowConfiguration, object>(x => x.Department ?? string.Empty)">Department</MudTableSortLabel></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Name">@contextWorkflowConfiguration.Name</MudTd>
+                                <MudTd DataLabel="Department">@contextWorkflowConfiguration.Department</MudTd>
                             </RowTemplate>
                             <PagerContent>
                                 <MudTablePager />
@@ -408,17 +450,26 @@ else
 
     private void ShowUsers(Team team)
     {
-        _canOpenEditor = false;
         team.ShowUsers = !team.ShowUsers;
         team.ShowSuperUsers = false; // Hide super users when showing users
+        team.ShowWorkflowConfigurations = false; // Hide workflow configurations when showing users
         _pageTitle = "Teams"; // Reset page title when showing teams
     }
 
     private void ShowSuperUsers(Team team)
     {
-        _canOpenEditor = false;
         team.ShowSuperUsers = !team.ShowSuperUsers;
         team.ShowUsers = false; // Hide users when showing super users
+        team.ShowWorkflowConfigurations = false; // Hide workflow configurations when showing super users
+        _pageTitle = "Teams"; // Reset page title when showing teams
+    }
+
+    private void ShowWorkflowConfigurations(Team team)
+    {
+        team.ShowWorkflowConfigurations = !team.ShowWorkflowConfigurations;
+        team.ShowUsers = false; // Hide users when showing workflow configurations
+        team.ShowSuperUsers = false; // Hide super users when showing workflow configurations
+        _pageTitle = "Teams"; // Reset page title when showing teams
     }
 
     private void ValidateTeam(Models.Team team)

@@ -59,4 +59,6 @@ public record Team : DTOs.TeamDTO
     public bool ShowUsers { get; set; } = false;
 
     public bool ShowSuperUsers { get; set; } = false;
+
+    public bool ShowWorkflowConfigurations { get; set; } = false;
 }

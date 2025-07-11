@@ -103,7 +103,11 @@ else
                             @if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) == 1)
                             {
                                 <MudTooltip Text="@team.Id" ShowOnFocus="false">
-                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" OnClick="() => NavigateToTeam(team.Id)">@team.Name</MudChip>
+                                    <MudChip CloseIcon="@Icons.Material.Filled.OpenInNew"
+                                             Color="Color.Default"
+                                             OnClose="() => NavigateToTeam(team.Id)"
+                                             Size="Size.Small"
+                                             T="string">@team.Name</MudChip>
                                 </MudTooltip>
                             }
                             else if (team.TeamExists && context.Teams.Count(t => t.Id == team.Id) > 1)
