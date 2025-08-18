@@ -418,8 +418,9 @@ else
             }
             else if (result?.Canceled == true && teamToEdit != null)
             {
+                // TODO: Remove snackbar message? Annoying to user to see this message.
                 Snackbar.Add($"Changes to team {teamToEdit.Name} were cancelled.", Severity.Info);
-                Logger.LogInformation("Changes to team {Name} ({TeamId}) were cancelled", teamToEdit.Name, teamToEdit.Id);
+                Logger.LogTrace("Changes to team {Name} ({TeamId}) were cancelled", teamToEdit.Name, teamToEdit.Id);
             }
         }
         finally

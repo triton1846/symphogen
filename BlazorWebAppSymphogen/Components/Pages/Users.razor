@@ -304,8 +304,9 @@ else
             }
             else if (result?.Canceled == true && userToEdit != null)
             {
+                // TODO: Remove snackbar message? Annoying to user to see this message.
                 Snackbar.Add($"Changes to user {userToEdit.FullName} were cancelled.", Severity.Info);
-                Logger.LogInformation("Changes to user {UserName} ({UserId}) were cancelled", userToEdit.FullName, userToEdit.Id);
+                Logger.LogTrace("Changes to user {UserName} ({UserId}) were cancelled", userToEdit.FullName, userToEdit.Id);
             }
         }
         finally
