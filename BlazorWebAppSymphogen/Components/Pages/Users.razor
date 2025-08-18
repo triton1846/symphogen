@@ -11,7 +11,7 @@
 @inject IUserPreferences UserPreferences
 @inject IUserService UserService
 @inject NavigationManager NavigationManager
-@attribute [Authorize]
+@attribute [Authorize(Policy = Auth.Policies.RequireDomain)]
 
 <PageTitle>@_pageTitle</PageTitle>
 

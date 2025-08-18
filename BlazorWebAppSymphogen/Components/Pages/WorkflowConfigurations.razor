@@ -7,7 +7,7 @@
 @inject IUserPreferences UserPreferences
 @inject IWorkflowConfigurationService WorkflowConfigurationService
 @inject Microsoft.Extensions.Logging.ILogger<Users> Logger
-@attribute [Authorize]
+@attribute [Authorize(Policy = Auth.Policies.RequireDomain)]
 
 @if (!_isInitialized)
 {

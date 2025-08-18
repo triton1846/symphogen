@@ -4,11 +4,21 @@ namespace BlazorWebAppSymphogen.Auth;
 
 public class RequireDomainRequirement : IAuthorizationRequirement
 {
-    public string RequiredDomain { get; }
+    public List<string> AllowedDomains { get; } = [];
 
     public RequireDomainRequirement(string requiredDomain)
     {
-        RequiredDomain = requiredDomain;
+        AllowedDomains.Add(requiredDomain);
+    }
+
+    public RequireDomainRequirement(params string[] requiredDomains)
+    {
+        AllowedDomains.AddRange(requiredDomains);
+    }
+
+    public RequireDomainRequirement(IEnumerable<string> requiredDomains)
+    {
+        AllowedDomains.AddRange(requiredDomains);
     }
 }
 

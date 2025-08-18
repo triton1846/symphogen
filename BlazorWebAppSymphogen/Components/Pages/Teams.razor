@@ -12,7 +12,7 @@
 @inject IUserService UserService
 @inject IWorkflowConfigurationService WorkflowConfigurationService
 @inject NavigationManager NavigationManager
-@attribute [Authorize]
+@attribute [Authorize(Policy = Auth.Policies.RequireDomain)]
 
 <PageTitle>@_pageTitle</PageTitle>
 

@@ -28,9 +28,9 @@ builder.Services.AddAuthorization(options =>
 {
     // By default, all incoming requests will be authorized according to the default policy
     options.FallbackPolicy = options.DefaultPolicy;
-    options.AddPolicy("RequireDomain", policy =>
+    options.AddPolicy(Policies.RequireDomain, policy =>
     {
-        policy.Requirements.Add(new RequireDomainRequirement("augustenberg.dk"));
+        policy.Requirements.Add(new RequireDomainRequirement("augustenberg.dk", "symphogen.com"));
     });
 });
 
@@ -56,6 +56,16 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddControllers()
     .AddMicrosoftIdentityUI();
 
+// Add http client factory
+builder.Services.AddHttpClient("MimerApi", client =>
+{
+    var baseUrl = builder.Configuration["MimerApi:BaseUrl"] ?? throw new InvalidOperationException("MimerApi BaseUrl not configured.");
+    var subscriptionKey = builder.Configuration["MimerApi:SubscriptionKey"] ?? throw new InvalidOperationException("MimerApi SubscriptionKey not configured.");
+
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+}).AddHttpMessageHandler<MimerApiHandler>();
+
 // Add custom services
 builder.Services.AddScoped<ICosmosService>(sp =>
 {
@@ -74,6 +84,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IWorkflowConfigurationService, WorkflowConfigurationService>();
 builder.Services.AddScoped<ITestDataService, TestDataService>();
+builder.Services.AddScoped<MimerApiHandler>();
 
 // Logging
 Log.Logger = new LoggerConfiguration()

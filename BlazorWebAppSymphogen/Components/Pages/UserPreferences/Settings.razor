@@ -1,6 +1,7 @@
 ﻿@page "/settings"
 @using BlazorWebAppSymphogen.Components.Pages.UserPreferences
 @inject IUserPreferences UserPreferences
+@attribute [Authorize(Policy = Auth.Policies.RequireDomain)]
 
 <PageTitle>Settings</PageTitle>
 

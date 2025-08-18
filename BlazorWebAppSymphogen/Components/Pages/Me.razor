@@ -11,7 +11,7 @@
 @inject IDownstreamApi downstreamApi
 @inject IUserInfoService UserInfoService
 @inject AuthenticationStateProvider AuthProvider
-@attribute [Authorize]
+@attribute [Authorize(Policy = Auth.Policies.RequireDomain)]
 
 <PageTitle>Me</PageTitle>
 
