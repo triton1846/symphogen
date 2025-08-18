@@ -52,6 +52,14 @@
                                   Immediate="true"
                                   Label="Initials" />
                 </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTooltip Text="Marking a user as inactive will prevent them from logging in, but will not remove their data.">
+                        <MudSwitch @bind-Value="_user.Deleted"
+                                   Color="Color.Error"
+                                   For="@(() => _user.Deleted)"
+                                   Label="@(_user.Deleted ? "Inactive" : "Active")" />
+                    </MudTooltip>
+                </MudItem>
                 <MudItem xs="12">
                     <MudSelect Clearable="true"
                                For="@(() => _user.ValidationTeams)"
@@ -112,6 +120,7 @@
 
     protected override void OnInitialized()
     {
+        _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
         if (IsEditMode && User == null)
         {
             throw new ArgumentNullException(nameof(User), "User cannot be null in edit mode.");
@@ -119,7 +128,6 @@
         else if (IsEditMode && User != null)
         {
             _user = User with { }; // Using C# 9.0 record copy syntax
-            _allTeams = AllTeams.Where(t => t.TeamExists).DistinctBy(t => t.Id).ToList();
             RemoveInvalidData();
         }
     }

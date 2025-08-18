@@ -74,6 +74,7 @@ else
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Department ?? string.Empty)">Department</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Location ?? string.Empty)">Location</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="SortByTeams">Teams</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.Deleted)">Status</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<Models.User, object>(x => x.ValidationResult?.IsValid == true)">Validity</MudTableSortLabel></MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -143,6 +144,7 @@ else
                     <MudChip T="string" Size="Size.Small">@((context.Teams.Count())) team membership(s)</MudChip>
                 </MudTd>
             </MudHidden>
+            <MudTd DataLabel="Status">@(context.Deleted ? "Inactive" : "Active")</MudTd>
             <MudTd DataLabel="Valid">
                 <MudTooltip Text="@(context.ValidationResult?.IsValid == false ? string.Join(" ", context.ValidationResult?.Errors ?? []) : "User is valid")" ShowOnFocus="false">
                     <MudChip T="string" Color="@(context.ValidationResult?.IsValid == false ? Color.Error : Color.Default)" Size="Size.Small">
