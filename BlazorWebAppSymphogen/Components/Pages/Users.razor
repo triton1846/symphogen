@@ -256,6 +256,16 @@ else
             return true;
         if (user.Id?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
             return true;
+        if (_searchString.Equals("active", StringComparison.OrdinalIgnoreCase) && !user.Deleted)
+            return true;
+        if (_searchString.Equals("inactive", StringComparison.OrdinalIgnoreCase) && user.Deleted)
+            return true;
+        if (_searchString.Equals("valid", StringComparison.OrdinalIgnoreCase) && user.ValidationResult?.IsValid == true)
+            return true;
+        if (_searchString.Equals("invalid", StringComparison.OrdinalIgnoreCase) && user.ValidationResult?.IsValid == false)
+            return true;
+        if (user.Teams.Any(t => t.Name?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true))
+            return true;
         return false;
     }
 
