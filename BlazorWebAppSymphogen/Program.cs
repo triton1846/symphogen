@@ -42,6 +42,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add MudBlazor services
 builder.Services.AddMudServices(config =>
 {
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
@@ -55,6 +56,7 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddControllers()
     .AddMicrosoftIdentityUI();
 
+// Add custom services
 builder.Services.AddScoped<ICosmosService>(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();

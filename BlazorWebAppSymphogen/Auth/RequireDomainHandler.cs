@@ -27,7 +27,7 @@ public class RequireDomainHandler(
         var user = JsonDocument.Parse(json);
         var email = user.RootElement.GetProperty("mail").GetString();
 
-        if (email != null && email.EndsWith($"@{requirement.RequiredDomain}", StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(email) && email.EndsWith($"@{requirement.RequiredDomain}", StringComparison.OrdinalIgnoreCase))
         {
             context.Succeed(requirement);
         }
