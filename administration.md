@@ -15,5 +15,8 @@
 
 [Bulk Rerun of Data Imports and Re-execution of Gold Scripts (5676)](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_workitems/edit/5676)
 
+### Board
+[Mimer Administration Module](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_boards/board/t/Mimer%20Administrations%20Module/Stories)
 
-
+### Repo
+[Symphogen.Mimer.AdminWeb](https://symphogenteams.visualstudio.com/Mimer/_git/Symphogen.Mimer.AdminWeb)
