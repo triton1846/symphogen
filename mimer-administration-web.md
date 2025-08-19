@@ -26,6 +26,6 @@
 - Deployment (Web App setup)
 - MudBlazor => SyncFusion
 - Auth (app reg)
-- Wiki documentation
+- [Wiki documentation](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_wiki/wikis/Development-and-Data-Engineering.wiki/468/Mimer-AdminWeb)
   - Web App + App registration
   - Code / solution
