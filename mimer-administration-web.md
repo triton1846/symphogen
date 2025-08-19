@@ -20,3 +20,12 @@
 
 ### Repo
 [Symphogen.Mimer.AdminWeb](https://symphogenteams.visualstudio.com/Mimer/_git/Symphogen.Mimer.AdminWeb)
+
+
+## TODO
+- Deployment (Web App setup)
+- MudBlazor => SyncFusion
+- Auth (app reg)
+- Wiki documentation
+  - Web App + App registration
+  - Code / solution
