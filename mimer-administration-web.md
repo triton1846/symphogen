@@ -30,3 +30,7 @@
   > REMEMBER TO USE TEMPLATE
   - Web App + App registration
   - Code / solution
+
+
+## Help
+- [SyncFusion MS auth](https://blazor.syncfusion.com/documentation/visual-studio-integration/template-studio#microsoft-identity-platform-authentication)
