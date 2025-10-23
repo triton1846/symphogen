@@ -26,6 +26,7 @@
 - [x] Deployment (Web App setup)
 - [x] MudBlazor => SyncFusion
 - [x] Auth (app reg)
+- [ ] Application Insights: Add to application map
 - [ ] [Wiki documentation](https://symphogenteams.visualstudio.com/Development%20and%20Data%20Engineering/_wiki/wikis/Development-and-Data-Engineering.wiki/468/Mimer-AdminWeb)
   > REMEMBER TO USE TEMPLATE
   - Web App + App registration
