@@ -3,6 +3,7 @@
 - [x] Log to application insights
 - [x] Sign first package
 - [x] Fix issue with summary not shown on approval task
+- [ ] Application Insights: Add to application map
 
 
 ## Signing msix files/packages
