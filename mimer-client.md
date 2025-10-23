@@ -1,3 +1,10 @@
+## TODO
+- [ ] How should Christian and others report bugs and new feature request?
+- [x] Log to application insights
+- [x] Sign first package
+- [x] Fix issue with summary not shown on approval task
+
+
 ## Signing msix files/packages
 Change file location to location of msix file and run from command line:
 ```bat
