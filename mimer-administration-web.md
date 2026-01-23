@@ -32,7 +32,12 @@
   > REMEMBER TO USE TEMPLATE
   - Web App + App registration
   - Code / solution
-
+- [ ] Data validation
+  - Workflows
+    - Where workflow is related (through workflowConfigurationId) to a non-existing workflow configuration
+    - Where department on workflow is different from department on mother workflow configuration?
+  - Workflow configuration
+    - Can only delete if no workflows have workflow configuration as parent
 
 ## Help
 - [SyncFusion MS auth](https://blazor.syncfusion.com/documentation/visual-studio-integration/template-studio#microsoft-identity-platform-authentication)
